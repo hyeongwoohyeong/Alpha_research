@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Alpha Deep-Dive Watchlist</title>
+<style>
+  :root {
+    --bg: #0e1116;
+    --panel: #161a22;
+    --panel-2: #1c212c;
+    --border: #2a3140;
+    --text: #e7ebf2;
+    --muted: #8a93a3;
+    --accent: #ff8a3d;
+    --green: #3ddc84;
+    --yellow: #ffce4f;
+    --red: #ff5f6d;
+    --blue: #6aa8ff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Pretendard', sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  header {
+    padding: 20px 28px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  header h1 { margin: 0; font-size: 18px; font-weight: 600; }
+  header .meta { color: var(--muted); font-size: 12px; }
+
+  .toolbar {
+    display: flex;
+    gap: 12px;
+    padding: 12px 28px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .toolbar input, .toolbar select {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+  }
+  .toolbar button {
+    background: var(--accent);
+    border: 0;
+    color: #1a1a1a;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    padding: 20px 28px;
+  }
+  @media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+  }
+  .card h2 {
+    margin: 0 0 12px;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .ticker-list { display: flex; flex-direction: column; gap: 10px; }
+  .ticker-row {
+    display: grid;
+    grid-template-columns: 90px 1fr auto auto;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 12px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .ticker-row:hover { border-color: var(--accent); }
+  .ticker-symbol { font-weight: 600; font-size: 13px; }
+  .ticker-thesis { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pill {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-weight: 600;
+  }
+  .pill-green { background: rgba(61,220,132,0.12); color: var(--green); }
+  .pill-yellow { background: rgba(255,206,79,0.12); color: var(--yellow); }
+  .pill-red { background: rgba(255,95,109,0.14); color: var(--red); }
+  .pill-blue { background: rgba(106,168,255,0.14); color: var(--blue); }
+
+  .matrix {
+    display: grid;
+    grid-template-columns: 90px 1fr 1fr 1fr;
+    grid-template-rows: 30px 1fr 1fr 1fr;
+    gap: 4px;
+  }
+  .matrix .cell {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px;
+    font-size: 12px;
+    min-height: 70px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow: hidden;
+  }
+  .matrix .label {
+    background: transparent;
+    border: 0;
+    color: var(--muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 10px;
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+  }
+  .matrix .severity-label { writing-mode: vertical-rl; transform: rotate(180deg); }
+
+  .finding-chip {
+    background: rgba(255,138,61,0.10);
+    border-left: 2px solid var(--accent);
+    color: var(--text);
+    padding: 3px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    line-height: 1.3;
+    cursor: pointer;
+  }
+  .finding-chip:hover { background: rgba(255,138,61,0.18); }
+  .finding-chip.high-conf { background: rgba(255,95,109,0.14); border-left-color: var(--red); }
+  .finding-chip.low-conf { background: rgba(106,168,255,0.10); border-left-color: var(--blue); }
+
+  .watchlist-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .watchlist-table th, .watchlist-table td {
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .watchlist-table th { color: var(--muted); font-weight: 500; font-size: 11px; text-transform: uppercase; }
+  .watchlist-table tr:hover { background: var(--panel-2); }
+  .breach { color: var(--red); font-weight: 600; }
+  .ok { color: var(--green); }
+
+  .timeline { display: flex; flex-direction: column; gap: 8px; }
+  .timeline-item {
+    display: grid;
+    grid-template-columns: 90px 70px 1fr;
+    gap: 10px;
+    padding: 8px 10px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 12px;
+  }
+  .timeline-date { color: var(--muted); }
+  .timeline-ticker { font-weight: 600; }
+
+  .empty-state { color: var(--muted); padding: 16px; text-align: center; }
+
+  /* Detail drawer */
+  .drawer {
+    position: fixed; top: 0; right: 0; width: 460px; height: 100%;
+    background: var(--panel); border-left: 1px solid var(--border);
+    transform: translateX(100%); transition: transform 0.2s ease;
+    overflow-y: auto; padding: 20px 22px;
+    z-index: 50;
+  }
+  .drawer.open { transform: translateX(0); }
+  .drawer h3 { margin: 0 0 6px; font-size: 16px; }
+  .drawer .close { float: right; cursor: pointer; color: var(--muted); }
+  .drawer section { margin-top: 18px; }
+  .drawer section h4 { font-size: 12px; color: var(--muted); text-transform: uppercase; margin: 0 0 8px; }
+  .drawer p, .drawer li { font-size: 13px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Alpha Deep-Dive Watchlist</h1>
+  <div class="meta">
+    <span id="last-updated">-</span> · <span id="ticker-count">0</span> tickers
+    <button onclick="reload()" style="margin-left:12px;background:transparent;border:1px solid var(--border);color:var(--text);padding:4px 10px;border-radius:6px;cursor:pointer">Reload</button>
+  </div>
+</header>
+
+<div class="toolbar">
+  <input id="search" placeholder="Search ticker / thesis..." oninput="render()" />
+  <select id="filter-status" onchange="render()">
+    <option value="all">All Status</option>
+    <option value="strengthened">Strengthened</option>
+    <option value="unchanged">Unchanged</option>
+    <option value="weakened">Weakened</option>
+    <option value="broken">Broken</option>
+  </select>
+  <select id="sort" onchange="render()">
+    <option value="severity">Sort: Top Severity</option>
+    <option value="recent">Sort: Recent Update</option>
+    <option value="ticker">Sort: Ticker</option>
+  </select>
+</div>
+
+<div class="grid">
+
+  <div class="card" style="grid-column: 1 / -1;">
+    <h2>Watchlist Tickers</h2>
+    <div class="ticker-list" id="ticker-list"></div>
+  </div>
+
+  <div class="card">
+    <h2>Severity × Confidence (All Findings)</h2>
+    <div class="matrix" id="matrix"></div>
+  </div>
+
+  <div class="card">
+    <h2>Watchlist Metric Breaches</h2>
+    <table class="watchlist-table" id="metric-table">
+      <thead><tr><th>Ticker</th><th>Metric</th><th>Current</th><th>Threshold</th><th>Status</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="card" style="grid-column: 1 / -1;">
+    <h2>Recent Delta Log (Across Tickers)</h2>
+    <div class="timeline" id="timeline"></div>
+  </div>
+
+</div>
+
+<div class="drawer" id="drawer">
+  <span class="close" onclick="closeDrawer()">✕</span>
+  <h3 id="drawer-ticker">-</h3>
+  <p id="drawer-thesis" style="color:var(--muted);margin:0"></p>
+
+  <section>
+    <h4>Open Questions for Next Round</h4>
+    <ul id="drawer-questions"></ul>
+  </section>
+
+  <section>
+    <h4>Top Red Flags</h4>
+    <ul id="drawer-redflags"></ul>
+  </section>
+
+  <section>
+    <h4>Watchlist Metrics</h4>
+    <table class="watchlist-table" id="drawer-metrics">
+      <thead><tr><th>Metric</th><th>Current</th><th>Threshold</th><th>Status</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <section>
+    <h4>Round History</h4>
+    <ol id="drawer-rounds"></ol>
+  </section>
+</div>
+
+<script>
+// === DEMO DATA ===
+// 실제 운용 시 fetch('./tickers/[TICKER]/dossier.md') 또는 cowork.callMcpTool 등으로 read
+// Watchlist Metric / Top Red Flag / Round History 만 indexing 해서 dashboard 화
+const DEMO_DATA = [
+  {
+    ticker: "005930.KS",
+    name: "삼성전자",
+    thesis: "AI infra capex sustain → DDR5/HBM mix shift 수혜",
+    thesisStatus: "strengthened",
+    lastUpdate: "2026-05-04",
+    rounds: [
+      { id: "R1", date: "2026-02-10", thesis: "AI infra capex 시작 단계, HBM rev 비중 확장 가설" },
+      { id: "R2", date: "2026-04-15", thesis: "1Q HBM 매출 +42% YoY 확인. AR DSO 78일로 상승 — 의심 신호" },
+      { id: "R3", date: "2026-05-04", thesis: "HBM 점유율 30%대 진입. Inventory days 53일로 정상화. 단, 환율 영향 모니터링." }
+    ],
+    redFlags: [
+      { id: "FDD-2026Q2-007", frame: "WC", severity: "med", confidence: "high", text: "AR DSO 78일 — 매출 성장 대비 회수 둔화" },
+      { id: "FDD-2026Q2-012", frame: "QoE", severity: "low", confidence: "med", text: "환율 효과 OP +1.8%p — 지속성 의심" }
+    ],
+    metrics: [
+      { metric: "DRAM ASP QoQ", current: "+6%", threshold: "+5%", status: "ok" },
+      { metric: "HBM revenue share", current: "32%", threshold: "20%", status: "ok" },
+      { metric: "Inventory days", current: "53", threshold: "<60", status: "ok" },
+      { metric: "AR DSO", current: "78", threshold: "<70", status: "breach" }
+    ],
+    questions: [
+      "DSO 상승의 고객별 분해 — internal 확인 필요",
+      "관계사 거래 비중 분기별 추이",
+      "환율 hedge 정책 disclosure 여부"
+    ]
+  },
+  {
+    ticker: "012450.KS",
+    name: "한화에어로스페이스",
+    thesis: "K-방산 수출 sustain + 우주 사업 재평가",
+    thesisStatus: "unchanged",
+    lastUpdate: "2026-05-01",
+    rounds: [
+      { id: "R1", date: "2026-03-12", thesis: "수주잔고 31조 — backlog quality 확인 필요" },
+      { id: "R2", date: "2026-05-01", thesis: "1Q 수출 매출 인식 정책 disclosure 확인. 충당부채 충실성 의심." }
+    ],
+    redFlags: [
+      { id: "FDD-2026Q2-021", frame: "Hidden Liability", severity: "high", confidence: "med", text: "해외법인 우발채무 footnote 강조 — 분쟁 진행" },
+      { id: "FDD-2026Q2-022", frame: "Accounting", severity: "med", confidence: "med", text: "충당부채 reversal 패턴 — smoothing 의심" }
+    ],
+    metrics: [
+      { metric: "Backlog 대비 매출 인식 속도", current: "8.2%", threshold: ">10%", status: "breach" },
+      { metric: "충당부채 / 매출", current: "1.4%", threshold: ">2%", status: "breach" },
+      { metric: "수출 매출 비중", current: "38%", threshold: ">35%", status: "ok" }
+    ],
+    questions: [
+      "수출 계약별 매출 인식 timing",
+      "해외법인 분쟁의 max exposure",
+      "백로그 cancellation clause"
+    ]
+  },
+  {
+    ticker: "035420.KS",
+    name: "NAVER",
+    thesis: "AI search transition 비용 → 단기 margin 압박, 장기 LTV 회복",
+    thesisStatus: "weakened",
+    lastUpdate: "2026-04-28",
+    rounds: [
+      { id: "R1", date: "2026-01-20", thesis: "AI infra capex 본격화. Search rev growth 둔화 우려." },
+      { id: "R2", date: "2026-04-28", thesis: "1Q Search rev YoY -2%. Capex/rev 22% 도달. Thesis 약화." }
+    ],
+    redFlags: [
+      { id: "FDD-2026Q2-031", frame: "Cash Flow", severity: "high", confidence: "high", text: "FCF conversion 41% — 3년래 최저" },
+      { id: "FDD-2026Q2-032", frame: "Operational", severity: "med", confidence: "high", text: "광고주 Top 10 의존도 상승 (38% → 44%)" }
+    ],
+    metrics: [
+      { metric: "Search YoY growth", current: "-2%", threshold: ">+3%", status: "breach" },
+      { metric: "Capex/rev", current: "22%", threshold: "<18%", status: "breach" },
+      { metric: "FCF conversion", current: "41%", threshold: ">60%", status: "breach" }
+    ],
+    questions: [
+      "AI infra capex 의 maintenance vs growth 비중",
+      "Search revenue 의 AI cannibalization 효과",
+      "광고주 집중도 internal cohort"
+    ]
+  }
+];
+
+// === RENDER ===
+function statusPill(status) {
+  const map = {
+    strengthened: ["pill-green", "Strengthened"],
+    unchanged: ["pill-blue", "Unchanged"],
+    weakened: ["pill-yellow", "Weakened"],
+    broken: ["pill-red", "Broken"]
+  };
+  const [cls, label] = map[status] || ["pill-blue", status];
+  return `<span class="pill ${cls}">${label}</span>`;
+}
+
+function topSeverity(d) {
+  const order = { high: 3, med: 2, low: 1 };
+  return d.redFlags.reduce((acc, rf) => Math.max(acc, order[rf.severity] || 0), 0);
+}
+
+function render() {
+  const search = document.getElementById('search').value.toLowerCase();
+  const status = document.getElementById('filter-status').value;
+  const sort = document.getElementById('sort').value;
+
+  let data = DEMO_DATA.filter(d => {
+    const hit = (d.ticker.toLowerCase().includes(search)) ||
+                (d.name.toLowerCase().includes(search)) ||
+                (d.thesis.toLowerCase().includes(search));
+    const statusOk = (status === 'all') || (d.thesisStatus === status);
+    return hit && statusOk;
+  });
+
+  if (sort === 'severity') data.sort((a,b) => topSeverity(b) - topSeverity(a));
+  else if (sort === 'recent') data.sort((a,b) => b.lastUpdate.localeCompare(a.lastUpdate));
+  else if (sort === 'ticker') data.sort((a,b) => a.ticker.localeCompare(b.ticker));
+
+  // Ticker list
+  const list = document.getElementById('ticker-list');
+  list.innerHTML = data.length
+    ? data.map(d => `
+      <div class="ticker-row" onclick="openDrawer('${d.ticker}')">
+        <div class="ticker-symbol">${d.ticker}</div>
+        <div>
+          <div>${d.name}</div>
+          <div class="ticker-thesis">${d.thesis}</div>
+        </div>
+        <div>${statusPill(d.thesisStatus)}</div>
+        <div style="color:var(--muted);font-size:11px">${d.lastUpdate}</div>
+      </div>`).join('')
+    : '<div class="empty-state">No tickers</div>';
+
+  // Severity × Confidence matrix
+  const allFindings = data.flatMap(d => d.redFlags.map(rf => ({...rf, ticker: d.ticker})));
+  const matrix = document.getElementById('matrix');
+  const severities = ['high', 'med', 'low'];
+  const confidences = ['high', 'med', 'low'];
+  let mhtml = '<div class="cell label"></div>';
+  confidences.forEach(c => mhtml += `<div class="cell label">Conf: ${c}</div>`);
+  severities.forEach(s => {
+    mhtml += `<div class="cell label severity-label">Sev: ${s}</div>`;
+    confidences.forEach(c => {
+      const cell = allFindings.filter(f => f.severity === s && f.confidence === c);
+      mhtml += `<div class="cell">${cell.map(f => `
+        <div class="finding-chip ${c === 'high' ? 'high-conf' : c === 'low' ? 'low-conf' : ''}" title="${f.ticker}: ${f.text}">
+          <strong>${f.ticker}</strong> · ${f.frame}<br>${f.text.slice(0, 50)}...
+        </div>`).join('') || '<span style="color:var(--muted);font-size:11px">—</span>'}</div>`;
+    });
+  });
+  matrix.innerHTML = mhtml;
+
+  // Metric breach table
+  const breaches = data.flatMap(d => d.metrics
+    .filter(m => m.status === 'breach')
+    .map(m => ({...m, ticker: d.ticker})));
+  const tbody = document.querySelector('#metric-table tbody');
+  tbody.innerHTML = breaches.length
+    ? breaches.map(b => `
+      <tr>
+        <td><strong>${b.ticker}</strong></td>
+        <td>${b.metric}</td>
+        <td class="breach">${b.current}</td>
+        <td>${b.threshold}</td>
+        <td><span class="pill pill-red">Breach</span></td>
+      </tr>`).join('')
+    : '<tr><td colspan="5" class="empty-state">No breaches</td></tr>';
+
+  // Recent delta timeline
+  const recents = data.flatMap(d => d.rounds.map(r => ({...r, ticker: d.ticker})))
+    .sort((a,b) => b.date.localeCompare(a.date))
+    .slice(0, 10);
+  document.getElementById('timeline').innerHTML = recents.map(r => `
+    <div class="timeline-item">
+      <span class="timeline-date">${r.date}</span>
+      <span class="timeline-ticker">${r.ticker}</span>
+      <span>${r.id} — ${r.thesis}</span>
+    </div>`).join('');
+
+  document.getElementById('ticker-count').textContent = data.length;
+  document.getElementById('last-updated').textContent = new Date().toLocaleString('ko-KR');
+}
+
+function openDrawer(ticker) {
+  const d = DEMO_DATA.find(x => x.ticker === ticker);
+  if (!d) return;
+  document.getElementById('drawer-ticker').innerHTML = `${d.ticker} ${d.name} ${statusPill(d.thesisStatus)}`;
+  document.getElementById('drawer-thesis').textContent = d.thesis;
+  document.getElementById('drawer-questions').innerHTML = d.questions.map(q => `<li>${q}</li>`).join('');
+  document.getElementById('drawer-redflags').innerHTML = d.redFlags.map(rf =>
+    `<li><strong>[${rf.id}]</strong> ${rf.frame} · Sev ${rf.severity} / Conf ${rf.confidence} — ${rf.text}</li>`).join('');
+  document.querySelector('#drawer-metrics tbody').innerHTML = d.metrics.map(m => `
+    <tr><td>${m.metric}</td><td class="${m.status}">${m.current}</td><td>${m.threshold}</td>
+    <td><span class="pill ${m.status === 'breach' ? 'pill-red' : 'pill-green'}">${m.status}</span></td></tr>`).join('');
+  document.getElementById('drawer-rounds').innerHTML = d.rounds.map(r =>
+    `<li><strong>${r.id}</strong> (${r.date}) — ${r.thesis}</li>`).join('');
+  document.getElementById('drawer').classList.add('open');
+}
+function closeDrawer() {
+  document.getElementById('drawer').classList.remove('open');
+}
+function reload() {
+  // Hook: fetch latest dossier index here
+  render();
+}
+
+render();
+</script>
+
+</body>
+</html>

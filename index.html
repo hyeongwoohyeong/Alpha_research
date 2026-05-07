@@ -1,0 +1,2234 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Alpha Deep-Dive Research Dashboard</title>
+<style>
+  :root {
+    --bg: #f7f8fa;
+    --panel: #ffffff;
+    --panel-2: #f0f2f6;
+    --border: #e2e6ed;
+    --text: #1a1f29;
+    --text-soft: #475065;
+    --muted: #8a93a3;
+    --accent: #1f6feb;
+    --accent-soft: #e8f0ff;
+    --green: #1a7f5a;
+    --green-soft: #e6f4ee;
+    --yellow: #b87900;
+    --yellow-soft: #fff5e0;
+    --red: #c0392b;
+    --red-soft: #fce8e6;
+    --purple: #6d3ec5;
+    --purple-soft: #f0e9ff;
+    --shadow: 0 1px 2px rgba(15,20,30,.06), 0 4px 12px rgba(15,20,30,.04);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Pretendard', 'Apple SD Gothic Neo', ui-sans-serif, sans-serif;
+    font-size: 14.5px;
+    line-height: 1.75;
+    display: flex;
+    min-height: 100vh;
+    word-break: keep-all;
+    letter-spacing: -0.1px;
+  }
+  .sidebar {
+    width: 240px; background: var(--panel); border-right: 1px solid var(--border);
+    padding: 18px 14px; position: sticky; top: 0; height: 100vh;
+    overflow-y: auto; flex-shrink: 0;
+  }
+  .sidebar-header { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin: 0 0 14px; padding: 0 6px; font-weight: 600; }
+  .sidebar-section + .sidebar-section { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); }
+  .sidebar-title { font-size: 13px; font-weight: 700; color: var(--text); margin: 0 0 10px; padding: 0 6px; display: flex; align-items: center; gap: 8px; }
+  .sidebar-title::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+  .sidebar-title.studies::before { background: var(--purple); }
+  .sidebar-empty { padding: 8px 10px; font-size: 11px; color: var(--muted); line-height: 1.5; }
+  .study-nav { display: flex; flex-direction: column; gap: 2px; }
+  .study-item { padding: 8px 10px; border-radius: 6px; cursor: pointer; border: 1px solid transparent; }
+  .study-item:hover { background: var(--panel-2); }
+  .study-item.active { background: var(--purple-soft); border-color: var(--purple); }
+  .study-item .s-title { font-weight: 600; font-size: 12.5px; line-height: 1.35; color: var(--text); }
+  .study-item .s-meta { font-size: 10px; color: var(--muted); margin-top: 3px; }
+  .study-item .s-tags { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 5px; }
+  .study-item .s-tag { font-size: 9.5px; padding: 1px 5px; background: var(--purple-soft); color: var(--purple); border-radius: 3px; font-weight: 600; }
+  .ticker-nav { display: flex; flex-direction: column; gap: 2px; }
+  .ticker-item { padding: 8px 10px; border-radius: 6px; cursor: pointer; transition: background 0.12s; border: 1px solid transparent; }
+  .ticker-item:hover { background: var(--panel-2); }
+  .ticker-item.active { background: var(--accent-soft); border-color: var(--accent); }
+  .ticker-item .t-symbol { font-weight: 700; font-size: 13px; }
+  .ticker-item .t-name { font-size: 11px; color: var(--text-soft); margin-top: 2px; }
+  .ticker-item .t-meta { font-size: 10px; color: var(--muted); margin-top: 3px; }
+  .ticker-item .t-score { display: inline-block; padding: 1px 6px; background: var(--accent); color: white; border-radius: 999px; font-size: 10px; font-weight: 700; margin-top: 4px; }
+  .sidebar-footer { margin-top: 24px; padding: 10px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); line-height: 1.6; }
+
+  .main { flex: 1; padding: 28px 36px 80px; max-width: 1020px; min-width: 0; }
+  .header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 22px; }
+  .header-l h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+  .header-l .subtitle { font-size: 13px; color: var(--text-soft); margin-top: 6px; }
+  .header-r { text-align: right; font-size: 11px; color: var(--muted); line-height: 1.6; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; background: var(--panel-2); color: var(--text-soft); margin-left: 4px; }
+  .badge.industry { background: var(--purple-soft); color: var(--purple); }
+  .badge.exchange { background: var(--accent-soft); color: var(--accent); }
+
+  /* Alpha Score */
+  .alpha-score {
+    background: linear-gradient(135deg, #f0f4ff 0%, #ffffff 60%);
+    border: 1px solid var(--border); border-left: 4px solid var(--accent);
+    border-radius: 10px; padding: 22px 24px; margin-bottom: 18px;
+    box-shadow: var(--shadow);
+  }
+  .alpha-head {
+    display: grid; grid-template-columns: auto 1fr auto;
+    gap: 18px; align-items: center; margin-bottom: 18px;
+    padding-bottom: 16px; border-bottom: 1px solid var(--border);
+  }
+  .alpha-composite-wrap { text-align: center; padding: 0 16px; }
+  .alpha-composite { font-size: 38px; font-weight: 800; color: var(--accent); line-height: 1; }
+  .alpha-composite-label { font-size: 10.5px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+  .alpha-tag-wrap { display: flex; flex-direction: column; gap: 6px; }
+  .alpha-tag { font-size: 11px; padding: 4px 10px; border-radius: 4px; font-weight: 700; letter-spacing: 0.3px; display: inline-block; }
+  .alpha-tag.signal-watch { background: var(--yellow); color: white; }
+  .alpha-tag.signal-buy { background: var(--green); color: white; }
+  .alpha-tag.signal-avoid { background: var(--red); color: white; }
+  .alpha-tag.signal-monitor { background: var(--accent); color: white; }
+  .alpha-rationale { font-size: 13px; color: var(--text); line-height: 1.65; }
+  .alpha-bars-title { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 10px; font-weight: 700; }
+  .alpha-bars { display: flex; flex-direction: column; gap: 10px; }
+  .alpha-bar {
+    display: grid; grid-template-columns: 110px 1fr 38px;
+    gap: 10px; align-items: center; font-size: 12.5px;
+  }
+  .alpha-bar-label { color: var(--text); font-weight: 600; }
+  .alpha-bar-track { background: var(--panel-2); border-radius: 999px; height: 8px; overflow: hidden; }
+  .alpha-bar-fill { height: 100%; transition: width 0.3s; }
+  .alpha-bar-fill.s-high { background: var(--green); }
+  .alpha-bar-fill.s-mid { background: var(--accent); }
+  .alpha-bar-fill.s-low { background: var(--yellow); }
+  .alpha-bar-fill.s-bad { background: var(--red); }
+  .alpha-bar-score { text-align: right; font-weight: 700; color: var(--text); }
+  .alpha-bar-rationale { grid-column: 1 / -1; font-size: 11.5px; color: var(--muted); margin-top: -4px; padding-left: 0; line-height: 1.5; }
+
+  .tldr { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 22px 24px; margin-bottom: 18px; box-shadow: var(--shadow); }
+  .tldr h2, .section-card h3, .qa-box h2, .sources h2, .chart-block h2 { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin: 0 0 10px; font-weight: 700; }
+  .tldr .what { font-size: 14.5px; color: var(--text); line-height: 1.85; margin-bottom: 18px; }
+  .metrics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+  .metric { background: var(--panel-2); border-radius: 6px; padding: 10px 12px; }
+  .metric .label { font-size: 11px; color: var(--muted); }
+  .metric .value { font-size: 13.5px; font-weight: 600; color: var(--text); margin-top: 3px; }
+  .moat-line { font-size: 13.5px; color: var(--text); padding: 10px 14px; background: var(--green-soft); border-left: 3px solid var(--green); border-radius: 4px; margin-bottom: 14px; line-height: 1.7; }
+  .moat-line strong { color: var(--green); margin-right: 4px; }
+  .concerns { margin: 0; padding-left: 22px; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 14px; font-size: 13px; color: var(--text); }
+  .concerns li::marker { color: var(--red); }
+
+  .risk-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 10px; margin-bottom: 18px; }
+  .risk-card { border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; background: var(--panel); box-shadow: var(--shadow); }
+  .risk-card.sev-high { border-left: 4px solid var(--red); }
+  .risk-card.sev-med { border-left: 4px solid var(--yellow); }
+  .risk-card.sev-low { border-left: 4px solid var(--accent); }
+  .risk-card .sev-label { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 10.5px; font-weight: 700; letter-spacing: 0.4px; margin-bottom: 8px; }
+  .risk-card.sev-high .sev-label { background: var(--red-soft); color: var(--red); }
+  .risk-card.sev-med .sev-label { background: var(--yellow-soft); color: var(--yellow); }
+  .risk-card.sev-low .sev-label { background: var(--accent-soft); color: var(--accent); }
+  .risk-card .r-title { font-weight: 700; font-size: 14px; margin-bottom: 6px; }
+  .risk-card .r-detail { font-size: 13px; color: var(--text); line-height: 1.7; }
+  .risk-card .r-source { font-size: 11px; color: var(--muted); margin-top: 8px; }
+
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 16px; position: sticky; top: 0; background: var(--bg); z-index: 5; padding-top: 4px; }
+  .tab { padding: 10px 18px; cursor: pointer; font-size: 13.5px; font-weight: 600; color: var(--text-soft); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .section { display: none; }
+  .section.active { display: block; }
+  .section-intro { color: var(--text); font-size: 13.5px; margin-bottom: 14px; padding: 12px 14px; background: var(--panel-2); border-radius: 6px; line-height: 1.7; }
+  .section-card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 18px 20px; margin-bottom: 12px; box-shadow: var(--shadow); }
+  .section-card .sc-num { display: inline-block; padding: 1px 8px; background: var(--panel-2); color: var(--muted); font-size: 11px; font-weight: 700; border-radius: 4px; margin-right: 8px; vertical-align: 2px; }
+  .section-card h3 { font-size: 15px; color: var(--text); margin: 0 0 12px; text-transform: none; letter-spacing: 0; font-weight: 700; }
+  .section-card .body { font-size: 14px; color: var(--text); line-height: 1.85; }
+  .section-card .body p { margin: 0 0 10px; }
+  .section-card .body p:last-child { margin-bottom: 0; }
+  .section-card .body ul, .section-card .body ol { margin: 6px 0 10px; padding-left: 22px; }
+  .section-card .body li { margin-bottom: 4px; }
+  .section-card .body strong { color: var(--text); font-weight: 700; }
+  .section-card .body em { color: var(--text); font-style: normal; background: var(--yellow-soft); padding: 1px 5px; border-radius: 3px; }
+
+  table.tbl { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 13px; }
+  .tbl th, .tbl td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .tbl th { background: var(--panel-2); font-weight: 600; color: var(--text-soft); font-size: 11.5px; }
+  .tbl tr:last-child td { border-bottom: 0; }
+  .tbl tr:hover { background: var(--panel-2); }
+  .tbl.numeric td:not(:first-child), .tbl.numeric th:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; }
+  .tbl .num-pos { color: var(--green); font-weight: 600; }
+  .tbl .num-neg { color: var(--red); font-weight: 600; }
+  .tbl .row-emph td { background: var(--accent-soft); font-weight: 700; }
+
+  /* Charts */
+  .chart-block { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 16px 18px; margin-bottom: 12px; box-shadow: var(--shadow); }
+  .chart-block svg { width: 100%; height: auto; max-width: 100%; display: block; }
+  .chart-legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--text-soft); margin-top: 8px; }
+  .chart-legend .lg { display: inline-flex; align-items: center; gap: 6px; }
+  .chart-legend .lg-dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  .chart-meta { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  .qa-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+  @media (max-width: 900px) { .qa-grid { grid-template-columns: 1fr; } .alpha-head { grid-template-columns: 1fr; } }
+  .qa-box { background: var(--panel); border: 1px solid var(--border); border-left: 4px solid var(--purple); border-radius: 6px; padding: 16px 18px; box-shadow: var(--shadow); }
+  .qa-box.verify { border-left-color: var(--yellow); }
+  .qa-box ul { margin: 0; padding-left: 22px; }
+  .qa-box li { font-size: 13px; color: var(--text); margin-bottom: 7px; line-height: 1.65; }
+
+  .sources { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 16px 18px; margin-bottom: 12px; font-size: 12.5px; }
+  .sources-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 4px 16px; }
+  .sources-list a { color: var(--accent); text-decoration: none; font-size: 12.5px; line-height: 1.7; }
+  .sources-list a:hover { text-decoration: underline; }
+  .disclaimer { font-size: 11.5px; color: var(--muted); background: var(--panel-2); padding: 12px 14px; border-radius: 6px; margin-top: 12px; line-height: 1.65; }
+  .empty-state { text-align: center; padding: 80px 20px; color: var(--muted); }
+
+  /* === Study Page (반도체 Value Chain) === */
+  .sv-anchor-nav { position: sticky; top: 0; background: var(--bg); border-bottom: 1px solid var(--border); padding: 8px 0; margin: 0 -20px 20px; padding-left: 20px; padding-right: 20px; z-index: 4; display: flex; flex-wrap: wrap; gap: 4px 6px; font-size: 12px; }
+  .sv-anchor-nav a { padding: 5px 10px; border-radius: 4px; color: var(--text-soft); text-decoration: none; background: var(--panel-2); border: 1px solid transparent; }
+  .sv-anchor-nav a:hover { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+  .sv-section { margin: 32px 0 28px; scroll-margin-top: 60px; }
+  .sv-section h2 { font-size: 18px; font-weight: 700; margin: 0 0 6px; color: var(--text); border-bottom: 2px solid var(--accent); padding-bottom: 6px; display: inline-block; }
+  .sv-section .lead { font-size: 13px; color: var(--text-soft); margin: 8px 0 18px; line-height: 1.7; }
+  .sv-hero { background: linear-gradient(135deg, #1f6feb 0%, #6d3ec5 100%); color: white; padding: 28px 30px; border-radius: 12px; margin-bottom: 22px; box-shadow: var(--shadow); }
+  .sv-hero h1 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.4px; }
+  .sv-hero .sub { font-size: 14px; opacity: 0.9; margin-top: 6px; }
+  .sv-summary { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 20px; }
+  @media (min-width: 760px) { .sv-summary { grid-template-columns: repeat(4, 1fr); } }
+  .sv-summary-card { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 14px; backdrop-filter: blur(4px); }
+  .sv-summary-card .num { font-size: 11px; opacity: 0.75; font-weight: 700; }
+  .sv-summary-card .ttl { font-size: 14px; font-weight: 700; margin: 4px 0 6px; }
+  .sv-summary-card .desc { font-size: 12px; opacity: 0.92; line-height: 1.55; }
+  .sv-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 760px) { .sv-grid2 { grid-template-columns: 1fr; } }
+  .sv-grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+  .sv-card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; box-shadow: var(--shadow); }
+  .sv-card h4 { font-size: 13.5px; font-weight: 700; margin: 0 0 8px; color: var(--text); display: flex; align-items: center; gap: 6px; }
+  .sv-card h4 .pill { font-size: 10px; padding: 2px 7px; border-radius: 999px; font-weight: 600; }
+  .sv-card .pill.b { background: var(--accent-soft); color: var(--accent); }
+  .sv-card .pill.g { background: var(--green-soft); color: var(--green); }
+  .sv-card .pill.y { background: var(--yellow-soft); color: var(--yellow); }
+  .sv-card .pill.r { background: var(--red-soft); color: var(--red); }
+  .sv-card .pill.p { background: var(--purple-soft); color: var(--purple); }
+  .sv-card p, .sv-card ul { font-size: 13px; line-height: 1.7; margin: 4px 0; }
+  .sv-card ul { padding-left: 20px; }
+  .sv-card .label { font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; font-weight: 700; margin-top: 10px; margin-bottom: 2px; }
+  /* Value Chain — 가로 overview (한눈에) */
+  .sv-flow-overview { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 18px; align-items: stretch; }
+  @media (max-width: 760px) { .sv-flow-overview { grid-template-columns: repeat(2, 1fr); gap: 8px; } }
+  .sv-ov { background: var(--panel); border: 1px solid var(--border); border-top: 3px solid var(--accent); border-radius: 6px; padding: 10px 8px; text-align: center; position: relative; }
+  .sv-ov:nth-child(1) { border-top-color: var(--accent); }
+  .sv-ov:nth-child(2) { border-top-color: #1a7f5a; }
+  .sv-ov:nth-child(3) { border-top-color: var(--purple); }
+  .sv-ov:nth-child(4) { border-top-color: var(--yellow); }
+  .sv-ov:nth-child(5) { border-top-color: var(--red); }
+  .sv-ov .step-num { font-size: 9.5px; color: var(--muted); font-weight: 700; letter-spacing: 0.5px; }
+  .sv-ov .step-title { font-size: 12.5px; font-weight: 700; margin: 4px 0 4px; color: var(--text); line-height: 1.3; }
+  .sv-ov .step-tagline { font-size: 10.5px; color: var(--text-soft); line-height: 1.45; }
+  @media (min-width: 760px) {
+    .sv-ov:not(:last-child)::after { content: "→"; position: absolute; right: -8px; top: 50%; transform: translateY(-50%); color: var(--muted); font-weight: 700; font-size: 14px; z-index: 2; }
+  }
+
+  /* Value Chain — 세로 상세 카드 */
+  .sv-flow { display: flex; flex-direction: column; gap: 10px; }
+  .sv-stage { background: var(--panel); border: 1px solid var(--border); border-left: 4px solid var(--accent); border-radius: 8px; padding: 16px 18px; box-shadow: var(--shadow); position: relative; font-size: 13px; line-height: 1.7; display: grid; grid-template-columns: 160px 1fr; gap: 18px; align-items: start; }
+  @media (max-width: 760px) { .sv-stage { grid-template-columns: 1fr; gap: 8px; } }
+  .sv-stage:nth-child(2) { border-left-color: #1a7f5a; }
+  .sv-stage:nth-child(3) { border-left-color: var(--purple); }
+  .sv-stage:nth-child(4) { border-left-color: var(--yellow); }
+  .sv-stage:nth-child(5) { border-left-color: var(--red); }
+  .sv-stage .stage-head { display: flex; flex-direction: column; gap: 4px; }
+  .sv-stage h4 { margin: 0 0 4px; font-size: 15px; font-weight: 700; }
+  .sv-stage .step { font-size: 10px; color: var(--muted); font-weight: 700; letter-spacing: 0.6px; }
+  .sv-stage .stage-body { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
+  .sv-stage .lab { color: var(--muted); font-size: 10.5px; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.4px; }
+  .sv-stage .stage-body div > div { font-size: 12.5px; line-height: 1.6; color: var(--text); }
+  .sv-hbm-diagram { background: linear-gradient(180deg, #f0f4ff 0%, #ffffff 100%); border: 1px solid var(--border); border-radius: 10px; padding: 24px; text-align: center; }
+  .sv-hbm-stack { display: inline-block; }
+  .sv-hbm-die { display: block; width: 220px; height: 22px; margin: 2px auto; background: linear-gradient(90deg, #1f6feb, #6d3ec5); border-radius: 3px; color: white; font-size: 10.5px; line-height: 22px; font-weight: 600; }
+  .sv-hbm-die.gpu { background: linear-gradient(90deg, #c0392b, #b87900); height: 60px; line-height: 60px; font-size: 13px; width: 320px; margin-top: 12px; border-radius: 6px; }
+  .sv-hbm-die.interposer { background: #cdd3dd; color: #475065; height: 18px; line-height: 18px; width: 360px; margin-top: 4px; }
+  .sv-hbm-die.substrate { background: #8a93a3; color: white; height: 14px; line-height: 14px; width: 380px; }
+  .sv-tsv { width: 8px; height: 100%; background: repeating-linear-gradient(0deg, #ffce4f 0 4px, transparent 4px 6px); position: absolute; }
+  .sv-roadmap { display: grid; gap: 12px; }
+  .sv-roadmap-row { display: grid; grid-template-columns: 100px 1fr; gap: 12px; align-items: center; }
+  .sv-roadmap-row .axis { font-weight: 700; color: var(--accent); font-size: 13px; }
+  .sv-roadmap-row .stages { display: flex; gap: 8px; flex-wrap: wrap; }
+  .sv-roadmap-row .stage-pill { background: var(--panel-2); border: 1px solid var(--border); border-radius: 999px; padding: 5px 12px; font-size: 12px; }
+  .sv-roadmap-row .stage-pill.now { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 700; }
+  .sv-policy { display: flex; flex-direction: column; gap: 10px; }
+  .sv-policy-item { display: grid; grid-template-columns: 90px 1fr; gap: 14px; padding: 12px 14px; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; }
+  .sv-policy-item .yr { font-weight: 700; color: var(--accent); font-size: 13px; }
+  .sv-policy-item .desc { font-size: 12.5px; line-height: 1.65; }
+  .sv-checklist { display: grid; gap: 8px; }
+  .sv-check { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; font-size: 13px; line-height: 1.65; display: grid; grid-template-columns: 24px 1fr; gap: 8px; align-items: start; }
+  .sv-check::before { content: "□"; color: var(--accent); font-weight: 700; font-size: 16px; }
+  .sv-glossary-search { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; margin-bottom: 12px; background: var(--panel); }
+  .sv-glossary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 8px; }
+  .sv-gloss { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; font-size: 12.5px; }
+  .sv-gloss .term { font-weight: 700; color: var(--accent); font-size: 13px; }
+  .sv-gloss .def { color: var(--text); margin-top: 3px; line-height: 1.55; }
+  .sv-tbl { width: 100%; border-collapse: collapse; font-size: 12.5px; margin: 8px 0; }
+  .sv-tbl th, .sv-tbl td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; }
+  .sv-tbl th { background: var(--panel-2); font-size: 11px; color: var(--text-soft); font-weight: 700; }
+  .sv-callout { background: var(--yellow-soft); border-left: 3px solid var(--yellow); padding: 12px 14px; border-radius: 4px; font-size: 12.5px; line-height: 1.7; margin: 12px 0; }
+  .sv-callout strong { color: var(--yellow); }
+  .sv-insight { background: var(--purple-soft); border-left: 3px solid var(--purple); padding: 12px 14px; border-radius: 4px; font-size: 12.5px; line-height: 1.7; margin: 12px 0; }
+  .sv-insight strong { color: var(--purple); }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-header">Alpha Deep-Dive</div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-title studies">스터디 노트</div>
+    <nav class="study-nav" id="study-nav"></nav>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-title">관심 종목</div>
+    <nav class="ticker-nav" id="ticker-nav"></nav>
+  </div>
+
+  <div class="sidebar-footer">스터디 또는 종목명을 클릭하면 본문이 전환됩니다.<br>스터디는 대화창에 본인 필기·리서치를 보내면 누적됩니다.</div>
+</aside>
+
+<main class="main" id="main-content"></main>
+
+<script>
+const STOCKS = {
+  "SN": {
+    ticker: "SN",
+    nameEn: "SharkNinja, Inc.",
+    nameKr: "샤크닌자",
+    exchange: "NYSE",
+    asOfDate: "2026-05-06",
+    industry: "소형 생활가전 (Small Domestic Appliances)",
+
+    market: {
+      price: 114.02,
+      currency: "USD",
+      priceKrw: 167666,
+      preMarketChange: -3.39,
+      preMarketChangePct: -2.88,
+      range1d: [111.72, 124.00],
+      range52w: [79.33, 133.99],
+      sinceIPO: "+341.25% from $25.84 (2023.7.31)",
+      multiples: { PER: 23.7, PSR: 2.6, PBR: 6.2, EPS: 4.93, BPS: 18.95, ROE: 30.4 }
+    },
+
+    alphaScore: {
+      composite: 7.0,
+      signal: "monitor",
+      signalLabel: "MONITOR · 사실 우수, 거버넌스 트래킹",
+      rationale: "사업 펀더멘털과 실적 모멘텀 점수는 상위권. 단 controlled company 구조 + Joyoung 관계사 거래 의혹 + Foodi recall 누적이 거버넌스 score를 눌러 종합 점수를 7.0 수준으로 정렬한다. 정상가격 검증과 recall provision 인식이 다음 분기에 해소되면 score 상향 여지.",
+      components: [
+        { key: "value", label: "Value", score: 5, weight: 15,
+          rationale: "PER 23.7x · PSR 2.6x · PBR 6.2x. SDA 산업 평균 대비 premium 영역. 단 ROE 30.4%, GP margin 49% 감안 시 growth premium은 일부 정당화.", direction: "neutral" },
+        { key: "quality", label: "Quality (Moat)", score: 8, weight: 20,
+          rationale: "Speed-to-market R&D cadence (연 25개), dual-brand portfolio, 대형 retailer relationship. 중장기 moat 견조.", direction: "positive" },
+        { key: "momentum", label: "Growth Momentum", score: 8, weight: 20,
+          rationale: "FY2025 매출 +15.8% YoY, 영업이익률 25Q4 16.4% 도달. 분기 가속 패턴 (Q3 16.1% → Q4 16.4%). International +20.8%로 더 빠름.", direction: "positive" },
+        { key: "profitability", label: "Profitability", score: 9, weight: 15,
+          rationale: "GP margin 49.0%, 영업이익률 25Q4 16.4%, 순이익률 25Q4 12.1%, ROE 30.4%. 동종 대비 우수.", direction: "positive" },
+        { key: "balance", label: "Financial Health", score: 8, weight: 10,
+          rationale: "Net cash 상태 (현금 $777M vs LT debt $697M), D/E 0.26, revolver headroom $489M. 다만 영업권+무형 비중 약 24% (자산 $5.35B 중 $1.29B)는 중간 정도.", direction: "positive" },
+        { key: "governance", label: "Governance Risk", score: 3, weight: 20,
+          rationale: "Wang Xuning 51% controlled company. SharkNinja China = Joyoung 100% 자회사 → related-party 거래 검증 어려움. Grizzly Research short report (2024) 의혹 제기. Cayman 등록 + FPI로 minority shareholder 보호 약함.", direction: "negative-flagged" }
+      ]
+    },
+
+    tldr: {
+      whatItDoes: "샤크닌자는 청소기 브랜드 Shark와 주방가전 브랜드 Ninja를 운영하는 미국 소형가전 기업이다. 1994년 Massachusetts에서 설립되었고, 2017년 Wang Xuning이 인수해 자신의 지주회사 JS Global Lifestyle 산하로 편입했다. 이후 2023년 7월 JS Global에서 carve-out·spin-off로 분리되어 NYSE에 단독 상장했다. 본사는 Cayman Islands에 두고 있으나 실질 운영은 Needham, Massachusetts 본부에서 이루어지며, 9개국 25개 사무소에 2,800명 이상이 근무한다.",
+      keyMetrics: [
+        { label: "FY2025 매출", value: "$6.40B (+15.8% YoY)" },
+        { label: "GP 마진", value: "49.0%" },
+        { label: "Op 마진 25Q4", value: "16.4%" },
+        { label: "ROE", value: "30.4%" },
+        { label: "Capital", value: "Net cash · D/E 0.26" },
+        { label: "신제품 cadence", value: "연 25개 유지" }
+      ],
+      moatSummary: "Speed-to-market R&D cadence, dual-brand portfolio, 대형 retailer channel relationship, ASEAN 공급망 fast mover.",
+      keyConcerns: [
+        "Wang Xuning 의결권 51% · NYSE controlled company",
+        "Ninja Foodi 압력솥 185만 대 recall (2025.5)",
+        "SharkNinja China–Joyoung related-party 거래 의혹",
+        "Tariff 잔존 노출 + 공급망 이전 cost",
+        "중국 저가 브랜드(Roborock·Dreame) 추격",
+        "20-F 직접 확인 미완료"
+      ]
+    },
+
+    risks: [
+      { severity: "high", title: "Ninja Foodi 압력솥 대량 recall (2025.5)",
+        detail: "Ninja Foodi OP300 시리즈 압력솥에서 가압 상태로 뚜껑이 열리는 defect이 확인되어 미국 185만 대·캐나다 18만 대가 recall되었다. 화상 사고 106건 중 50건 이상이 2~3도 화상이며, 26건이 lawsuit으로 진행 중이다. Provision 인식 시점과 금액은 분기보고서·20-F에서 별도 확인이 필요하다.",
+        source: "CPSC 2025.5.1" },
+      { severity: "high", title: "지배구조와 related-party 거래",
+        detail: "Wang Xuning이 의결권 51%를 보유해 NYSE 기준 controlled company로 분류된다. 동시에 그가 통제하는 중국 A주 상장사 Joyoung이 SharkNinja China의 100% 모회사로, 양사 간 거래가 arm's length로 이루어졌는지 외부 투자자가 검증하기 어렵다. Grizzly Research는 2024년 short report에서 이 구조를 통한 자금 이전 의혹을 제기했다. 20-F의 related-party 섹션 직접 확인이 핵심이다.",
+        source: "20-F · Grizzly Research 2024" },
+      { severity: "med", title: "ASEAN 공급망 이전 실행 cost",
+        detail: "2025년 중반 미국향 volume의 약 90%가 중국 외 지역(Vietnam·Thailand·Malaysia·Indonesia·Cambodia)에서 생산되며, 연말까지 거의 100% 이전이 목표다. 이전 과정의 dual inventory, 신규 vendor QC, lead time 지연 등 일시적 cost burden이 따른다.",
+        source: "Manufacturing Dive 2025" },
+      { severity: "med", title: "Tariff 잔존 노출",
+        detail: "ASEAN 생산 비중이 높아져도 미국의 reciprocal tariff 정책에서 자유롭지 않다. CEO Mark Barrocas는 누적 tariff cost를 'hundreds of millions of dollars' 수준으로 언급했다. 정책 reversal 시 margin에 직접 반영된다.",
+        source: "Fortune 2025.2.13" },
+      { severity: "low", title: "Dyson과의 patent litigation (2024~2025)",
+        detail: "Dyson이 cyclonic vacuum 기술 침해를 이유로 2024년 5월 Texas 동부지법(EDTX)에 제기한 patent infringement 소송은 2025년 2월 settle되었다. 다른 IP holder의 추가 공세 가능성은 잔존한다.",
+        source: "Bloomberg Law / PatSnap" }
+    ],
+
+    revenueMix: [
+      { name: "청소 기기 (Cleaning)", value: 34.47, color: "#1f6feb" },
+      { name: "조리 및 음료 기기 (Cooking & Beverage)", value: 28.38, color: "#1a7f5a" },
+      { name: "식품 가공 기기 (Food Preparation)", value: 24.23, color: "#3eb489" },
+      { name: "Beauty & Home Environment", value: 12.91, color: "#f4c430" }
+    ],
+
+    quarterlyPL: [
+      { period: "23Q4", revenue: 1376, opIncome: 100, ni: 49.32, opMargin: 7.31, npMargin: 3.58 },
+      { period: "24Q1", revenue: 1063, opIncome: 154, ni: 110, opMargin: 14.53, npMargin: 10.28 },
+      { period: "24Q2", revenue: 1247, opIncome: 104, ni: 68.04, opMargin: 8.32, npMargin: 5.45 },
+      { period: "24Q3", revenue: 1427, opIncome: 180, ni: 132, opMargin: 12.64, npMargin: 9.28, gp: 695, opex: 1246, cogs: 732 },
+      { period: "24Q4", revenue: 1787, opIncome: 205, ni: 129, opMargin: 11.48, npMargin: 7.20, gp: 839, opex: 1582, cogs: 948 },
+      { period: "25Q1", revenue: 1223, opIncome: 145, ni: 118, opMargin: 11.86, npMargin: 9.64, gp: 603, opex: 1078, cogs: 619 },
+      { period: "25Q2", revenue: 1445, opIncome: 169, ni: 140, opMargin: 11.67, npMargin: 9.66, gp: 708, opex: 1276, cogs: 737 },
+      { period: "25Q3", revenue: 1630, opIncome: 263, ni: 189, opMargin: 16.13, npMargin: 11.58, gp: 817, opex: 1367, cogs: 813 },
+      { period: "25Q4", revenue: 2101, opIncome: 344, ni: 255, opMargin: 16.36, npMargin: 12.14, gp: 1008, opex: 1758, cogs: 1094 }
+    ],
+
+    quarterlyOpexDetail: [
+      { period: "24Q3", sga: 416, rd: 93, da: 6, special: null, intExp: 17 },
+      { period: "24Q4", sga: 544, rd: 84, da: 7, special: null, intExp: 17 },
+      { period: "25Q1", sga: 366, rd: 85, da: 6, special: 1, intExp: 13 },
+      { period: "25Q2", sga: 446, rd: 87, da: 6, special: 0, intExp: 14 },
+      { period: "25Q3", sga: 458, rd: 91, da: 6, special: 0, intExp: 13 },
+      { period: "25Q4", sga: 562, rd: 96, da: 6, special: null, intExp: 9 }
+    ],
+
+    quarterlyBS: [
+      { period: "24Q3", assets: 4237, ca: 2516, cash: 128, ar: 1190, inv: 1076, prepaid: 122, ppe: 346, gw: 835, intangible: 467, otherNCA: 73, liab: 2443, cl: 1510, ltd: 746, deferredTax: 4, otherL: 183, equity: 1795 },
+      { period: "24Q4", assets: 4394, ca: 2644, cash: 364, ar: 1267, inv: 900, prepaid: 114, ppe: 358, gw: 835, intangible: 463, otherNCA: 95, liab: 2458, cl: 1529, ltd: 736, deferredTax: 10, otherL: 183, equity: 1936 },
+      { period: "25Q1", assets: 4175, ca: 2396, cash: 225, ar: 1041, inv: 973, prepaid: 158, ppe: 365, gw: 835, intangible: 460, otherNCA: 120, liab: 2137, cl: 1214, ltd: 726, deferredTax: 16, otherL: 181, equity: 2038 },
+      { period: "25Q2", assets: 4539, ca: 2757, cash: 188, ar: 1325, inv: 1053, prepaid: 191, ppe: 353, gw: 835, intangible: 458, otherNCA: 137, liab: 2332, cl: 1419, ltd: 716, deferredTax: 19, otherL: 177, equity: 2208 },
+      { period: "25Q3", assets: 4975, ca: 3244, cash: 264, ar: 1655, inv: 1158, prepaid: 167, ppe: 362, gw: 835, intangible: 454, otherNCA: 79, liab: 2567, cl: 1658, ltd: 707, deferredTax: 19, otherL: 184, equity: 2408 },
+      { period: "25Q4", assets: 5349, ca: 3611, cash: 777, ar: 1780, inv: 1002, prepaid: 52, ppe: 375, gw: 835, intangible: 451, otherNCA: 78, liab: 2673, cl: 1774, ltd: 697, deferredTax: 16, otherL: 187, equity: 2676 }
+    ],
+
+    part1: [
+      { no: "1.1", title: "산업 정의",
+        body: `<p>샤크닌자가 속한 산업은 <strong>소형 생활가전(Small Domestic Appliances, SDA)</strong>으로, 카운터탑에 올려놓는 주방가전과 바닥 청소·홈 케어 기기로 양분된다. 냉장·세탁 등 대형 백색가전과는 다른 카테고리로 분류·추적되며, 미국 NAICS 코드 335220의 일부에 해당한다.</p>
+        <table class="tbl"><thead><tr><th>분류</th><th>대표 제품</th><th>SharkNinja 노출</th></tr></thead><tbody>
+        <tr><td>주방 카운터탑 가전</td><td>믹서, air fryer, 압력솥, 커피머신, 아이스크림 메이커</td><td>Ninja</td></tr>
+        <tr><td>바닥 청소·홈 케어</td><td>upright/cordless 진공청소기, 로봇청소기, 스팀 청소기, 의류 케어</td><td>Shark</td></tr>
+        <tr><td>헤어케어·생활환경 (확장)</td><td>헤어 드라이어, 공기청정 등</td><td>두 브랜드 신규 진입</td></tr>
+        </tbody></table>` },
+      { no: "1.2", title: "시장 규모와 성장률",
+        body: `<p>출처에 따라 시장 규모가 1.6배가량 차이가 난다. 카테고리 정의와 지역 범위가 다르기 때문이다. 단정적으로 한 수치를 채택하기보다 출처별 range를 그대로 인용한다.</p>
+        <table class="tbl"><thead><tr><th>세부 시장</th><th>규모 (2025)</th><th>CAGR</th><th>출처</th></tr></thead><tbody>
+        <tr><td>Small kitchen appliances</td><td>$31.20B</td><td>3.9% (2026~33)</td><td>Business Research Insights</td></tr>
+        <tr><td>Small kitchen appliances</td><td>$19.54B</td><td>4.22% (2025~33)</td><td>Data Bridge</td></tr>
+        <tr><td>Vacuum cleaner 전체</td><td>$17.6B</td><td>5.4% (2026~35)</td><td>Research Nester / OMR</td></tr>
+        <tr><td>Cordless vacuum</td><td>주거용 시장의 58.5% (2024)</td><td>6.9% (2025~30)</td><td>Mordor Intelligence</td></tr>
+        </tbody></table>
+        <p>실무적으로는 진공·로봇청소기 시장과 주방 카운터탑 시장을 분리해 보는 것이 적절하다. 두 시장의 cycle이 다르게 움직인다.</p>` },
+      { no: "1.3", title: "Value chain 분해",
+        body: `<p>업스트림에서 다운스트림으로 이어지는 흐름은 다음과 같다. 부품(모터·배터리·BLDC·PCBA·외장재)은 대만·중국·한국·ASEAN에서 생산되고, 완제품 조립은 contract manufacturing(CM) 업체가 담당한다. 전통적으로 중국이 중심이었으나 최근 ASEAN으로 빠르게 이전 중이다.</p>
+        <p>완제품 위에는 디자인·브랜드를 보유한 회사(SharkNinja, Dyson, Vorwerk 등)가 자리하고, 그 다음 단계가 channel이다. Channel은 대형 retailer(Walmart·Costco·Target), specialty retail(Best Buy·Home Depot), e-commerce(Amazon), DTC로 구분된다.</p>
+        <p>마진 구조는 디자인·브랜드를 보유한 회사가 GP margin 45~50%대, 단순 CM은 10~20%대로 알려진다. 동사의 2025년 GP margin 49.0%는 디자인+브랜드 그룹에 위치함을 보여준다.</p>` },
+      { no: "1.4", title: "수요는 무엇으로 움직이는가",
+        body: `<p>SDA 수요는 네 개 layer에서 작동한다.</p>
+        <p>첫째는 <strong>주거 cycle</strong>이다. 신규 입주와 리모델링이 가전 첫 대량 구매를 만든다. 부동산 거래가 회복되면 일정 시차를 두고 수요가 반응한다. 둘째는 <strong>replacement cycle</strong>로, 진공청소기는 5~8년, 카운터탑 주방가전은 7~10년의 평균 수명을 가진다. 과거 판매량이 미래의 replacement 수요를 결정하는 구조라 펜데믹기에 일시 급증한 매출이 5~7년 뒤 환류로 이어질 가능성이 있다(메커니즘이며 단정적 전망은 아니다).</p>
+        <p>셋째는 <strong>category creation</strong>이다. Air fryer, Ninja Creami(아이스크림 메이커), 헤어케어처럼 기존에 없던 사용 시나리오를 만들어 기존 카테고리를 대체하지 않고 추가 수요를 만들어낸다. 동사가 가장 의존하는 layer다. 넷째는 같은 카테고리 안에서 혁신 제품이 ASP와 점유율을 올리는 <strong>innovation premium</strong>이다. 단, 이 경로는 모방 위험과 patent litigation 위험을 동반한다.</p>` },
+      { no: "1.5", title: "공급 측면 dynamics",
+        body: `<p>제조 자체는 진입장벽이 낮다. 자체 capex 부담이 작고, contract manufacturing 업체가 다수 존재한다. 차별화는 디자인과 브랜드, 그리고 channel 관계에서 나온다.</p>
+        <p>최근 5~7년의 가장 큰 흐름은 공급망의 <strong>탈(脫)중국</strong>이다. 2018년 트럼프 1기 tariff, 2025년 2기 tariff로 압박이 누적되며 ASEAN(Vietnam·Thailand·Malaysia·Indonesia·Cambodia)으로 생산 거점을 옮기는 산업 전반의 이동이 일어났다. 동사는 이 흐름의 fast mover다.</p>
+        <p>원자재는 ABS·PP 수지, 알루미늄·강철, 리튬이온 배터리, 모터용 자석 등 commodity 성격이 강해 hedge가 일반적이다.</p>` },
+      { no: "1.6", title: "경쟁구조 (5 forces)",
+        body: `<table class="tbl"><thead><tr><th>요인</th><th>강도</th><th>핵심 관찰</th></tr></thead><tbody>
+        <tr><td>신규 진입</td><td>중간</td><td>제조 진입은 쉬우나 브랜드·channel·디자인 진입은 어렵다. 단 중국 브랜드(Roborock·Ecovacs·Dreame·Xiaomi)가 e-commerce로 직접 진입하며 일부 우회.</td></tr>
+        <tr><td>대체재</td><td>낮음</td><td>직접 대체재는 적다. 외식 비중처럼 라이프스타일 변화가 카테고리 크기에 영향.</td></tr>
+        <tr><td>공급자 협상력</td><td>약함</td><td>CM 업체가 다수.</td></tr>
+        <tr><td>구매자 협상력</td><td>강함</td><td>Walmart·Costco·Amazon 등 4~5개사가 미국 retail의 30~50%를 차지하는 것으로 추정.</td></tr>
+        <tr><td>산업 내 경쟁</td><td>강함</td><td>청소: Dyson·SharkNinja·iRobot·Bissell·Roborock·Ecovacs·Samsung. 주방: Vitamix·Breville·KitchenAid·Cuisinart·Instant Brands·Ninja.</td></tr>
+        </tbody></table>` },
+      { no: "1.7", title: "정책·regulation 환경",
+        body: `<p>가장 큰 변수는 미국 tariff. 2018년 25% 부과 이후 2025년 추가 인상이 이어지면서 중국 생산 제품의 비용 부담이 커졌다. 동사 CEO는 누적 tariff 비용을 'hundreds of millions of dollars' 수준으로 언급했다.</p>
+        <p>안전 regulation 측면에서는 미국 CPSC(Consumer Product Safety Commission)가 사실상의 산업 regulator다. 화상·전기·배터리 사고에 따른 recall 빈도가 높은 산업이며, 동사 역시 2025년 5월 Ninja Foodi OP300 압력솥 185만 대 recall이라는 큰 사건을 겪었다.</p>
+        <p>유럽은 EU Ecodesign regulation으로 진공청소기의 energy efficiency·motor 출력에 제한을 두어 제품 설계에 영향을 준다. Patent litigation 또한 산업 전반에서 활발하며, Dyson이 가장 적극적인 plaintiff로 꼽힌다.</p>` },
+      { no: "1.8", title: "기술·표준의 변화",
+        body: `<p>진공청소기는 유선에서 무선(Li-ion)으로 전환되며 2010년대 후반부터 cordless stick이 upright를 대체했다. 흡입력·무게·배터리 수명의 trade-off triangle이 R&D의 핵심이다. 로봇청소기는 1세대 Roomba에서 LiDAR·AI vision 2~3세대(Roborock·Dreame)를 거쳐 자가 청소·도크 일체형 4세대로 진화 중이다.</p>
+        <p>스마트 connectivity(Wi-Fi·앱·음성)은 거의 모든 업체가 채택해 차별화 요소로서의 의미가 약해졌고, 최근 2년간은 AI integration이 강조되고 있다. 동사도 연 25개 신제품에 AI를 결합한다는 입장을 IR에서 밝혔다.</p>
+        <p>주방 쪽은 Instant Pot이 만든 다기능 압력솥 카테고리에 동사 Ninja가 air fry 기능을 결합한 Foodi로 변형해 진입한 사례가 대표적이다.</p>` },
+      { no: "1.9", title: "산업 cycle과 반복 패턴",
+        body: `<p>코로나 시기(2020~22년) 재택과 홈쿠킹 수요로 SDA 시장이 한 자릿수 후반에서 30%까지 출처별로 급증했다가 2023~24년 정상화되었다. 2018년과 2025년 두 차례의 tariff cycle은 공급망 이전이라는 산업 전반의 megatrend를 만들었으며, 이전을 빠르게 끝낸 회사가 일시적으로 점유율을 가져가는 패턴이 반복되었다.</p>
+        <p>혁신 cycle은 한 카테고리 안에서 약 7~10년 주기로 기술 변곡점이 반복되는 모습을 보인다. 진공청소기의 cordless화(2015~22년)가 대표적이다.</p>` },
+      { no: "1.10", title: "산업 차원의 구조적 위험",
+        body: `<table class="tbl"><thead><tr><th>위험</th><th>메커니즘</th><th>주요 영향</th></tr></thead><tbody>
+        <tr><td>중국 저가 disruption</td><td>성능의 약 90%를 절반 가격으로 제공하며 e-commerce로 직접 진입</td><td>Dyson·premium 브랜드 우선 영향</td></tr>
+        <tr><td>Tariff 정책 변화</td><td>margin 변동, 추가 공급망 이전 cost</td><td>미국 시장 의존도 높은 모든 업체</td></tr>
+        <tr><td>Retail channel 집중</td><td>대형 retailer 협상력, PB 출시</td><td>모든 브랜드</td></tr>
+        <tr><td>안전사고·recall</td><td>일회성 cost, 브랜드 손상, lawsuit</td><td>주력 카테고리 보유 업체</td></tr>
+        <tr><td>Patent litigation</td><td>settlement, 디자인 제약</td><td>모방·후발 사업자</td></tr>
+        </tbody></table>` }
+    ],
+
+    part2: [
+      { no: "2.1", title: "회사 개요와 연혁",
+        body: `<p>현재의 SharkNinja는 1994년 Mark Rosenzweig가 Massachusetts에서 설립한 Euro-Pro Operating에 뿌리를 둔다. 2008년 Mark Barrocas가 사장으로 합류했고, 2017년 Wang Xuning이 회사를 인수하면서 자신의 지주회사 JS Global Lifestyle(2017.10 설립)에 편입시켰다. JS Global은 2019년 12월 홍콩 증시에 상장했다.</p>
+        <p>2023년 2월 JS Global이 SharkNinja carve-out을 결정하고, 2023년 7월 31일 spin-off 절차를 마치며 NYSE에 stand-alone listing했다. 분배 비율은 JS Global 25주당 SharkNinja 1주였다. 2025년 들어서는 미국향 생산 volume의 ASEAN 이전이 본격화되어, 연중반 약 90%, 연말 거의 100% 수준으로 끌어올린다는 목표가 진행 중이다.</p>
+        <p>법적으로는 Cayman Islands에 등록된 외국 사기업(FPI)으로 SEC에 20-F 양식을 제출한다. 본사 운영은 Needham, Massachusetts이며, 9개국 25개 사무소에 2,800명 이상이 근무한다.</p>` },
+      { no: "2.2", title: "Segment 구조",
+        body: `<p>회사는 보고용으로는 단일 reportable segment로 묶는다. Operating segment는 미국 중심의 Domestic과 그 외 지역의 International 두 개가 있으나 SEC 보고서상 단일 reportable segment로 통합되어, 세부 segment 손익은 별도로 공시하지 않는다.</p>
+        <p>제품 차원에서는 네 카테고리(Food Preparation·Cooking & Beverage·Cleaning·Beauty & Home Environment)로 구분된다. 카테고리별 매출 break-down은 SEC 보고서에는 나오지 않으며, IR 자료와 어닝 콜 코멘트에 의존해 추적해야 한다.</p>` },
+      { no: "2.3", title: "제품 포트폴리오",
+        body: `<p>Shark 브랜드는 청소·홈 케어 영역에서 cordless stick·upright 진공, 로봇청소기, 스팀 청소기, 의류 케어, 헤어케어, 그리고 신규 카테고리인 공기청정·생활환경 제품군을 보유한다. Ninja 브랜드는 주방에서 믹서(Bullet·Foodi·Creami), 다기능 가전(Foodi 시리즈), 압력솥, 드립 커피, 아웃도어 그릴·스모커, 그리고 카테고리 자체를 새로 만든 Creami 아이스크림 메이커가 핵심이다.</p>
+        <p>회사는 매년 25개의 신제품 출시 cadence를 유지한다고 밝히고 있다. 단순한 R&D 지출 규모보다 기획에서 출시까지 12~18개월 안에 끝내는 cycle 자체가 핵심 역량이라는 점에서 의미가 있다.</p>` },
+      { no: "2.4", title: "매출 mix",
+        body: `<p>제품 카테고리별 매출 비중은 25년 12월 기준 다음과 같다(연합인포맥스 및 회사 IR 자료 기반).</p>
+        <div id="revenueMixChart"></div>
+        <p style="margin-top:14px">지역별 2025년 매출 변화는 회사 IR 발표를 그대로 인용한다.</p>
+        <table class="tbl"><thead><tr><th>구분</th><th>매출 변화</th><th>참고</th></tr></thead><tbody>
+        <tr><td>Domestic (미국)</td><td>+13.5% (+$510.9M)</td><td>전년 대비 / IR 인용</td></tr>
+        <tr><td>International</td><td>+20.8% (+$359.6M)</td><td>전년 대비 / IR 인용</td></tr>
+        <tr><td>UK 단독</td><td>$964M (FY2025 연간)</td><td>별도 공시</td></tr>
+        <tr><td><strong>Total</strong></td><td><strong>+15.75% → $6.40B</strong></td><td>2025 4Q IR 자료</td></tr>
+        </tbody></table>
+        <p>회사는 장기 목표로 Domestic·International 50:50 구도를 제시하고 있다. 현재는 추정 약 67:33 수준이다.</p>` },
+      { no: "2.5", title: "고객·channel·지역",
+        body: `<p>Channel은 대형 retailer(Walmart·Costco·Sam's Club·Target), specialty retail(Best Buy·Home Depot), e-commerce(Amazon), DTC의 네 갈래로 운영된다. Amazon 비중은 상당할 것으로 알려졌으나 회사가 별도 수치를 공시하지 않아 정확한 비중은 <em>추가 확인이 필요하다</em>. DTC는 2026년 초 전 세계 단위로 개편할 예정이라고 회사가 밝혔다.</p>
+        <p>고객 집중도 역시 SEC 보고서에 별도 공시되지 않으며, 산업 통념상 Top 3 retailer 비중이 30~50% 수준일 것으로 추정된다.</p>
+        <p>지역적으로는 미국 비중이 압도적이고, 단일 국가로는 영국이 두 번째로 큰 시장이다. 유럽 확장이 진행 중이며 호주·캐나다도 점진적으로 키우고 있다. 한 가지 주의할 점은 <strong>아시아·태평양 시장은 spin-off 시점부터 SharkNinja의 사업 영역에서 제외</strong>되었다는 점이다. 이 지역은 모회사 JS Global과 Joyoung이 담당한다.</p>` },
+      { no: "2.6", title: "Moat 메커니즘",
+        body: `<p>동사의 moat은 네 가지 원천이 결합된 형태로 보인다.</p>
+        <table class="tbl"><thead><tr><th>원천</th><th>작동 메커니즘</th><th>지속성</th><th>영향 범위</th></tr></thead><tbody>
+        <tr><td>Speed-to-market</td><td>연 25개 신제품 cycle을 유지하는 기획·디자인·런칭 역량 자체. 후발이 매년 25개 SKU를 모두 따라가기 어렵다.</td><td>중·고 (속도가 떨어지면 약화)</td><td>중 (청소·주방 두 카테고리)</td></tr>
+        <tr><td>Dual-brand</td><td>Shark와 Ninja라는 서로 다른 브랜드로 청소·주방 양쪽에 진입할 수 있어, Dyson처럼 단일 브랜드인 회사보다 카테고리 확장이 매끄럽다.</td><td>고</td><td>광범위</td></tr>
+        <tr><td>Channel relationship</td><td>Walmart·Costco·Amazon 매대에서 다수 SKU를 동시에 진열할 수 있는 buyer relationship 자체가 진입장벽이다.</td><td>중</td><td>광범위</td></tr>
+        <tr><td>Cost structure</td><td>CM 외주를 통해 자체 capex 부담은 작은 한편 디자인 IP는 보유한다. ASEAN 이전을 빠르게 진행한 것도 같은 맥락이다.</td><td>중·고 (mover 우위는 시간 한정)</td><td>광범위</td></tr>
+        </tbody></table>
+        <p>Moat이 약해질 수 있는 경로는 네 가지로 요약된다. 첫째, 중국 브랜드(Roborock·Dreame·Ecovacs·Xiaomi)가 e-commerce로 channel 우위를 우회한다. 둘째, Dyson 등 IP holder의 추가 공세 가능성이 있다. 셋째, speed-to-market cadence가 재고·recall 위험을 키울 수 있는데 Ninja Foodi 사례가 그 가능성을 보여주었다. 넷째, Wang Xuning 지배구조와 related-party 거래로 인한 governance 위험이 잠재한다.</p>` },
+      { no: "2.7", title: "경쟁사 비교",
+        body: `<p>해석 없이 사실만 비교한다.</p>
+        <table class="tbl"><thead><tr><th>항목</th><th>SharkNinja</th><th>Dyson</th><th>iRobot</th><th>Vorwerk</th></tr></thead><tbody>
+        <tr><td>사업 범위</td><td>청소+주방+뷰티</td><td>청소+뷰티+조명</td><td>로봇청소기 전문</td><td>premium 진공+식품(Thermomix)</td></tr>
+        <tr><td>최근 매출</td><td>$6.4B (2025)</td><td>약 $8B (2023, 비공개)</td><td>$0.9B (2024, 부진)</td><td>약 €3.5B (2023)</td></tr>
+        <tr><td>제조 방식</td><td>CM (ASEAN ⏎ 중국)</td><td>자체+CM (싱가포르 본사)</td><td>CM</td><td>자체(독일)+ASEAN</td></tr>
+        <tr><td>주력 channel</td><td>대형 retailer + Amazon + DTC</td><td>DTC + premium retail</td><td>대형 retailer + Amazon</td><td>방문판매</td></tr>
+        <tr><td>Moat</td><td>Speed-to-market + dual-brand</td><td>핵심 IP (cyclonic·motor)</td><td>카테고리 선두 (Roomba)</td><td>직판·구독 모델</td></tr>
+        </tbody></table>
+        <p>Vorwerk 매출은 회사 발표 기준이며 <em>추가 검증이 필요하다</em>.</p>` },
+      { no: "2.8", title: "경영진·governance·capital allocation 이력",
+        body: `<p>경영의 실질적인 운영은 2008년 합류해 2018년 CEO에 오른 Mark Barrocas가 맡고 있다. 연 25개 신제품 cadence를 만들어낸 인물로 평가된다. 회장은 회사를 인수해 spin-off·상장까지 끌고 온 Wang Xuning(CJ Xuning Wang)으로, 동시에 모회사 JS Global의 회장 겸 CEO직을 겸한다. CFO는 Patraic Reagan이라 알려졌으나 직책 변동은 <em>확인이 필요하다</em>.</p>
+        <p>Governance의 핵심 사실은 Wang Xuning이 의결권 약 51%를 보유한다는 점이다. NYSE 기준 controlled company에 해당해 board 다수 독립이사 등 일부 governance 의무가 면제된다. 또한 Cayman Islands 등록 FPI라 미국 SOX 일부 규정도 면제 적용을 받을 수 있다. 동시에 그는 중국 A주 상장사 Joyoung도 통제하는데, 이 Joyoung이 SharkNinja China Technology의 100% 모회사라는 점이 외부 투자자에게 가장 민감한 부분이다(상세는 부록 3.D 참조).</p>
+        <p>Spin-off 이후 capital allocation에서는 $750M share buyback 프로그램이 발표되었고, dividend는 실시되지 않았다. 대규모 M&A도 없었다.</p>` },
+      { no: "2.9", title: "자본구조와 재무 현황",
+        body: `<table class="tbl"><thead><tr><th>항목</th><th>값</th><th>시점</th><th>출처</th></tr></thead><tbody>
+        <tr><td>현금성 자산</td><td>$264M</td><td>2025.9.30</td><td>3Q IR</td></tr>
+        <tr><td>현금성 자산</td><td>$777M</td><td>2025.12.31</td><td>4Q 재무제표</td></tr>
+        <tr><td>총 debt (이연수수료 제외)</td><td>$749M</td><td>2025.9.30</td><td>3Q IR</td></tr>
+        <tr><td>Long-term debt</td><td>$697M</td><td>2025.12.31</td><td>4Q 재무제표</td></tr>
+        <tr><td>Revolver capacity</td><td>$489M</td><td>2025.9.30</td><td>3Q IR</td></tr>
+        <tr><td>총자산 / 총부채 / 자본</td><td>$5.35B / $2.67B / $2.68B</td><td>2025.12.31</td><td>4Q 재무제표</td></tr>
+        <tr><td>D/E</td><td>0.26</td><td>2025년 말</td><td>보도 인용</td></tr>
+        <tr><td>Net cash 여부</td><td>Net cash (현금 > LT debt)</td><td>2025.12.31</td><td>4Q 재무제표</td></tr>
+        </tbody></table>
+        <p>분기별 현금 변동은 working capital cycle(4분기 매출 spike → 1분기 AR 회수)에서 비롯된 것으로 보인다. 25Q4의 현금 급증($264M → $777M)은 4Q 매출 $2.10B 호조와 함께 자연스러운 패턴이다.</p>` },
+      { no: "2.10", title: "최근 실적 추이",
+        body: `<p>분기 매출은 25Q4 $2.10B로 사상 최고치를 기록했고, 영업이익률은 25Q3 16.13% → 25Q4 16.36%로 가속하고 있다. 다음 차트는 분기별 매출(좌축)과 영업이익·순이익(우축)을 동시에 보여준다. 자세한 분기 손익계산서는 Part 3 부록에 정리되어 있다.</p>
+        <div id="quarterlyTrendChartSummary"></div>
+        <p>FY 누적 매출은 2022년 $3.7B → 2025년 $6.40B로 약 +73% 누적 증가했다(연평균 +20% 내외). 자체 forecast는 작성하지 않으며, 회사 가이던스만 다음 항에 인용한다.</p>` },
+      { no: "2.11", title: "회사가 제시한 전략",
+        body: `<p>회사가 직접 발화한 forward statement는 그대로 인용한다(자체 forecast 아님).</p>
+        <ul>
+          <li><strong>2026년 가이던스</strong>: 매출 +10~11%, adjusted EPS +12~14%, EBITDA는 매출보다 빠르게 성장</li>
+          <li><strong>제품 출시</strong>: 연 25개 신제품 cadence 유지, AI integration 강조</li>
+          <li><strong>DTC 전략</strong>: 2026년 초 전 세계 단위 개편</li>
+          <li><strong>지역 목표</strong>: 장기 Domestic·International 50:50</li>
+          <li><strong>공급망</strong>: 2025년 중반 미국향 90% 중국 외 생산, 연말 거의 100%</li>
+        </ul>` },
+      { no: "2.12", title: "회사 차원의 구조적 위험",
+        body: `<table class="tbl"><thead><tr><th>위험</th><th>메커니즘</th></tr></thead><tbody>
+        <tr><td>공급망 이전 cost·실행</td><td>Dual inventory, 신규 vendor QC, lead time 지연</td></tr>
+        <tr><td>Tariff 잔존 노출</td><td>ASEAN 생산도 향후 reciprocal tariff 정책에서 자유롭지 않다</td></tr>
+        <tr><td>Retail 의존도</td><td>Walmart·Costco·Amazon 협상력. DTC 개편의 실행 위험</td></tr>
+        <tr><td><strong>제품 안전·recall</strong></td><td>2025.5 Ninja Foodi OP300 미국 185만·캐나다 18만 대 recall. 주력 제품군이라 회복 cycle 필요</td></tr>
+        <tr><td>Patent litigation 재발</td><td>Dyson과의 분쟁은 2025년 2월 settle되었으나 추가 claim 가능성 잔존</td></tr>
+        <tr><td><strong>Governance·related-party</strong></td><td>Wang Xuning 51% 지배. SharkNinja China가 Joyoung 100% 자회사. 거래의 arm's length 검증이 외부에서 어려움</td></tr>
+        <tr><td>중국 저가 disruption</td><td>Roborock·Dreame·Ecovacs의 e-commerce 직접 진입</td></tr>
+        </tbody></table>` }
+    ],
+
+    part3Financials: { include: true },
+
+    part3: [
+      { no: "3.A", title: "EBITDA quality 의심 신호",
+        body: `<p>공급망 이전 과정에서 발생하는 일회성 cost(공급사 이전, dual inventory, 신규 공장 셋업)가 영업이익 라인에서 어떻게 처리되는지가 첫 번째 점검 사항이다. 자본화되는지, 별도 비경상 항목으로 표시되는지 확인이 필요하다.</p>
+        <p>Tariff cost의 손익 처리 위치(매출원가 vs 판관비)와 추정 환입 패턴, Ninja Foodi recall provision의 인식 시점·금액(25Q2 또는 25Q3 일부 인식 가능성), 회사가 제시하는 adjusted EBITDA 산출 시 차감되는 항목(SBC·restructuring·M&A 관련비)의 비중 추이는 모두 별도로 살펴야 한다. Marketing 비중 매출의 9.9%는 비용 처리되는 것으로 보이나, 신제품 launch 시 광고 자본화 가능성에 대한 정책 공시는 <em>확인이 필요하다</em>.</p>` },
+      { no: "3.B", title: "Working capital 신호",
+        body: `<p>DSO 산업 평균은 60~75일이다. 매출이 +15.8% 성장한 환경에서 AR이 그 이상의 속도로 늘어났다면 회수 둔화 또는 revenue recognition 시점 조작 가능성을 의심할 수 있다.</p>
+        <p>실제 분기 BS를 보면 AR이 24Q3 $1,190M에서 25Q4 $1,780M로 +49.6% 증가했다. 같은 기간 LTM 매출 성장이 +15~20% 수준임을 감안하면 <strong>AR 증가 속도가 매출 성장의 약 2.5~3배</strong>로 빠르다. 25Q3 AR이 $1,655M로 직전 분기 $1,325M 대비 +25% 점프했다는 점도 주목된다. 이는 (a) channel sell-in 가속, (b) 신규 retailer 도입 시 payment term이 더 길어졌을 가능성, (c) 결산 직전 push로 인한 AR 누적 가능성을 시사한다. 어느 해석이 맞는지는 internal data 없이 단정 불가하다 — <em>Mgmt Q list로 회부</em>.</p>
+        <p>재고는 24Q3 $1,076M → 25Q4 $1,002M로 비교적 안정적이며, 25Q3 일시 $1,158M까지 올라갔다가 다시 감소했다. ASEAN 이전 cycle 중에도 dual inventory가 BS에 크게 누적되지는 않은 것으로 보인다.</p>` },
+      { no: "3.C", title: "현금흐름의 질",
+        body: `<p>EBITDA 대비 CFO conversion ratio는 보도 자료만으로는 정확히 산출하기 어렵다. 다만 25Q4 말 net cash 상태(현금 $777M, LT debt $697M)를 유지한다는 점에서 CFO는 견조한 것으로 보인다. 정확한 수치는 20-F를 직접 확인해야 한다.</p>
+        <p>CM 의존 모델 특성상 자체 capex 강도는 낮을 것으로 보이며, R&D 자본화 여부와 ROU asset 추이는 별도로 확인이 필요하다. 분기별 영업외 이자비용이 24Q3 -$17M에서 25Q4 -$9M로 점진적으로 줄어들고 있다는 점은 debt 상환·refinance가 진행되고 있음을 시사한다.</p>` },
+      { no: "3.D", title: "숨은 부채와 거버넌스",
+        body: `<p>가장 즉각적인 위험은 Ninja Foodi OP300 recall 관련 provision과 26건의 진행 중 lawsuit이다. Settlement 규모와 provision 인식 정도가 분기 손익에 어떻게 반영되는지 추적이 필요하다.</p>
+        <p>Patent litigation은 Dyson과의 2024년 5월 lawsuit이 2025년 2월 settle되었다. Settlement 금액이 공시되었는지, 추가 claim이 잠재하는지 확인이 따른다.</p>
+        <p>가장 강도가 큰 항목은 related-party 거래다. Wang Xuning이 의결권 51%를 보유한 동시에, 그가 통제하는 중국 A주 상장사 Joyoung이 SharkNinja China의 100% 모회사라는 구조다. Grizzly Research는 2024년 short report에서 이 구조를 통한 자금 이전 의혹을 'rampant looting'이라는 표현으로 제기했다. 거래 규모와 가격이 arm's length에서 형성되었는지의 검증은 외부 투자자에게 사실상 불가능하며, <strong>20-F의 related-party 섹션을 직접 확인하는 것이 핵심이다</strong>.</p>
+        <p>이 외에도 controlled company 구조에서 향후 minority shareholder squeeze-out 가능성, revolver covenant headroom, Cayman Islands 등록사 특성상 분쟁 발생 시 외부 주주의 법적 구제 제약이 잠재한다.</p>` },
+      { no: "3.E", title: "회계 위험",
+        body: `<p>Auditor는 Ernst & Young (EY)으로, 미국 PCAOB 기준 CAM 항목이 보고서에 포함된다. 본 회차에서는 직접 확인하지 못했다(<em>확인 필요</em>). 산업 특성상 가능성 있는 CAM 후보는 revenue recognition(variable consideration·channel rebate), 재고 평가, recall provision, related-party 거래 정도다.</p>
+        <p>Spin-off 이후 첫 stand-alone 회계연도라는 점에서 비교 연도(2023·2022)의 carve-out 회계 적정성, R&D 자본화 정책(미국 GAAP 일반 원칙은 비용 처리), spin-off 시점의 push-down 회계 적용 여부와 brand 무형자산 평가 정책, spin-off 후 stand-alone ICFR 평가에서 중요한 취약점이 보고되었는지 등이 점검 대상이다. 영업권 $835M과 무형자산 $451M(25Q4)이 자산의 약 24%를 차지하는 만큼 impairment test 가정은 매년 점검 필요.</p>` },
+      { no: "3.F", title: "운영 위험 (FDD 관점)",
+        body: `<p>공급망은 ASEAN 5개국으로 분산되었으나 각국 내 단일 공급사·공장 의존도가 어떤지는 공시되지 않아 <em>확인이 필요하다</em>. Retail channel의 Top 3 비중도 공시 의무 사항이 아니어서 산업 통념에 의존하는 상태다.</p>
+        <p>핵심 인력 측면에서는 CEO Mark Barrocas(2008년부터 합류)와 Chairman Wang Xuning의 거취가 회사 운영에 큰 영향을 미친다. Ninja Foodi 외 과거 recall 이력은 미국 CPSC 데이터베이스에서 추가로 확인할 수 있다. Wi-Fi 연동 제품의 사용자 데이터 보호 체계도 점검 대상이다.</p>` },
+      { no: "3.G", title: "주식 투자자 관점의 위험 신호 종합",
+        body: `<table class="tbl"><thead><tr><th>프레임</th><th>유발 사실</th><th>투자자에게 미치는 영향</th></tr></thead><tbody>
+        <tr><td>Earnings management 의심</td><td>공급망 이전 cost 처리, recall provision 시점</td><td>실적 surprise 가능성</td></tr>
+        <tr><td>WC 악화</td><td>AR 증가율이 매출 성장의 2.5~3배</td><td>FCF 압박 가능성</td></tr>
+        <tr><td>숨은 부채</td><td>Foodi recall, 26건 lawsuit, related-party 의혹</td><td>일회성 손실, governance 위험</td></tr>
+        <tr><td>회계 공격성</td><td>Carve-out 회계, brand 무형자산, revenue recognition</td><td>재무제표 재작성 위험</td></tr>
+        <tr><td>운영 집중도</td><td>ASEAN 공급사·Top retailer 의존</td><td>분기 변동성</td></tr>
+        </tbody></table>` },
+      { no: "3.H", title: "경영진 질문 / 추가 확인 항목",
+        body: `<p>이어지는 두 박스에 IR 콜에서 직접 던질 질문과, 본 회차에서 검증하지 못해 후속 작업이 필요한 항목이 분리되어 정리되어 있다.</p>` }
+    ],
+
+    part4: [
+      { no: "4.1", title: "핵심 사실 정리",
+        body: `<ul>
+          <li>SharkNinja는 1994년 설립, 2017년 Wang Xuning 인수, 2023년 7월 NYSE 단독 상장. Cayman Islands 등록·Needham 운영. Wang Xuning이 의결권 51% 보유한 controlled company.</li>
+          <li>2025년 매출 $6.40B(+15.8%), GP margin 49.0%, marketing 매출의 9.9%. Net cash 상태에 D/E 0.26.</li>
+          <li>두 개 브랜드(Shark 청소·Ninja 주방), 네 개 카테고리. <strong>연 25개 신제품 cadence 유지</strong>.</li>
+          <li>공급망: 2025년 중반 미국향 90% 중국 외 생산, 연말 거의 100% 이전 (Vietnam·Thailand·Malaysia·Indonesia·Cambodia).</li>
+          <li><strong>2025년 5월 Ninja Foodi OP300 미국 185만 대 recall</strong> — 화상 신고 106건, lawsuit 26건.</li>
+          <li>Dyson과의 patent litigation은 2024.5 제소 → 2025.2 settle.</li>
+          <li>회사가 제시한 2026년 가이던스: 매출 +10~11%, adjusted EPS +12~14%.</li>
+          <li>Alpha 종합 점수 7.0. 사업·실적은 상위권이나 governance 점수가 종합을 끌어내림.</li>
+        </ul>` },
+      { no: "4.2", title: "산업·회사·회계 layer의 연결",
+        body: `<p>산업 차원의 라이프스타일·혁신 수요 layer(1.4)는 회사 차원의 연 25개 신제품 cadence(2.6)에 직접 매핑된다. 이 cadence가 떨어지면 두 layer의 연결이 끊긴다. 산업 차원의 공급망 megatrend(1.5)는 회사가 90→100%로 진행 중인 ASEAN 이전(2.11)에 그대로 대응되는데, fast mover로서의 우위는 시간이 지나면 일반화되어 사라지는 성격이다.</p>
+        <p>산업 차원의 retail channel 집중 위험(1.10)에 대한 회사의 대응은 DTC 개편(2.5·2.11)이며, 이는 cost·시간 관점에서 별도의 실행 위험을 만든다. Tariff 정책(1.7)은 회사 margin(2.12)에 직접 영향을 미친다. 마지막으로 산업 일반의 안전사고·recall 위험(1.10)이 Ninja Foodi 사례(2.12·3.D)로 회사에서 실현된 모습이다.</p>` },
+      { no: "4.3", title: "후속 작업이 필요한 항목",
+        body: `<ol>
+          <li>2025 20-F 직접 read — related-party 거래, CAM, 위험 요인, provision, lease 약정, debt 약정 항목 우선</li>
+          <li>제품 카테고리별 매출 분해 (IR 자료에서 추적)</li>
+          <li>Top 3 retailer 비중 공시 여부</li>
+          <li>Ninja Foodi recall 관련 provision의 분기·금액</li>
+          <li>ASEAN 단일 공장·공급사 의존도</li>
+          <li>R&D 자본화 정책</li>
+          <li>Wang Xuning 51% governance의 향후 변화</li>
+          <li>Grizzly Research 주장에 대한 회사 반박 자료</li>
+          <li>iRobot·Dyson·Vorwerk와의 segment별 정량 비교</li>
+        </ol>` },
+      { no: "4.4", title: "출처",
+        body: `<p>아래 출처 섹션 참조.</p>` }
+    ],
+
+    mgmtQ: [
+      "SharkNinja China Technology와 Joyoung 사이의 거래 규모, 가격 산정 방식, arm's length 검증 절차는 어떻게 운영되는가",
+      "Ninja Foodi OP300 recall provision은 어느 분기에, 어떤 규모로 인식되었으며 잠재적인 settlement 범위는 어디까지인가",
+      "공급망 이전 과정에서 발생한 vendor financing과 dual inventory가 25Q4와 26Q1 BS에 어떻게 반영되었는가",
+      "Wang Xuning 51% 지배 구조에서 향후 minority shareholder 보호를 위해 어떤 절차나 약정이 마련되어 있는가",
+      "Walmart·Costco·Amazon Top 3 retailer 매출 비중과 협상 dynamics는 어떤 모습인가",
+      "AR 증가율이 매출 성장의 2.5~3배에 달하는 원인은 무엇이며, 25Q4 $1,780M의 분기말 abnormal 여부는?",
+      "연 25개 신제품 cadence와 R&D 자본화 정책은 회계상 어떻게 처리되고 있는가",
+      "ASEAN 5개국 가운데 단일 공장 의존도가 가장 높은 영역과 capacity 여유는 어느 정도인가",
+      "2025 20-F의 CAM 가운데 가장 의심도가 높은 영역은 어디인가"
+    ],
+
+    itemsToVerify: [
+      "2025 20-F 직접 read — 특히 related-party 거래, 위험 요인, CAM, provision, lease 약정, debt 약정",
+      "2025년 4분기 어닝 콜 transcript 정독",
+      "Grizzly Research short report (2024) 본문 검증과 회사 반박 비교",
+      "SharkNinja IR Investor Day 2024~2025 자료 — R&D, capex, capacity 분해",
+      "iRobot·Dyson와의 segment별 정량 비교 (가능 범위)",
+      "CPSC 데이터베이스 — Ninja Foodi 외 과거 recall 이력",
+      "FY2023·2024 정확 매출·margin·NI 수치"
+    ],
+
+    sources: [
+      { title: "SharkNinja Q4 FY25 IR 자료", url: "https://ir.sharkninja.com/news/news-details/2026/SharkNinja-Reports-Fourth-Quarter-and-Full-Year-2025-Results/default.aspx" },
+      { title: "SharkNinja Q3 FY25 IR 자료", url: "https://ir.sharkninja.com/news/news-details/2025/SharkNinja-Reports-Third-Quarter-2025-Results/default.aspx" },
+      { title: "Wikipedia — SharkNinja", url: "https://en.wikipedia.org/wiki/SharkNinja" },
+      { title: "Wikipedia — JS Global Lifestyle", url: "https://en.wikipedia.org/wiki/JS_Global_Lifestyle" },
+      { title: "Wikipedia — Wang Xuning", url: "https://en.wikipedia.org/wiki/Wang_Xuning" },
+      { title: "BusinessWire — 2023.7.31 NYSE 상장", url: "https://www.businesswire.com/news/home/20230731843517/en/SharkNinja-Becomes-Independent-Publicly-Traded-Company-and-Begins-Trading-on-New-York-Stock-Exchange" },
+      { title: "Manufacturing Dive — 공급망 이전", url: "https://www.manufacturingdive.com/news/sharkninja-leaving-chinese-manufacturers-avoid-tariffs/748578/" },
+      { title: "Fortune 2024.2.8 — Wang Xuning", url: "https://fortune.com/2024/02/08/sharkninja-mogul-wang-xuning-3-2-billion/" },
+      { title: "Fortune 2025.2.13 — Tariff", url: "https://fortune.com/2025/02/13/sharkninja-investors-blender-vacuum-ceo-trump-tariffs-wont-lead-to-us-production-for-ninja-creami/" },
+      { title: "CPSC — Ninja Foodi recall (2025.5.1)", url: "https://www.cpsc.gov/Recalls/2025/SharkNinja-Recalls-1-8-Million-Foodi-Multi-Function-Pressure-Cookers-Due-to-Burn-Hazard-Serious-Burn-Injuries-Reported" },
+      { title: "Bloomberg Law — Dyson settlement", url: "https://news.bloomberglaw.com/ip-law/dyson-sharkninja-settle-patent-lawsuits-over-bagless-vacuums" },
+      { title: "Grizzly Research short report", url: "https://grizzlyreports.com/we-believe-sharkninja-inc-nyse-sn-is-a-china-hustle-based-on-rampant-looting-and-conflicts-of-interest-with-the-chinese-chairman/" },
+      { title: "Caproasia — Wang Xuning profile", url: "https://www.caproasia.com/2024/02/10/chinese-billionaire-founder-of-js-global-lifestyle-joyoung-wang-xuning-cj-fortune-increased-to-3-billion-invented-world-first-soy-milk-electric-machine-in-1994-acquired-sharkninja-in-2019/" },
+      { title: "Business Research Insights — Small Kitchen Appliances", url: "https://www.businessresearchinsights.com/market-reports/small-kitchen-appliances-market-122499" },
+      { title: "Mordor Intelligence — Residential Vacuum", url: "https://www.mordorintelligence.com/industry-reports/residential-vacuum-cleaners-market" },
+      { title: "Stocktitan — SharkNinja 재무", url: "https://www.stocktitan.net/financials/SN/" },
+      { title: "Macrotrends — SharkNinja 매출", url: "https://www.macrotrends.net/stocks/charts/SN/sharkninja/revenue" },
+      { title: "SharkNinja IR Presentation (2025.11)", url: "https://s202.q4cdn.com/977000893/files/doc_financials/2025/q3/SharkNinja-Investor-Presentation-11-6-25.pdf" }
+    ]
+  },
+
+  "005930": {
+    ticker: "005930",
+    nameEn: "Samsung Electronics",
+    nameKr: "삼성전자",
+    exchange: "KOSPI",
+    asOfDate: "2026-05-06",
+    industry: "메모리·시스템 반도체·디스플레이·모바일·가전",
+
+    market: {
+      note: "참고용. valuation 의견 X.",
+      multiples: { note: "PER·PBR은 분기 사이클 의존도가 크므로 본 dashboard는 단정 수치를 명시하지 않는다. 컨센서스는 별도 확인." }
+    },
+
+    alphaScore: {
+      composite: 7.0,
+      signal: "monitor",
+      signalLabel: "MONITOR · 사이클 호황, HBM 추격 진행",
+      rationale: "FY2025 사업보고서 기준 매출 333.61조(+10.9%)·영업이익 43.60조(+33.2%)·순이익 45.21조(+31.2%). EPS 4,950원→6,605원. 매출의 절반 이상은 DX(56.3%)이지만 영업이익 견인은 메모리 가격 +14% 상승에 따른 DS 부문이며, 25Q4에는 DS·DX가 매출 47%씩으로 좁혀져 DS의 영업이익 기여가 81%에 도달했다. 자본 436조·net cash 102조의 압도적 BS는 글로벌 IT 대기업 중 최상위. 다만 HBM 점유율(약 17%)은 SK(57%) 대비 큰 격차이며 파운드리도 TSMC 격차 영구화 우려. KAM이 FY2023 메모리 재고 → FY2025 건설중인자산 감가상각·매출차감 정확성 2건으로 변화한 점은 cycle이 재고 risk → capex 가동 risk로 전환되었음을 시사.",
+      components: [
+        { key: "value", label: "Value", score: 6, weight: 15,
+          rationale: "EPS 6,605원·BPS 약 65,700원(자본 424.3조 ÷ 6,460M주). 자본이 +8.3% 늘었으나 메모리 cycle 정점 직전이라는 인식과 충돌. PER 기준 동종 SK하이닉스보다 낮은 멀티플 영역.", direction: "neutral" },
+        { key: "quality", label: "Quality (Moat)", score: 8, weight: 20,
+          rationale: "메모리·시스템·디스플레이·모바일·가전 수직 통합. TV 점유율 29.1%로 20년 연속 글로벌 1위, 스마트폰 19.2%. 자산총계 567조·유형자산 215조의 양산 capacity는 global 4~5사 진입장벽.", direction: "positive" },
+        { key: "momentum", label: "Growth Momentum", score: 7, weight: 20,
+          rationale: "매출 +10.9%·영업이익 +33.2%·순이익 +31.2%. 메모리 평균가격 +14%로 DS가 견인. 다만 TV(-5%)·스마트폰(-3%)·OLED(-6%)는 가격 하락 압박 지속이라 DS 의존이 cycle risk를 키운다. HBM 점유율은 SK 대비 추격 위치.", direction: "positive" },
+        { key: "profitability", label: "Profitability", score: 7, weight: 15,
+          rationale: "GP 39.4%(133.4조÷333.6조), 영업이익률 13.07%, 순이익률 13.55%. SK하이닉스(영업이익률 48.6%)와 큰 격차는 DX 부문 가격 압박이 메모리 호황을 희석하기 때문. 25Q4 단일분기 DS 영업이익률은 37.3%로 높음.", direction: "neutral" },
+        { key: "balance", label: "Financial Health", score: 9, weight: 10,
+          rationale: "현금성+단기금융 125.8조원 vs 총차입금 24.0조원 → net cash 약 102조. 부채비율 30.0%로 글로벌 IT 대기업 중 가장 보수적. 이익잉여금 402조원 누적. 3년 capex sustaining 충분한 capacity.", direction: "positive" },
+        { key: "governance", label: "Governance Risk", score: 5, weight: 20,
+          rationale: "이재용 회장 사법 cycle 잔존, 5개 사업부(DX·DS·SDC·Harman) 통합 모델의 자원 배분 효율성, 미국 CHIPS·중국 VEU 이중 압력, KAM 중 '판매장려활동 매출차감 정확성'이 DX 가격 정책의 회계 정합성 risk를 시사.", direction: "negative-flagged" }
+      ]
+    },
+
+    tldr: {
+      whatItDoes: "삼성전자는 메모리·시스템반도체·디스플레이·모바일·가전을 수직 통합 운영하는 글로벌 IT 기업이다. 사업부는 크게 반도체를 담당하는 DS(Device Solutions)와 완제품을 담당하는 DX(Device eXperience)로 나뉘며, 자회사 삼성디스플레이(SDC)와 미국 자동차 전장 자회사 Harman을 포함한다. 본사는 경기도 수원이며, FY2025(제57기) 사업보고서 기준 연간 매출 333.61조원(+10.9%)·영업이익 43.60조원(+33.2%)·순이익 45.21조원(+31.2%)을 기록했다. 매출 비중은 DX 56.3%·DS 39.0%·SDC 8.9%·Harman 4.7%이며, 영업이익은 메모리 가격 +14% 상승에 힘입어 DS가 견인했다.",
+      keyMetrics: [
+        { label: "FY2025 매출", value: "333.6조원 (+10.9%)" },
+        { label: "FY2025 영업이익", value: "43.60조원 (+33.2%)" },
+        { label: "FY2025 순이익", value: "45.21조원 (+31.2%)" },
+        { label: "기본 EPS", value: "6,605원 (전년 4,950원)" },
+        { label: "TV 점유율 (글로벌 1위 20년차)", value: "29.1%" },
+        { label: "스마트폰 점유율", value: "19.2%" }
+      ],
+      moatSummary: "수직 통합 IT 모델, 메모리 글로벌 1위(범용 DRAM 기준), 막대한 capex 자본력, 글로벌 sales channel.",
+      keyConcerns: [
+        "HBM 점유율 SK 대비 큰 격차 (17% vs 57%)",
+        "파운드리 2nm 수율 TSMC 대비 열위",
+        "DX 부문 가격 하락 (TV -5%·스마트폰 -3%·OLED -6%)",
+        "DS 영업이익 의존 심화 → cycle risk 증대",
+        "이재용 회장 사법 cycle 잔존",
+        "KAM '판매장려 매출차감 정확성' 잔존"
+      ]
+    },
+
+    risks: [
+      { severity: "high", title: "HBM 경쟁에서 SK하이닉스에 큰 격차",
+        detail: "2025년 상반기 기준 HBM 점유율은 SK하이닉스 약 57%, 삼성 약 17%로 33%p의 격차가 유지된다. NVIDIA H200·B200 메인 공급은 SK가 점유. 삼성은 2025년 9월 HBM3E NVIDIA 품질 테스트 통과로 본격 공급 진입했으나 격차 축소까지는 시간 필요. HBM4 12단 양산은 2025년 하반기 목표.",
+        source: "Daishin·JP Morgan·CEO Score Daily" },
+      { severity: "high", title: "파운드리 2nm 수율과 TSMC 격차",
+        detail: "TSMC 2nm 본격 양산 수율 70~90% 수준에 도달한 반면 삼성 파운드리는 2025년 8월 기준 30%대에서 시작해 50~60%대 진입 중. 점유율은 TSMC 69.9% vs 삼성 7.2%로 차이가 크게 벌어짐. 엑시노스 2600의 자체 수요로 SF2 수율 안정화가 진행 중.",
+        source: "글로벌이코노믹·Business Post" },
+      { severity: "high", title: "중국 공장 VEU 철회와 미·중 이중 압력",
+        detail: "미국 상무부가 2024년 8월 삼성·SK하이닉스 중국 공장 VEU 전면 승인을 철회. 2025년 1월부터 장비 출하 시 미국 승인 필요. 2026년 1월 연간 허가권 부여로 일부 완화되었으나 정책 reversal 위험은 잔존. 삼성은 시안·쑤저우, SK는 우시·충칭·다롄에 공장 보유.",
+        source: "글로벌이코노믹·MBC·서울경제" },
+      { severity: "med", title: "DX 부문 가격 하락 (사업보고서 확인)",
+        detail: "FY2025 사업보고서 기준 TV 평균판매가 -5%, 스마트폰 -3%, OLED 패널 -6%로 DX 주력 제품 모두 가격 하락. 메모리 +14% 상승으로 전사 영업이익은 +33.2% 증가했으나, 25Q4 분기로 보면 DS 영업이익 16.4조 vs DX 1.3조로 영업이익의 81%가 DS에 집중. 메모리 cycle이 둔화하면 전사 손익이 한 번에 무너지는 구조.",
+        source: "사업보고서 제57기" },
+      { severity: "med", title: "메모리 cycle 정점 시점",
+        detail: "DRAM 가격이 25Q4 +40~50%, 26Q1 추가 +40~50% 상승 후 26Q2 둔화 전망(+20%). AI 슈퍼사이클로 2026년까지 호황 지속이 컨센서스이나, 가격 상승률 둔화 시점은 정확하지 않음. 64GB RDIMM은 25Q3 $255 → 25Q4 $450 → 26Q1 $700 전망.",
+        source: "Counterpoint·TrendForce" },
+      { severity: "low", title: "거버넌스·총수 사법 cycle",
+        detail: "이재용 회장의 부당합병·삼성바이오로직스 회계 관련 사법 절차가 장기화. 그룹 의사결정의 속도와 일관성에 영향 가능. 또한 2024년 노조 파업 사례로 인적 자원 risk도 잠재.",
+        source: "보도 종합" }
+    ],
+
+    revenueMix: [
+      { name: "DX (가전·모바일·TV·네트워크)", value: 56.3, color: "#1f6feb" },
+      { name: "DS (반도체)", value: 39.0, color: "#1a7f5a" },
+      { name: "SDC (디스플레이)", value: 8.9, color: "#3eb489" },
+      { name: "Harman", value: 4.7, color: "#f4c430" }
+    ],
+
+    quarterlyPL: [
+      { period: "24Q1", revenue: 71.9, opIncome: 6.6, ni: 6.7, opMargin: 9.18, npMargin: 9.32 },
+      { period: "24Q2", revenue: 74.1, opIncome: 10.4, ni: 9.8, opMargin: 14.04, npMargin: 13.23 },
+      { period: "24Q3", revenue: 79.1, opIncome: 9.2, ni: 10.1, opMargin: 11.63, npMargin: 12.77 },
+      { period: "24Q4", revenue: 75.8, opIncome: 6.5, ni: 7.5, opMargin: 8.58, npMargin: 9.89 },
+      { period: "25Q1", revenue: 79.1, opIncome: 6.7, ni: 8.2, opMargin: 8.47, npMargin: 10.37 },
+      { period: "25Q2", revenue: 74.1, opIncome: 4.7, ni: 4.5, opMargin: 6.34, npMargin: 6.07 },
+      { period: "25Q3", revenue: 86.1, opIncome: 12.2, ni: 12.3, opMargin: 14.17, npMargin: 14.29 },
+      { period: "25Q4", revenue: 93.8, opIncome: 20.1, ni: 18.5, opMargin: 21.43, npMargin: 19.72 }
+    ],
+
+    quarterlyBS: [
+      { period: "23년말", assets: 455906, ca: 195937, cash: 69081, ar: 36647, inv: 51626, prepaid: 3366, ppe: 187256, gw: 0, intangible: 22742, otherNCA: 49972, liab: 92228, cl: 75719, ltd: 4262, deferredTax: 621, otherL: 11626, equity: 363678 },
+      { period: "24년말", assets: 514532, ca: 227062, cash: 53706, ar: 43623, inv: 51755, prepaid: 3363, ppe: 205945, gw: 0, intangible: 23739, otherNCA: 57786, liab: 112340, cl: 93326, ltd: 3950, deferredTax: 528, otherL: 14536, equity: 402192 },
+      { period: "25년말", assets: 566942, ca: 247685, cash: 57856, ar: 51128, inv: 52637, prepaid: 3627, ppe: 215305, gw: 0, intangible: 29481, otherNCA: 73457, liab: 130622, cl: 106411, ltd: 6480, deferredTax: 709, otherL: 17021, equity: 436320 }
+    ],
+
+    part1: [
+      { no: "1.1", title: "산업 정의",
+        body: `<p>삼성전자가 속한 산업은 단일 산업이 아니라 <strong>메모리 반도체, 시스템 반도체, 디스플레이, 모바일·가전</strong>의 다섯 축으로 구성된 종합 IT 산업이다. 본 deep dive에서는 회사 영업이익의 80% 이상을 차지하는 <strong>메모리 반도체</strong> 산업을 주요 layer로 다루고, 시스템반도체(파운드리)와 DX는 보조로 다룬다.</p>
+        <table class="tbl"><thead><tr><th>분류</th><th>대표 제품</th><th>회사 사업부</th></tr></thead><tbody>
+        <tr><td>메모리 반도체</td><td>DRAM, NAND Flash, HBM</td><td>DS (메모리)</td></tr>
+        <tr><td>시스템 반도체</td><td>파운드리, 시스템LSI(이미지센서·SoC)</td><td>DS (시스템LSI·파운드리)</td></tr>
+        <tr><td>디스플레이</td><td>OLED, QD</td><td>SDC (자회사)</td></tr>
+        <tr><td>모바일·가전·TV</td><td>스마트폰, TV, 가전</td><td>DX</td></tr>
+        <tr><td>전장·오디오</td><td>자동차 전장 솔루션</td><td>Harman</td></tr>
+        </tbody></table>` },
+      { no: "1.2", title: "메모리 시장 규모와 cycle",
+        body: `<p>메모리 반도체는 사이클 산업의 전형이다. 2025년 4분기에 들어서면서 다시 강한 상승 cycle에 진입했다. AI 데이터센터의 학습·추론 수요가 핵심 driver다.</p>
+        <table class="tbl"><thead><tr><th>지표</th><th>25Q3</th><th>25Q4</th><th>26Q1 전망</th><th>26Q2 전망</th></tr></thead><tbody>
+        <tr><td>64GB RDIMM 가격</td><td>$255</td><td>$450 (+76%)</td><td>$700 (+56%)</td><td>20% 추가 상승 둔화</td></tr>
+        <tr><td>DRAM 가격 상승률</td><td>-</td><td>+40~50%</td><td>+40~50%</td><td>+20%</td></tr>
+        </tbody></table>
+        <p>2026년 DRAM 비트 공급 증가율은 약 20%로 예상되나 수요 증가율이 30% 이상이라 공급 부족 cycle이 지속될 가능성이 높다(Counterpoint·TrendForce 컨센서스 인용). 단, 자체 forecast가 아니라 외부 reference 수치다.</p>` },
+      { no: "1.3", title: "Value chain 분해",
+        body: `<p>메모리 반도체 value chain은 (1) 장비·소재 → (2) Wafer 가공 → (3) Packaging → (4) 모듈화·솔루션 → (5) Server·PC·모바일·자동차 OEM 의 흐름이다. HBM은 Wafer 단계의 DRAM die에 후공정인 TSV 적층과 advanced packaging이 결합된 구조라, 후공정 capacity와 수율이 출하량을 좌우한다.</p>
+        <p>장비는 미국(AMAT, LAM, KLA)·일본(Tokyo Electron)·네덜란드(ASML)이 과점하며, 중국 수출통제의 직접 대상이 된다. 소재(가스·웨이퍼·포토레지스트)는 일본·한국 일부 의존도가 크다. 후공정 패키징은 TSMC가 advanced packaging(CoWoS) 우위를 통해 HBM 통합 layer를 잡고 있다.</p>` },
+      { no: "1.4", title: "수요 driver — AI 슈퍼사이클",
+        body: `<p>현 사이클의 핵심 driver는 AI 데이터센터다. 메커니즘은 다음과 같다.</p>
+        <ol>
+          <li><strong>학습용 GPU 수요 증가</strong> → NVIDIA H200·B200·Rubin 등 가속기 출하량 증가 → 가속기 한 대당 HBM 6~8개 탑재 → HBM 수요 폭증.</li>
+          <li><strong>추론(inference) 단계</strong> → 모델 size 증가와 long-context 추세로 HBM 단가·용량 동시 상승.</li>
+          <li><strong>일반 서버 DRAM</strong> → AI 데이터센터 build-out 부산물로 DDR5 RDIMM도 동반 수요 증가.</li>
+          <li><strong>NAND</strong> → eSSD(기업용) 수요 회복 + 추론용 KV cache offload 수요로 단계적 회복.</li>
+        </ol>` },
+      { no: "1.5", title: "공급 측면",
+        body: `<p>DRAM은 SK하이닉스·삼성전자·Micron 3사 과점(약 95%)이며, NAND는 SK하이닉스(Solidigm 포함)·삼성·Kioxia·Western Digital·Micron 5사 구도다. HBM은 SK 57%·삼성 17%·Micron 약 24%로 SK 우위 구조다(JP Morgan 인용). HBM4부터 Micron이 점유율 확대를 시도하고 삼성은 추격 모드.</p>
+        <p>중국 공장 비중은 SK하이닉스가 약 30%(우시·충칭·다롄), 삼성·SK 합산 약 40%로 추정된다. 미국 VEU 정책 변화에 직접 노출.</p>` },
+      { no: "1.6", title: "경쟁구조 (5 forces)",
+        body: `<table class="tbl"><thead><tr><th>요인</th><th>강도</th><th>관찰</th></tr></thead><tbody>
+        <tr><td>신규 진입</td><td>매우 약함</td><td>capex 수십조원·기술 lock-in으로 신규 진입 사실상 불가. 단 중국 CXMT가 정부 지원 하 추격 중.</td></tr>
+        <tr><td>대체재</td><td>약함</td><td>DRAM·NAND·HBM은 직접 대체재 부재. 단 모델 효율화로 메모리 절감 기술 발전 시 수요 둔화 가능.</td></tr>
+        <tr><td>공급자 협상력</td><td>중간</td><td>ASML·AMAT 등 핵심 장비 의존도 큼. 일본 소재 의존.</td></tr>
+        <tr><td>구매자 협상력</td><td>중간~강함</td><td>NVIDIA(HBM)·하이퍼스케일러(DDR5) 등 소수 대형 고객 의존도 상승. NVIDIA가 HBM 가격 협상력 보유.</td></tr>
+        <tr><td>산업 내 경쟁</td><td>강함</td><td>HBM 3사 구도, 점유율 변동성 큼. 파운드리는 TSMC 압도.</td></tr>
+        </tbody></table>` },
+      { no: "1.7", title: "정책·regulation 환경",
+        body: `<p>미국 CHIPS Act는 미국 내 fab 투자에 보조금을 지급하지만, 동시에 중국 fab 신증설 제한 조항(가드레일)을 부과한다. 미국 상무부는 2024년 8월 삼성·SK 중국 공장 VEU(Validated End User) 전면 승인을 철회했고, 2025년 1월부터 장비 출하 시 미국 승인이 필요해졌다. 2026년 1월에는 연간 단위 허가권으로 일부 완화되었다.</p>
+        <p>중국은 희토류 수출통제로 맞대응 중이며, 사마륨·디스프로슘·가돌리늄 등 합금이 통제 대상이다. 메모리 자체 생산에는 직접 영향이 작지만 모터·자석 등을 사용하는 다운스트림 산업에 영향.</p>
+        <p>한국 정부는 K-반도체 클러스터(용인·평택)와 세제지원 정책으로 자국 capex 유치에 나서고 있다.</p>` },
+      { no: "1.8", title: "기술·표준의 변화",
+        body: `<p>DRAM은 1z(15nm) → 1α(13nm) → 1β(12nm) → 1γ(11nm) 미세화 cycle 진행 중이며, 미세화 한계로 인해 HBM과 같이 die를 적층하는 3D 솔루션 비중이 증가하고 있다. NAND는 단수 경쟁이 200단대 → 300단대로 진입(SK 321단 QLC, 삼성 286단 V9). HBM은 HBM3E (8/12단) → HBM4 (16단) → HBM5로 진화하며, 단당 용량과 적층 단수가 동시 증가한다.</p>
+        <p>파운드리는 EUV 적용 7nm/5nm 이후 GAA 구조로 전환되었다. 삼성 파운드리는 SF3E(3nm GAA)에서 세계 최초 GAA 양산을 성공했으나 수율 안정화에 시간이 걸렸다. SF2(2nm GAA)에서 수율 추격 중.</p>` },
+      { no: "1.9", title: "메모리 cycle 역사",
+        body: `<p>메모리 산업은 약 3~4년 주기로 호황·불황을 반복해 왔다. 2017~18년 PC·서버 호황, 2019~20년 불황, 2020~21년 펜데믹·재택 호황, 2022~23년 가격 폭락, 2024년 회복, 2025년 4분기부터 AI driver의 새로운 슈퍼사이클이라는 평가다. 다만 cycle 정점 시점은 항상 사후적으로만 확인되며 단정 forecast는 위험하다.</p>` },
+      { no: "1.10", title: "산업 차원 구조적 위험",
+        body: `<table class="tbl"><thead><tr><th>위험</th><th>메커니즘</th></tr></thead><tbody>
+        <tr><td>지정학 — 미·중 갈등</td><td>중국 fab 장비 반입 제약·희토류 보복</td></tr>
+        <tr><td>고객 집중 — NVIDIA</td><td>HBM 가격·물량 협상력이 NVIDIA 측에 집중</td></tr>
+        <tr><td>cycle 정점 후 가격 급락</td><td>capex 확장 후 공급 과잉 → 가격 폭락의 역사적 패턴</td></tr>
+        <tr><td>중국 CXMT 추격</td><td>정부 지원 하 범용 DRAM·NAND에서 점유 확대</td></tr>
+        <tr><td>capex 부담</td><td>HBM·EUV 라인 capex 수십조원 단위, 사이클 부진 시 감가상각 부담</td></tr>
+        </tbody></table>` }
+    ],
+
+    part2: [
+      { no: "2.1", title: "회사 개요와 연혁",
+        body: `<p>삼성전자는 1969년 삼성그룹 창업자 이병철 회장이 흑백TV·라디오 조립 회사로 설립한 것이 출발이다. 1983년 64Kb DRAM 개발 선언으로 메모리 반도체에 진입했고, 1992년 64Mb DRAM에서 세계 1위로 올라선 이후 30여 년간 메모리 글로벌 1위를 유지해 왔다. 2017년 인텔을 제치고 반도체 매출 세계 1위를 기록하기도 했다.</p>
+        <p>현재 회장은 이재용(JY Lee)이며, 대표이사 부회장은 한종희(DX), 전영현(DS) 두 부문장 체제다. 본사는 경기도 수원, 글로벌 직원 수는 약 27만 명. 2008년 분식회계 이슈, 2017년 박근혜·최순실 게이트 연루, 2020년대 부당합병·삼성바이오 회계 관련 사법 절차 등 거버넌스 history가 길다.</p>` },
+      { no: "2.2", title: "사업부 구조",
+        body: `<p>회사는 크게 두 개의 사업부와 두 개의 자회사로 구성된다.</p>
+        <table class="tbl"><thead><tr><th>부문</th><th>주요 사업</th><th>25Q4 매출 비중</th><th>25Q4 영업이익</th></tr></thead><tbody>
+        <tr><td><strong>DS (Device Solutions)</strong></td><td>메모리 반도체, 시스템LSI, 파운드리</td><td>46.9% (44조)</td><td>16.4조 (영업이익률 37.3%)</td></tr>
+        <tr><td><strong>DX (Device eXperience)</strong></td><td>모바일(MX), TV·가전, 네트워크</td><td>47.2% (44.3조)</td><td>1.3조 (영업이익률 2.9%)</td></tr>
+        <tr><td>SDC (자회사)</td><td>OLED 디스플레이</td><td>4.3% (4조 추정)</td><td>별도 공시</td></tr>
+        <tr><td>Harman (자회사)</td><td>차량용 인포테인먼트·오디오</td><td>1.6% (1.5조 추정)</td><td>별도 공시</td></tr>
+        </tbody></table>
+        <p>회사 영업이익의 약 82%가 DS 부문에서 발생하며, DS 안에서도 메모리 비중이 압도적이다. 시스템LSI(이미지센서·SoC)와 파운드리는 매출 기여는 있으나 영업이익 기여는 제한적이다.</p>` },
+      { no: "2.3", title: "제품 포트폴리오",
+        body: `<p><strong>메모리</strong>: DRAM(DDR5·LPDDR5·GDDR7·HBM3E), NAND(8세대 V-NAND·SSD), HBM3E·HBM4. 25Q4 서버용 DDR5와 기업용 SSD 등 고부가가치 제품 판매가 메모리 영업이익을 견인.</p>
+        <p><strong>시스템LSI·파운드리</strong>: 자체 SoC(Exynos 2600 26년 출시 예정), 이미지센서(2억 화소·5천만 화소 빅픽셀), 파운드리 SF3E·SF2(2nm 본격 양산은 26년).</p>
+        <p><strong>DX</strong>: 갤럭시 S 시리즈·폴더블, QLED·OLED TV, 가전(에어컨·세탁기·냉장고), 5G 네트워크 장비.</p>` },
+      { no: "2.4", title: "매출 mix",
+        body: `<p>FY2025 사업보고서 기준 부문별 매출(내부거래 포함). 연간으로 보면 DX(56.3%)가 DS(39.0%)보다 크지만, 25Q4 단일 분기에는 DS가 DX와 동일 수준(약 47%씩)으로 좁혀졌다.</p>
+        <div id="revenueMixChart"></div>
+        <p style="margin-top:14px"><strong>FY2025 부문별 매출 (단위 조원, 내부거래 포함)</strong></p>
+        <table class="tbl"><thead><tr><th>부문</th><th>주요 제품</th><th>매출</th><th>비중</th></tr></thead><tbody>
+        <tr><td>DX</td><td>TV·모니터·냉장고·세탁기·에어컨·스마트폰·네트워크</td><td>187.97</td><td>56.3%</td></tr>
+        <tr><td>DS</td><td>DRAM·NAND·모바일AP</td><td>130.13</td><td>39.0%</td></tr>
+        <tr><td>SDC</td><td>스마트폰용 OLED 패널</td><td>29.84</td><td>8.9%</td></tr>
+        <tr><td>Harman</td><td>디지털 콕핏·카오디오·포터블 스피커</td><td>15.78</td><td>4.7%</td></tr>
+        <tr><td>(부문간 내부거래 제거)</td><td>-</td><td>(30.11)</td><td>-8.9%</td></tr>
+        <tr><td><strong>총계</strong></td><td>-</td><td><strong>333.61</strong></td><td>100.0%</td></tr>
+        </tbody></table>
+        <p>DS 부문 안에서 메모리·시스템LSI·파운드리의 분해는 별도 공시되지 않으며, 영업이익 측면에서는 메모리가 90% 이상을 차지하는 것으로 추정된다(<em>추가 확인 필요</em>). 2025년 평균 메모리 판매가격은 전년 대비 +14% 상승한 반면, TV는 -5%, 스마트폰은 -3%로 완제품은 가격 하락 압박이 지속.</p>` },
+      { no: "2.5", title: "고객·channel·지역",
+        body: `<p>HBM 메인 고객은 NVIDIA로, 2025년 9월 HBM3E 12단 품질 테스트 통과 후 본격 공급 진입했다. AMD·Broadcom과는 HBM4 맞춤형 제품 협의 중이며, 2026년부터 공급을 추진한다.</p>
+        <p>일반 DRAM·NAND는 하이퍼스케일러(Microsoft·Google·AWS·Meta), 서버 OEM, PC OEM에 광범위하게 공급한다. 파운드리 고객은 Qualcomm·NVIDIA(일부)·Tesla(Dojo)·Apple(과거)·Google(Tensor) 등이지만 핵심 고객 이탈로 점유율 회복이 과제다.</p>
+        <p>지역별로는 미국·유럽·중국·한국·동남아·일본에 광범위하게 분산. 단 메모리 fab은 한국(평택·기흥·화성)이 중심이며 중국 시안·쑤저우는 NAND 후공정 중심.</p>` },
+      { no: "2.6", title: "Moat 메커니즘",
+        body: `<table class="tbl"><thead><tr><th>원천</th><th>작동 메커니즘</th><th>지속성</th></tr></thead><tbody>
+        <tr><td>수직 통합</td><td>fab·design·packaging·완제품을 한 회사 안에 보유. 메모리 → 디스플레이 → 모바일까지 vertically aligned.</td><td>고</td></tr>
+        <tr><td>capex 자본력</td><td>연간 50조원 이상의 시설투자 capacity. 신규 fab 건설 sustaining 가능한 회사가 글로벌 4~5사뿐.</td><td>고</td></tr>
+        <tr><td>공정 lock-in</td><td>30년 누적된 양산 know-how, 수율 데이터, 협력사 ecosystem.</td><td>고</td></tr>
+        <tr><td>글로벌 sales channel</td><td>완제품 영업망과 반도체 영업망의 cross-sell 시너지.</td><td>중</td></tr>
+        </tbody></table>
+        <p>Moat이 약화될 수 있는 경로: (1) HBM에서 SK하이닉스 격차가 굳어질 경우, (2) 파운드리에서 TSMC 격차가 영구화될 경우, (3) 중국 CXMT의 범용 DRAM 점유 확대, (4) DX 부문의 가격 경쟁(중국 가전·휴대폰).</p>` },
+      { no: "2.7", title: "경쟁사 비교",
+        body: `<table class="tbl"><thead><tr><th>항목</th><th>삼성전자</th><th>SK하이닉스</th><th>TSMC</th><th>Micron</th></tr></thead><tbody>
+        <tr><td>주력 제품</td><td>메모리·시스템·완제품 통합</td><td>메모리(DRAM·NAND·HBM)</td><td>파운드리</td><td>메모리(DRAM·NAND)</td></tr>
+        <tr><td>2025 매출</td><td>약 350조원 추정</td><td>97.1조원</td><td>약 90조엔</td><td>약 28B$</td></tr>
+        <tr><td>2025 영업이익</td><td>43.6조원</td><td>47.2조원</td><td>약 50B$</td><td>약 6B$</td></tr>
+        <tr><td>HBM 점유율</td><td>17%</td><td>57%</td><td>(파운드리 패키징)</td><td>약 24%</td></tr>
+        <tr><td>파운드리 점유율</td><td>7.2%</td><td>-</td><td>69.9%</td><td>-</td></tr>
+        </tbody></table>
+        <p>2025년에는 SK하이닉스의 영업이익이 삼성전자를 처음으로 추월했다(47.2조원 vs 43.6조원). HBM 우위가 만든 결과로 평가된다.</p>` },
+      { no: "2.8", title: "경영진·governance·자본 배분",
+        body: `<p>지배구조는 이재용 회장 — 그룹 사령탑이지만 부당합병·삼성바이오 회계 관련 사법 절차가 장기화. 회사 최고경영진은 한종희 부회장(DX)과 전영현 부회장(DS) 두 부문장 체제. CFO는 박학규 사장.</p>
+        <p>자본 배분은 보수적이다. 막대한 순현금 보유, 정기 dividend(분기 배당 시작), 자사주 매입은 제한적. 2024년 11월 10조원 규모 자사주 매입 발표가 의미 있는 변화. 대규모 M&A는 2017년 Harman 인수 이후 부재.</p>
+        <p>최대주주는 이재용 회장(1.62%)을 비롯한 특수관계인 약 21%, 외국인 약 53%, 국민연금 약 7%. 외국인 비중이 높아 글로벌 기관 투자자 시각에 노출.</p>` },
+      { no: "2.9", title: "자본구조와 재무 현황",
+        body: `<p>FY2025 사업보고서(제57기) 연결 재무상태표 기준. 자본 436조원·자산 567조원의 초대형 BS이며, 차입금 24조원에 대해 현금성+단기금융이 126조원으로 압도적 net cash 구조다.</p>
+        <table class="tbl"><thead><tr><th>항목 (조원)</th><th>2023년말</th><th>2024년말</th><th>2025년말</th></tr></thead><tbody>
+        <tr><td><strong>자산총계</strong></td><td>455.9</td><td>514.5</td><td><strong>566.9</strong></td></tr>
+        <tr><td>현금성+단기금융</td><td>91.8</td><td>112.6</td><td>125.8</td></tr>
+        <tr><td>매출채권 (AR)</td><td>36.6</td><td>43.6</td><td>51.1</td></tr>
+        <tr><td>재고자산</td><td>51.6</td><td>51.8</td><td>52.6</td></tr>
+        <tr><td>유형자산</td><td>187.3</td><td>205.9</td><td>215.3</td></tr>
+        <tr><td>무형자산</td><td>22.7</td><td>23.7</td><td>29.5</td></tr>
+        <tr><td><strong>부채총계</strong></td><td>92.2</td><td>112.3</td><td><strong>130.6</strong></td></tr>
+        <tr><td>단기차입금</td><td>7.1</td><td>13.2</td><td>17.6</td></tr>
+        <tr><td>장기차입금+사채</td><td>4.3</td><td>4.0</td><td>6.5</td></tr>
+        <tr><td><strong>자본총계</strong></td><td>363.7</td><td>402.2</td><td><strong>436.3</strong></td></tr>
+        <tr><td>이익잉여금</td><td>346.7</td><td>370.5</td><td>402.1</td></tr>
+        </tbody></table>
+        <p>총차입금 약 24.0조원 vs 현금성+단기금융 125.8조원 → <strong>net cash 약 102조원</strong>. 부채비율(부채/자본) 30.0% 수준으로 글로벌 IT 대기업 중 가장 보수적. 매출채권은 +17.2% 증가하여 매출 성장(+10.9%) 대비 빠르게 늘었으나 대손충당금 설정비율은 1.1%로 안정.</p>` },
+      { no: "2.10", title: "최근 실적 추이",
+        body: `<p>2025년 분기별 영업이익은 강한 V자 회복을 보여준다. 25Q2(4.7조)에서 저점을 찍고 25Q3 12.2조 → 25Q4 20.1조로 가속. 메모리 cycle 회복과 HBM 본격 공급 효과가 결합된 결과로 보인다.</p>
+        <div id="quarterlyTrendChartSummary"></div>
+        <p>사업보고서 기준 연간 추이: 매출 258.94조(FY23) → 300.87조(FY24) → 333.61조(FY25). 영업이익 6.57조 → 32.73조 → 43.60조. 순이익 15.49조 → 34.45조 → 45.21조. 2년 만에 영업이익 +564%, 순이익 +192% 회복하며 메모리 cycle bottom(FY23) 탈출이 명확하다. 단 25Q4 단일 분기 영업이익 20.1조 중 DS가 16.4조(81.6%)를 차지하는 만큼, 2026년 메모리 cycle 둔화 시 전사 손익이 한 번에 무너지는 구조라는 점은 cycle risk로 잔존.</p>` },
+      { no: "2.11", title: "회사가 제시한 전략",
+        body: `<p>회사가 직접 발화한 forward statement는 그대로 인용한다(자체 forecast 아님).</p>
+        <ul>
+          <li><strong>HBM</strong>: HBM3E 본격 공급, HBM4 12단 25년 하반기 양산, NVIDIA·AMD·Broadcom 맞춤형 HBM4 26년 공급 추진</li>
+          <li><strong>파운드리</strong>: 2nm 1세대 25Q4 양산 본격화, Exynos 2600 자체 수요로 SF2 수율 안정화</li>
+          <li><strong>메모리</strong>: 서버용 DDR5·기업용 SSD 등 고부가가치 제품 판매 확대</li>
+          <li><strong>주주환원</strong>: 10조원 자사주 매입(2024.11 발표), 분기 배당 유지</li>
+        </ul>` },
+      { no: "2.12", title: "회사 차원의 구조적 위험",
+        body: `<table class="tbl"><thead><tr><th>위험</th><th>메커니즘</th></tr></thead><tbody>
+        <tr><td>HBM 격차</td><td>SK하이닉스와의 점유율 격차(17% vs 57%) 고착화 위험</td></tr>
+        <tr><td>파운드리 격차</td><td>TSMC와의 수율·점유율 격차 영구화 가능성</td></tr>
+        <tr><td>cycle 정점 risk</td><td>메모리 사이클 둔화 시 DS 의존도가 큰 손익 변동성</td></tr>
+        <tr><td>지정학 — 중국</td><td>VEU 정책 변화·희토류 통제·CXMT 추격</td></tr>
+        <tr><td>DX 부문 가격 경쟁</td><td>중국 가전·휴대폰의 가격 압박</td></tr>
+        <tr><td>거버넌스</td><td>이재용 회장 사법 cycle, 통합 IT 모델의 자원 배분 효율성</td></tr>
+        </tbody></table>` }
+    ],
+
+    part3: [
+      { no: "3.A", title: "EBITDA quality 의심 신호",
+        body: `<p>대형 장치 산업 특성상 EBITDA의 질은 (1) 감가상각 정책, (2) 일회성 비용·이익, (3) 사업부 간 cross-subsidy로 좌우된다. DS 부문 영업이익이 16.4조원에 도달한 25Q4의 경우 메모리 가격 상승의 직접 효과인지, 일회성 재고평가환입이 포함된 것인지 별도 추적이 필요하다.</p>
+        <p>또한 25Q4 파운드리에서 '충당 비용 영향으로 수익성 개선은 제한적'이라는 회사 발화가 있었다. 충당 비용의 성격(고객 이탈 위약·수율 보상 등)과 향후 환입 가능성은 <em>추가 확인 필요</em>.</p>
+        <p>디스플레이(SDC) 부문은 별도 공시되며 분기 변동성이 크다. Harman 자회사도 별도 손익이 있어 연결 EBITDA의 분해가 필요하다.</p>` },
+      { no: "3.B", title: "Working capital 신호",
+        body: `<p>메모리 cycle 호황기에는 매출채권과 재고가 동시에 증가하는 패턴이 일반적이다. 분기 BS는 사업보고서를 직접 read해야 정확한 추세를 볼 수 있다(<em>확인 필요</em>). 일반적으로 호황기 초기에는 출하 가속으로 AR 증가, 정점 부근에서 채널 inventory 누적, 둔화기에는 inventory write-down이 발생하는 cycle.</p>` },
+      { no: "3.C", title: "현금흐름의 질",
+        body: `<p>capex가 연간 50조원 수준에 달하는 장치 산업이라 영업현금흐름의 상당 부분이 capex로 재투자된다. 2025년 영업이익 43.6조원에 대한 영업현금흐름 conversion과 잉여현금흐름(FCF) 규모는 <em>사업보고서 직접 read 필요</em>. 자본 배분 정책상 FCF의 상당 부분이 신규 capex와 자사주·배당으로 환원된다.</p>` },
+      { no: "3.D", title: "숨은 부채와 거버넌스",
+        body: `<p>가장 큰 잠재 risk는 거버넌스 영역이다. 이재용 회장의 부당합병·삼성바이오 회계 관련 사법 절차는 형사·민사 모두 진행 중이다. 사법 절차의 결과가 그룹 의사결정 속도와 자본 배분에 영향을 줄 가능성.</p>
+        <p>이재용 회장이 통제하는 주요 계열사들과의 거래(시스템·소재·서비스 outsourcing)는 한국 공시기준상 매년 공시되며, 정상가격(arm's length) 검증이 일반적인 점검 대상이다.</p>
+        <p>중국 공장 VEU 이슈는 잠재 부채의 성격은 아니나, fab 가동 차질 시 일회성 손실이 발생할 수 있다.</p>` },
+      { no: "3.E", title: "회계 위험",
+        body: `<p>2025년 사업보고서(제57기) 기준 <strong>감사인의 핵심감사사항(KAM)</strong>은 다음 2개 항목이다.</p>
+        <ul>
+          <li><strong>1. 건설중인자산의 감가상각개시시점 평가</strong> — 메모리·HBM·파운드리 신규 fab 가동 시점에 따라 감가상각 시작 시기가 결정. 손익에 직접 영향. 막대한 capex(연 50조원대 추정)가 이 KAM의 배경.</li>
+          <li><strong>2. 재화의 판매장려활동에 대한 매출차감의 정확성과 완전성</strong> — 글로벌 retail에 지급하는 판매장려금(rebate·promotional allowance)을 매출에서 차감하는 회계처리의 정확성. DX 부문(가전·스마트폰)의 매출 인식 정합성에 영향.</li>
+        </ul>
+        <p>이 두 KAM은 FY2024(제56기)와 동일하게 유지되었으며, FY2023(제55기)에는 메모리 재고 순실현가치 평가가 KAM이었다(메모리 cycle 부진기). 2024~25년에는 cycle 회복으로 재고 KAM이 빠진 것은 양호한 신호.</p>
+        <p>매출채권 대손충당금 설정비율 1.1%(FY2025: 채권 51.7조원 / 충당금 5,744억원)로 안정적. 단기대여금 충당금 설정률은 24년 78.7%로 높게 잡혔으나 25년에는 1.5%로 정상화.</p>` },
+      { no: "3.F", title: "운영 위험",
+        body: `<p>고객 집중도는 NVIDIA가 HBM에서 단일 압도적 고객. NVIDIA의 가격·물량 정책 변화에 직접 노출된다. 일반 DRAM·NAND는 분산되어 있으나 하이퍼스케일러 4~5사 비중이 큰 편.</p>
+        <p>공급망 측면에서 ASML EUV 장비 의존, 일본 소재(포토레지스트·CMP slurry) 의존, 미국 장비(AMAT·LAM·KLA) 의존이 모두 지정학 risk와 결합된다.</p>
+        <p>핵심 인력은 전영현 DS 부문장(반도체 베테랑)과 한종희 DX 부문장이며, 이들의 거취가 회사 전략에 큰 영향.</p>` },
+      { no: "3.G", title: "주식 투자자 관점의 위험 신호 종합",
+        body: `<table class="tbl"><thead><tr><th>프레임</th><th>유발 사실</th><th>투자자에게 미치는 영향</th></tr></thead><tbody>
+        <tr><td>이익 조정 의심</td><td>25Q4 파운드리 충당 비용 성격</td><td>분기 변동성</td></tr>
+        <tr><td>운전자본</td><td>cycle 호황기 AR·재고 동반 증가 가능성</td><td>FCF 압박 시점</td></tr>
+        <tr><td>숨은 부채</td><td>이재용 회장 사법 cycle</td><td>의사결정 속도·일회성 비용</td></tr>
+        <tr><td>회계</td><td>재고 평가, 영업권·무형 손상</td><td>분기 surprise</td></tr>
+        <tr><td>운영 집중</td><td>NVIDIA 의존, 중국 공장 노출</td><td>지정학 변동성</td></tr>
+        </tbody></table>` },
+      { no: "3.H", title: "경영진 질문 / 추가 확인 항목",
+        body: `<p>이어지는 박스에 IR 콜 질문과 후속 확인 필요 항목이 정리되어 있다.</p>` }
+    ],
+
+    part4: [
+      { no: "4.1", title: "핵심 사실 정리",
+        body: `<ul>
+          <li><strong>FY2025 사업보고서 기준</strong> 매출 333.61조(+10.9%)·영업이익 43.60조(+33.2%)·순이익 45.21조(+31.2%)·EPS 6,605원(전년 4,950원).</li>
+          <li>매출 mix(연간): DX 56.3%(188조)·DS 39.0%(130조)·SDC 8.9%(30조)·Harman 4.7%(16조). 영업이익은 메모리 가격 +14% 상승의 DS가 견인.</li>
+          <li>DX 부문 가격: TV -5%·스마트폰 -3%·OLED -6%로 완제품 가격 압박 지속.</li>
+          <li>25Q4 단일분기 영업이익 20.1조 중 DS 16.4조(81.6%)·DX 1.3조. DS 의존이 심화되며 cycle 변동성에 더 노출.</li>
+          <li>BS: 자산 567조·자본 436조·net cash 약 102조원. 부채비율 30%로 글로벌 IT 대기업 중 최보수적.</li>
+          <li>HBM 점유율 약 17%(SK 57%), 파운드리 점유율 7.2%(TSMC 69.9%) 격차.</li>
+          <li>FY2025 KAM 2건(건설중인자산 감가상각·판매장려 매출차감) — 메모리 재고 KAM(FY23)이 빠진 점은 cycle 회복 신호이나 capex 가동 시점 리스크가 새로 부각됨.</li>
+          <li>Alpha 종합 7.0. 보수적 BS와 영업이익 +33%가 score를 떠받치지만, HBM·파운드리 격차와 DS 단일 의존이 cycle risk로 작동.</li>
+        </ul>` },
+      { no: "4.2", title: "산업·회사·회계 layer의 연결",
+        body: `<p>산업의 AI 슈퍼사이클(1.4)은 회사의 DS 부문 영업이익 폭증(2.10)에 직접 매핑된다. 단 HBM 시장에서의 위치(1.5의 17%)는 같은 cycle에서 SK하이닉스보다 적은 share를 가져가는 결과를 낳고 있다(2.6 moat 약화 경로).</p>
+        <p>산업 차원의 미·중 정책 risk(1.7)는 회사의 중국 공장 노출(2.5)에 직접 반영된다. cycle 정점 시점(1.9)은 회사 DS 의존(2.12)이 양방향으로 증폭하는 변수다.</p>` },
+      { no: "4.3", title: "후속 작업이 필요한 항목",
+        body: `<ol>
+          <li>2025 사업보고서 직접 read — 분기 BS·CF·KAM·관계사 거래</li>
+          <li>HBM 분기 매출·점유율 실측치 (회사는 별도 공시 X)</li>
+          <li>파운드리 사업부 손익 분해</li>
+          <li>2026 capex 가이던스 정밀화</li>
+          <li>이재용 회장 사법 절차 일정·잠재 영향 평가</li>
+          <li>중국 fab capacity 비중과 VEU 정책 변화 시나리오</li>
+        </ol>` },
+      { no: "4.4", title: "출처", body: `<p>아래 출처 섹션 참조.</p>` }
+    ],
+
+    mgmtQ: [
+      "HBM3E 본격 공급 이후 NVIDIA·AMD·Broadcom 별 분기 매출 비중 변화는?",
+      "HBM4 12단 양산 일정과 2026년 점유율 목표 35%의 근거는?",
+      "파운드리 SF2 수율이 안정 양산 기준선 60%를 언제 넘는가? 핵심 고객 확보 현황은?",
+      "25Q4 파운드리 '충당 비용 영향'의 성격과 향후 환입 가능성은?",
+      "중국 시안·쑤저우 fab의 2026년 capacity 운영 계획과 VEU 허가권 활용 방안은?",
+      "이재용 회장 사법 절차 진행이 그룹 자본 배분(자사주 매입·M&A)에 미치는 영향은?",
+      "DX 부문 영업이익률 회복을 위한 구체 cost·믹스 전략은?",
+      "디스플레이(SDC)·Harman 자회사의 향후 capital allocation 방향은?"
+    ],
+
+    itemsToVerify: [
+      "2025 사업보고서 — KAM, 관계사 거래, capex 가이던스, 분기 BS",
+      "DS 부문 안 메모리·시스템LSI·파운드리 매출·이익 분해",
+      "HBM 분기 매출 실측치 (NVIDIA·하이퍼스케일러별)",
+      "Exynos 2600 양산 일정과 SF2 수율 시계열",
+      "이재용 회장 사법 절차의 직접 비용·간접 영향",
+      "중국 fab capacity와 미국 장비 반입 실제 진행 상황",
+      "10조원 자사주 매입 프로그램의 실행 진척"
+    ],
+
+    sources: [
+      { title: "삼성전자 2025년 4Q 실적 발표", url: "https://news.samsung.com/kr/%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90-2025%EB%85%84-4%EB%B6%84%EA%B8%B0-%EC%8B%A4%EC%A0%81-%EB%B0%9C%ED%91%9C" },
+      { title: "삼성전자 반도체 뉴스룸 25Q4", url: "https://news.samsungsemiconductor.com/kr/%ec%82%bc%ec%84%b1%ec%a0%84%ec%9e%90-2025%eb%85%84-4%eb%b6%84%ea%b8%b0-%ec%8b%a4%ec%a0%81-%eb%b0%9c%ed%91%9c/" },
+      { title: "디일렉 25Q4 컨콜 전문", url: "https://www.thelec.kr/news/articleView.html?idxno=51584" },
+      { title: "글로벌이코노믹 — HBM3E 공급", url: "https://www.g-enews.com/article/Global-Biz/2025/07/202507220940536343fbbec65dfb_1" },
+      { title: "글로벌이코노믹 — 2nm 수율 격차", url: "https://www.g-enews.com/article/Global-Biz/2025/06/202506180950391907fbbec65dfb_1" },
+      { title: "Business Post — 파운드리 격차", url: "https://www.businesspost.co.kr/BP?command=article_view&num=435112" },
+      { title: "MBC — 미국 수출통제", url: "https://imnews.imbc.com/replay/2025/nw1200/article/6750735_36769.html" },
+      { title: "Counterpoint — 메모리 가격 (2026.1)", url: "https://korea.counterpointresearch.com/memory-price-tracker-january-2026/" },
+      { title: "Counterpoint — DRAM·HBM 점유율", url: "https://korea.counterpointresearch.com/global-dram-and-hbm-market-share-quarterly/" },
+      { title: "PWC — K-반도체 AI 보고서", url: "https://www.pwc.com/kr/ko/insights/industry-focus/samilpwc_ai-semiconductor.pdf" },
+      { title: "FETV — 2025 영업이익", url: "https://www.fetv.co.kr/news/article.html?no=211186" },
+      { title: "EconBite — 사업구조 해부", url: "https://econbite.com/samsung-business-structure/" },
+      { title: "삼성전자 사업보고서 (제57기, 2026.03.10 공시)", url: "https://dart.fss.or.kr" }
+    ]
+  },
+
+  "000660": {
+    ticker: "000660",
+    nameEn: "SK hynix Inc.",
+    nameKr: "SK하이닉스",
+    exchange: "KOSPI",
+    asOfDate: "2026-05-06",
+    industry: "메모리 반도체 (DRAM·NAND·HBM)",
+
+    market: { note: "참고용. valuation 의견 X." },
+
+    alphaScore: {
+      composite: 7.8,
+      signal: "monitor",
+      signalLabel: "MONITOR · HBM 압도적 우위, cycle 정점 추적 필요",
+      rationale: "FY2025 사업보고서 기준 매출 97.15조(+46.8%)·영업이익 47.21조(+101.2%)·순이익 42.95조(+116.9%) 모두 전년의 두 배 수준으로 도약하며 삼성전자 영업이익(43.60조)을 처음 추월했다. EPS는 28,732원 → 62,044원으로 +116% 점프. 자본은 1년 만에 73.9조→120.7조로 +46.8조 누적되어 BS가 빠르게 강해졌고, net cash 약 12.6조 상태. 다만 단일 사업(메모리) 회사라 cycle 정점 후 가격 급락 위험에 그대로 노출되며, 미국향 매출 비중 68.9%로 NVIDIA 의존이 매우 큰 점, 중국 공장 약 30% 비중, SK그룹 거버넌스가 risk로 잔존. KAM이 FY2023 4건 → FY2025 1건으로 단순화된 점은 회계 정합성 안정화 신호.",
+      components: [
+        { key: "value", label: "Value", score: 5, weight: 15,
+          rationale: "EPS 62,044원·BPS 약 165,800원 (자본 120.7조 ÷ 728M주) 기준 컨센서스는 사이클 정점 직전 수치. 자본이 1년 +63% 늘어 PBR이 자연스럽게 떨어지고 있으나 valuation 평가는 사용자 판단 영역.", direction: "neutral" },
+        { key: "quality", label: "Quality (Moat)", score: 9, weight: 20,
+          rationale: "DRAM 점유율 25Q2 39.1% → 25Q3 34.3%로 분기간 변동은 있으나 1위 유지. HBM 57% (JP Morgan), NVIDIA 메인 공급사. 미국 외부매출 66.9조원이 전체의 68.9%를 차지하며 AI 데이터센터 메인 공급망에 Lock-in.", direction: "positive" },
+        { key: "momentum", label: "Growth Momentum", score: 10, weight: 20,
+          rationale: "사업보고서 확정치: 매출 +46.8%·영업이익 +101.2%·순이익 +116.9%. 매출원가는 +11.9%만 늘어 GP 마진이 48.0%→60.4%로 12.4%p 개선. 분기 영업이익률은 25Q1 42% → 25Q4 58%로 가속.", direction: "positive" },
+        { key: "profitability", label: "Profitability", score: 10, weight: 15,
+          rationale: "GP 60.4%, 영업이익률 48.6%, 순이익률 44.2%. ROE는 자본 평균 97.3조원 기준 약 44% 추정. 매출채권 대손충당금 설정비율 0.01%로 회수 양호.", direction: "positive" },
+        { key: "balance", label: "Financial Health", score: 8, weight: 10,
+          rationale: "총차입금 22.3조원 vs 현금성+단기금융+단기투자 34.9조원으로 net cash 12.6조원. 자본 1년 +46.8조원 누적, 이익잉여금 65.4조→106.6조. 다만 유형자산 77.5조원으로 capex 부담이 매우 큼(2026 capex 30조원대 추정).", direction: "positive" },
+        { key: "governance", label: "Governance Risk", score: 5, weight: 20,
+          rationale: "최태원 회장 SK그룹 지배구조, 미국향 매출 68.9% 집중에 따른 NVIDIA 가격·물량 협상 리스크, 중국 공장 약 30% 비중(우시·충칭·다롄)에 따른 VEU 정책 노출. 단일 사업 의존도 100%(반도체부문).", direction: "negative-flagged" }
+      ]
+    },
+
+    tldr: {
+      whatItDoes: "SK하이닉스는 메모리 반도체 전문 기업으로 DRAM·NAND·HBM을 생산한다. 1983년 현대전자로 출발해 2001년 워크아웃을 거쳐 2012년 SK그룹에 편입되었다. 2020년대 들어 HBM에 선제 투자한 결과 NVIDIA 메인 공급사로 자리 잡으며 AI 슈퍼사이클의 최대 수혜주가 되었다. FY2025(제78기) 사업보고서 기준 매출 97.15조원, 영업이익 47.21조원, 순이익 42.95조원으로 모두 전년의 두 배 수준에 도달하며 삼성전자 영업이익(43.60조원)을 처음 추월했다. 외부매출의 68.9%가 미국향이라는 점에서 AI 가속기 공급망의 메인 노드로 자리 잡았다.",
+      keyMetrics: [
+        { label: "FY2025 매출", value: "97.15조원 (+46.8%)" },
+        { label: "FY2025 영업이익", value: "47.21조원 (+101.2%)" },
+        { label: "FY2025 순이익", value: "42.95조원 (+116.9%)" },
+        { label: "기본 EPS", value: "62,044원 (전년 28,732원)" },
+        { label: "GP 마진", value: "60.4% (+12.4%p)" },
+        { label: "DRAM 점유율 (2024→25Q3)", value: "33.4% → 34.3%" }
+      ],
+      moatSummary: "HBM 기술 격차, NVIDIA 메인 공급사 지위, AI 데이터센터 수요의 직접 수혜.",
+      keyConcerns: [
+        "반도체부문 단일 reportable segment, 매출의 100%",
+        "외부매출 미국 68.9% → NVIDIA 의존도 심화",
+        "중국 공장 비중 약 30% (DRAM·NAND)",
+        "2026년 capex 약 30조원 부담",
+        "Micron·삼성의 HBM 추격 (HBM4부터 가속)",
+        "최태원 회장 SK그룹 거버넌스 cycle"
+      ]
+    },
+
+    risks: [
+      { severity: "high", title: "단일 사업 cycle 의존 (사업보고서 확인)",
+        detail: "사업보고서상 반도체부문이 매출의 100%(97.15조원). 메모리 cycle 정점 후 가격 급락 시 수익이 한 번에 무너지는 구조. FY2023(제76기)에는 매출 32.77조원·영업손실 -7.73조원·당기순손실 -9.14조원을 기록한 바 있어, 정점-저점 swing이 영업이익 ±55조원 규모에 달함을 보여준다.",
+        source: "사업보고서 제76~78기" },
+      { severity: "high", title: "중국 공장 노출 약 30%",
+        detail: "DRAM·NAND 생산량의 약 30%가 중국 공장(우시·충칭·다롄)에서 생산된다. 2024.8 미국 VEU 철회 → 2025.1 장비 출하 승인제로 전환. 2026.1 연간 단위 허가권으로 일부 완화되었으나 정책 reversal 시 fab 가동 차질 가능.",
+        source: "글로벌이코노믹·미주한국일보" },
+      { severity: "med", title: "NVIDIA 의존도",
+        detail: "HBM 매출의 상당 부분이 NVIDIA향. NVIDIA가 가격·물량 협상력을 보유하며, 향후 인소싱(NVIDIA 자체 칩 메모리 통합) 또는 멀티 벤더 전략으로 점유율 분산 가능성.",
+        source: "산업 통념" },
+      { severity: "med", title: "Micron·삼성의 HBM 추격",
+        detail: "Micron은 HBM 점유율 약 24%로 2위 진입. HBM4부터 점유율 확대 시도. 삼성전자는 2025년 9월 HBM3E 공급 진입 후 추격 모드. 2026년 SK 점유율 50%+ 유지가 컨센서스이나 경쟁 강화는 가격·물량 양면 압박.",
+        source: "JP Morgan·골드만삭스·UBS" },
+      { severity: "med", title: "2026 capex 부담",
+        detail: "HBM 라인 증설과 1c DRAM·321단 NAND 투자로 2026년 capex 30조원대 추정. 사이클 둔화 시 감가상각 부담 급증 risk.",
+        source: "한경 컨센서스" },
+      { severity: "low", title: "SK그룹 거버넌스",
+        detail: "최태원 회장이 통제하는 SK그룹 지배구조. SK스퀘어·SK텔레콤 등 계열사 간 거래 및 최태원-노소영 이혼 소송 cycle 등 그룹 차원의 거버넌스 변동성 잠재.",
+        source: "보도 종합" }
+    ],
+
+    revenueMix: [
+      { name: "DRAM (HBM 포함)", value: 80, color: "#1f6feb" },
+      { name: "NAND·SSD", value: 18, color: "#1a7f5a" },
+      { name: "기타 (CIS·기술료 등)", value: 2, color: "#f4c430" }
+    ],
+
+    quarterlyPL: [
+      { period: "24Q1", revenue: 12.4, opIncome: 2.9, ni: 1.9, opMargin: 23.39, npMargin: 15.32 },
+      { period: "24Q2", revenue: 16.4, opIncome: 5.5, ni: 4.1, opMargin: 33.54, npMargin: 25.00 },
+      { period: "24Q3", revenue: 17.6, opIncome: 7.0, ni: 5.8, opMargin: 39.77, npMargin: 32.95 },
+      { period: "24Q4", revenue: 19.8, opIncome: 8.1, ni: 8.0, opMargin: 40.91, npMargin: 40.40 },
+      { period: "25Q1", revenue: 17.6, opIncome: 7.4, ni: 6.6, opMargin: 42.05, npMargin: 37.50 },
+      { period: "25Q2", revenue: 22.2, opIncome: 9.2, ni: 7.0, opMargin: 41.44, npMargin: 31.53 },
+      { period: "25Q3", revenue: 24.4, opIncome: 11.4, ni: 12.6, opMargin: 46.72, npMargin: 51.64 },
+      { period: "25Q4", revenue: 32.8, opIncome: 19.2, ni: 16.7, opMargin: 58.54, npMargin: 50.91 }
+    ],
+
+    quarterlyBS: [
+      { period: "23년말", assets: 100330, ca: 30468, cash: 7587, ar: 6600, inv: 13481, prepaid: 925, ppe: 52705, gw: 0, intangible: 3835, otherNCA: 13322, liab: 46826, cl: 21008, ltd: 19611, deferredTax: 114, otherL: 6093, equity: 53504 },
+      { period: "24년말", assets: 119855, ca: 42279, cash: 11205, ar: 13019, inv: 13314, prepaid: 1394, ppe: 60157, gw: 0, intangible: 4019, otherNCA: 13400, liab: 45940, cl: 24965, ltd: 17431, deferredTax: 218, otherL: 3326, equity: 73916 },
+      { period: "25년말", assets: 176108, ca: 69458, cash: 14924, ar: 18199, inv: 14289, prepaid: 1378, ppe: 77503, gw: 0, intangible: 4049, otherNCA: 24598, liab: 55441, cl: 37379, ltd: 14086, deferredTax: 248, otherL: 3748, equity: 120667 }
+    ],
+
+    part1: [
+      { no: "1.1", title: "산업 정의",
+        body: `<p>SK하이닉스의 사업 영역은 메모리 반도체 단일 산업이다. DRAM, NAND Flash, 그리고 DRAM의 고부가가치 변형인 HBM이 세 축이며, 이미지센서(CIS)는 비중이 작다. 본 deep dive는 회사 영업이익의 95% 이상을 차지하는 메모리 산업을 중심으로 다룬다. 사업보고서 기준 동사는 한국표준산업분류상 '반도체 및 기타 전자 부품 제조업'에 해당하며 반도체부문 매출이 90%를 초과하는 단일 reportable segment 회사다.</p>` },
+      { no: "1.2", title: "메모리 시장 규모와 cycle",
+        body: `<p>(삼성전자 dashboard의 1.2 동일 — 메모리 cycle 호황 진입, 2025Q4 DRAM 가격 +40~50% / 2026년 1Q +40~50% / 2Q +20% 상승 둔화 전망. 64GB RDIMM $255 → $450 → $700.)</p>
+        <p>2026년 HBM 시장 규모는 전년 대비 71% 성장한 $577억으로 전망(컨센서스). DRAM 비트 공급 +20% vs 수요 +30%로 공급 부족 cycle 지속.</p>` },
+      { no: "1.3", title: "Value chain 분해",
+        body: `<p>(삼성전자 dashboard와 동일.) HBM은 DRAM die 적층 + advanced packaging 결합 구조이며, 후공정 capacity가 출하량 결정.</p>` },
+      { no: "1.4", title: "수요 driver — AI 슈퍼사이클",
+        body: `<p>(삼성전자 dashboard와 동일.) NVIDIA H200·B200·Rubin → 가속기 1대당 HBM 6~8개 → SK하이닉스 HBM 직접 수혜.</p>
+        <p>SK하이닉스 분석에 따르면 2025년 HBM 출하량 비중이 전체 DRAM 출하량의 20%대에 불과함에도 영업이익의 50% 이상을 기여한다.</p>` },
+      { no: "1.5", title: "공급 측면 — HBM 과점",
+        body: `<p>HBM 점유율은 SK 57%·삼성 17%·Micron 24%(JP Morgan 기준)로 SK 우위. 2025년 2분기 출하량 기준으로는 SK가 62%까지 도달하기도 했다(EBN). HBM3E 12단 양산 우위와 NVIDIA 품질 인증 선행 효과가 결합된 결과.</p>
+        <p>HBM4부터는 Micron이 점유 확대를 시도하고 삼성이 추격. 골드만삭스는 SK가 2026년에도 HBM 50%+ 유지를 예상하며, UBS는 NVIDIA Rubin용 HBM4 시장에서 SK 점유율 70%를 예상.</p>` },
+      { no: "1.6", title: "경쟁구조 (5 forces)",
+        body: `<p>(삼성전자 dashboard와 동일.)</p>` },
+      { no: "1.7", title: "정책·regulation 환경",
+        body: `<p>SK하이닉스는 중국 공장 비중이 약 30%로 삼성보다 높다. 우시(DRAM 메인), 충칭(NAND 후공정), 다롄(NAND, Intel Solidigm 인수) 3개 거점. 미국 VEU 철회 영향이 더 직접적이며, 2026.1 연간 허가권으로 일부 완화되었다.</p>
+        <p>한국 정부의 K-반도체 클러스터(용인) 투자, 미국 CHIPS Act 인디애나 advanced packaging fab 투자(2024.4 발표)가 진행 중.</p>` },
+      { no: "1.8", title: "기술·표준의 변화",
+        body: `<p>HBM은 SK가 1세대 HBM(2013) → HBM2(2016) → HBM2E → HBM3(2021 세계 최초) → HBM3E 12단(2024 세계 최초) → HBM4(2025년 양산) → HBM5로 cycle을 주도해왔다. 이 기술 lock-in이 NVIDIA 의존도를 만든 동시에 가격 협상력을 부여.</p>
+        <p>NAND는 321단 QLC 개발 완료(2025), Intel Solidigm 인수(2020 발표·2025 완료)로 NAND 기업 SSD 영역 보강.</p>` },
+      { no: "1.9", title: "메모리 cycle 역사", body: `<p>(삼성전자 dashboard와 동일.)</p>` },
+      { no: "1.10", title: "산업 차원 구조적 위험", body: `<p>(삼성전자 dashboard와 동일.)</p>` }
+    ],
+
+    part2: [
+      { no: "2.1", title: "회사 개요와 연혁",
+        body: `<p>SK하이닉스는 1983년 현대전자산업으로 설립. 1996년 LG반도체와 통합 추진 → 1999년 LG반도체와 합병 → 2001년 워크아웃 → 2012년 SK그룹이 인수해 SK하이닉스로 사명 변경. 2020년 Intel NAND 사업부(Solidigm)를 인수 발표(약 90억 달러), 2025년 인수 완료.</p>
+        <p>현재 대표이사는 곽노정 사장(2022~). 회장은 SK그룹 최태원 회장. 본사는 경기도 이천이며 한국에 이천·청주 fab, 중국에 우시·충칭·다롄 fab, 미국 인디애나에 advanced packaging fab을 건설 중. 직원 수는 약 3.5만 명.</p>` },
+      { no: "2.2", title: "사업부 구조",
+        body: `<p>회사는 단일 사업 부문(메모리 반도체)이며 보고용으로도 단일 reportable segment다. 제품 카테고리는 DRAM, NAND, HBM(DRAM 안 분류), 기타(CIS·기술료)로 구분된다.</p>
+        <table class="tbl"><thead><tr><th>제품</th><th>매출 비중 (추정)</th><th>영업이익 기여</th></tr></thead><tbody>
+        <tr><td>DRAM (HBM 포함)</td><td>약 80%</td><td>영업이익의 95%+</td></tr>
+        <tr><td>NAND·SSD</td><td>약 18%</td><td>영업이익의 5% (25Q4 0.9조원)</td></tr>
+        <tr><td>기타</td><td>약 2%</td><td>제한적</td></tr>
+        </tbody></table>
+        <p>HBM은 별도 매출 공시는 안 되나, 영업이익의 50% 이상이 HBM에서 발생한다(회사 발화).</p>` },
+      { no: "2.3", title: "제품 포트폴리오",
+        body: `<p><strong>DRAM</strong>: DDR5 RDIMM(서버), LPDDR5(모바일), GDDR7(그래픽), HBM3E·HBM4. 1c(11nm) 미세화 진행 중.</p>
+        <p><strong>NAND·SSD</strong>: 321단 QLC, eSSD(기업용), Solidigm 브랜드.</p>
+        <p><strong>HBM</strong>: HBM3E 8단·12단 양산, HBM4 16단 2025년 양산 시작, HBM5 개발 중.</p>` },
+      { no: "2.4", title: "매출 mix",
+        body: `<p>제품별 매출 비중은 다음과 같다. DRAM 안 HBM 비중이 별도 공시되지 않으나 25Q4 기준 DRAM 매출의 약 40~50% 추정(컨센서스).</p>
+        <div id="revenueMixChart"></div>
+        <p style="margin-top:14px">지역별로는 미국·중국·아시아 주요 하이퍼스케일러와 OEM에 분산 공급. 매출 비중 분해는 <em>사업보고서 직접 read 필요</em>.</p>` },
+      { no: "2.5", title: "고객·channel·지역",
+        body: `<p>HBM 메인 고객은 NVIDIA로, H100·H200·B100·B200·Rubin 시리즈에 광범위하게 채택. 부수적으로 AMD MI300·MI400, Broadcom·Google·AWS의 자체 ASIC에도 공급.</p>
+        <p>일반 DRAM·NAND는 하이퍼스케일러 4사(MS·AWS·Google·Meta), 서버 OEM(Dell·HPE·Supermicro), PC OEM, 모바일 OEM(Apple은 NAND·일부 LPDDR)에 광범위 분산.</p>
+        <p>사업보고서 기준 <strong>FY2025 외부매출 지역별 분포</strong> (단위 조원, 합계 97.15):</p>
+        <table class="tbl"><thead><tr><th>지역</th><th>외부매출</th><th>비중</th><th>2024 대비</th></tr></thead><tbody>
+        <tr><td>미국</td><td>66.9</td><td><strong>68.9%</strong></td><td>+59.4%</td></tr>
+        <tr><td>중국</td><td>19.1</td><td>19.7%</td><td>+23.2%</td></tr>
+        <tr><td>아시아 (한국 외)</td><td>7.2</td><td>7.4%</td><td>+34.1%</td></tr>
+        <tr><td>유럽</td><td>2.0</td><td>2.0%</td><td>+39.9%</td></tr>
+        <tr><td>한국</td><td>1.9</td><td>2.0%</td><td>+1.5%</td></tr>
+        </tbody></table>
+        <p>미국 비중이 68.9%로 압도적 — NVIDIA·하이퍼스케일러향 HBM·DDR5 매출이 직접 반영된 결과. 자산은 한국 본국이 171조(자산총계의 97%) 집중되어 있다.</p>
+        <p>지역적으로 한국 fab 비중이 가장 크고, 중국 fab(우시·충칭·다롄)이 약 30%, 미국 인디애나 advanced packaging fab은 건설 중.</p>` },
+      { no: "2.6", title: "Moat 메커니즘",
+        body: `<table class="tbl"><thead><tr><th>원천</th><th>메커니즘</th><th>지속성</th></tr></thead><tbody>
+        <tr><td>HBM 기술 lock-in</td><td>HBM3·HBM3E 12단 세계 최초 양산. NVIDIA 품질 인증 선행. NVIDIA 메인 공급사 지위.</td><td>고 (HBM4까지)</td></tr>
+        <tr><td>고객 ecosystem</td><td>NVIDIA·AMD·Broadcom·Google과의 long-term 공급 협의.</td><td>중·고</td></tr>
+        <tr><td>capex 자본력</td><td>연 30조원 capex sustaining 가능.</td><td>고</td></tr>
+        <tr><td>SK그룹 backing</td><td>그룹 차원 자본 동원과 의사결정 속도.</td><td>중</td></tr>
+        </tbody></table>
+        <p>Moat 약화 경로: (1) HBM4·5에서 Micron·삼성 점유 확대, (2) NVIDIA의 멀티 벤더 정책 강화, (3) 중국 fab 정책 reversal, (4) cycle 정점 후 가격 급락.</p>` },
+      { no: "2.7", title: "경쟁사 비교",
+        body: `<table class="tbl"><thead><tr><th>항목</th><th>SK하이닉스</th><th>삼성전자(메모리)</th><th>Micron</th></tr></thead><tbody>
+        <tr><td>2025 메모리 매출</td><td>97.1조원</td><td>약 110조원 (DS 메모리 추정)</td><td>약 28B$</td></tr>
+        <tr><td>HBM 점유율</td><td>57%</td><td>17%</td><td>24%</td></tr>
+        <tr><td>DRAM 점유율</td><td>1위 (HBM 포함)</td><td>2위</td><td>3위</td></tr>
+        <tr><td>NAND 점유율</td><td>2위 (Solidigm 포함)</td><td>1위</td><td>5위</td></tr>
+        <tr><td>2025 영업이익률</td><td>약 49% (47.2/97.1)</td><td>DS 부문 30%대 추정</td><td>20%대</td></tr>
+        </tbody></table>` },
+      { no: "2.8", title: "경영진·governance·자본 배분",
+        body: `<p>대표이사는 곽노정 사장(반도체 엔지니어 출신, 2022~), CFO는 김우현 부사장. 회장은 SK그룹 최태원 회장. 사내이사·사외이사 board 구성.</p>
+        <p>지배구조는 SK그룹 → SK스퀘어 → SK하이닉스의 3단계. SK스퀘어가 SK하이닉스 약 20% 보유, 외국인 약 50%, 국민연금 약 8%, 기타 분산.</p>
+        <p>2025년 자본 배분은 자사주 매입 + 분기 배당 인상 등 '최대 주주환원'을 회사가 강조. 2025년 영업이익 47.2조원 중 일부가 dividend·buyback으로 환원.</p>` },
+      { no: "2.9", title: "자본구조와 재무 현황",
+        body: `<p>2025년 사업보고서 기준 연결 재무상태표(2025.12.31). 2024년 대비 자산이 56조원 증가, 자본이 47조원 증가하며 빠르게 강화되었다.</p>
+        <table class="tbl"><thead><tr><th>항목 (조원)</th><th>2023년말</th><th>2024년말</th><th>2025년말</th><th>2025 증감</th></tr></thead><tbody>
+        <tr><td><strong>자산총계</strong></td><td>100.3</td><td>119.9</td><td><strong>176.1</strong></td><td>+56.3</td></tr>
+        <tr><td>현금성+단기금융+단기투자</td><td>8.9</td><td>14.2</td><td>34.9</td><td>+20.7</td></tr>
+        <tr><td>매출채권 (AR)</td><td>6.6</td><td>13.0</td><td>18.2</td><td>+5.2</td></tr>
+        <tr><td>재고자산</td><td>13.5</td><td>13.3</td><td>14.3</td><td>+1.0</td></tr>
+        <tr><td>유형자산</td><td>52.7</td><td>60.2</td><td>77.5</td><td>+17.3</td></tr>
+        <tr><td><strong>부채총계</strong></td><td>46.8</td><td>45.9</td><td><strong>55.4</strong></td><td>+9.5</td></tr>
+        <tr><td>단기차입금</td><td>9.9</td><td>5.3</td><td>8.2</td><td>+2.9</td></tr>
+        <tr><td>장기차입금</td><td>19.6</td><td>17.4</td><td>14.1</td><td>-3.3</td></tr>
+        <tr><td><strong>자본총계</strong></td><td>53.5</td><td>73.9</td><td><strong>120.7</strong></td><td>+46.8</td></tr>
+        <tr><td>이익잉여금</td><td>46.7</td><td>65.4</td><td>106.6</td><td>+41.2</td></tr>
+        </tbody></table>
+        <p>총차입금 22.3조원 vs 현금성+단기금융+단기투자 34.9조원 → <strong>net cash 약 12.6조원</strong>. 부채비율 약 46%(부채/자본). 유형자산 77.5조원으로 고정자산 비중이 높은 전형적 장치 산업 구조. 2026 capex는 30조원대 추정(한경 컨센서스).</p>` },
+      { no: "2.10", title: "최근 실적 추이",
+        body: `<p>사업보고서 기준 연간 매출 32.77조(FY23) → 66.19조(FY24) → 97.15조(FY25). 영업이익 -7.73조 → 23.47조 → 47.21조. 순이익 -9.14조 → 19.80조 → 42.95조. 2년 만에 영업이익 swing이 +55조원에 달한다.</p>
+        <div id="quarterlyTrendChartSummary"></div>
+        <p>분기 영업이익률은 25Q1 42% → 25Q2 41% → 25Q3 47% → 25Q4 58%로 cycle 가속이 분명히 확인된다. GP 마진은 FY24 48.0% → FY25 60.4%로 12.4%p 개선되었다. 매출원가는 FY24 34.36조 → FY25 38.46조로 +11.9%만 증가해 매출 +46.8% 대비 operating leverage가 강하게 작동했다. 2026년 1분기는 추가 가속 또는 cycle 정점 신호 추적의 분기점이며, 사업보고서가 보여주는 FY23의 영업적자 -7.73조 기록은 cycle 둔화 시점에 어떤 swing이 가능한지를 reference로 남긴다.</p>` },
+      { no: "2.11", title: "회사가 제시한 전략",
+        body: `<ul>
+          <li><strong>HBM</strong>: HBM3E 점유율 유지, HBM4 양산 본격화, NVIDIA Rubin·차세대 ASIC 메인 공급</li>
+          <li><strong>1c DRAM·321단 NAND</strong>: 미세화·고적층화로 cost·cap 개선</li>
+          <li><strong>주주환원</strong>: 최대 주주환원 단행</li>
+          <li><strong>capex</strong>: HBM·advanced packaging·미국 인디애나 fab 동시 진행</li>
+        </ul>` },
+      { no: "2.12", title: "회사 차원의 구조적 위험",
+        body: `<table class="tbl"><thead><tr><th>위험</th><th>메커니즘</th></tr></thead><tbody>
+        <tr><td>cycle 정점 risk</td><td>단일 사업, 가격 급락 시 영업이익 -50%~-80% 가능</td></tr>
+        <tr><td>중국 fab 30%</td><td>VEU·미·중 정책 변화</td></tr>
+        <tr><td>NVIDIA 의존</td><td>가격·물량 협상력, 멀티 벤더 시 점유 분산</td></tr>
+        <tr><td>HBM4 경쟁</td><td>Micron·삼성 추격</td></tr>
+        <tr><td>capex 부담</td><td>2026 30조원, 사이클 둔화 시 감가상각 부담 급증</td></tr>
+        <tr><td>SK그룹 거버넌스</td><td>최태원-노소영 이혼 cycle, 그룹 자본 재편 가능성</td></tr>
+        </tbody></table>` }
+    ],
+
+    part3: [
+      { no: "3.A", title: "EBITDA quality 의심 신호",
+        body: `<p>cycle 호황기에는 재고평가환입(이전 분기 평가손실 환입)이 영업이익에 일회성으로 반영될 수 있다. 25Q4 영업이익률 58%의 경우 가격 상승의 직접 효과인지, 환입 효과인지 분해가 필요(<em>사업보고서 별도 read</em>).</p>
+        <p>HBM 매출이 영업이익의 50% 이상이지만 별도 공시되지 않아 분해를 외부에서 검증하기 어렵다.</p>` },
+      { no: "3.B", title: "Working capital 신호",
+        body: `<p>cycle 호황기 재고 cycle은 (a) 출하 가속으로 AR 증가, (b) HBM 우선 공급으로 일반 DRAM 채널 inventory 누적 가능성, (c) 고가 NAND eSSD 재고 회전 빠름. 분기 BS는 사업보고서 직접 read 필요.</p>` },
+      { no: "3.C", title: "현금흐름의 질",
+        body: `<p>영업이익 47.2조원의 영업현금흐름 conversion은 매우 높을 것으로 추정. 단 2026 capex 30조원으로 잉여현금흐름은 그만큼 압축. 자사주·dividend 환원 capacity는 회사가 IR에서 '최대 주주환원' 표현으로 시그널링.</p>` },
+      { no: "3.D", title: "숨은 부채와 거버넌스",
+        body: `<p>SK그룹 거버넌스 변동성이 가장 큰 잠재 risk. 최태원 회장-노소영 관장 이혼 소송이 2024.5 1심에서 1.4조원 위자료·재산분할 판결, 항소 진행 중. 그룹 차원 자본 재편(SK스퀘어 → SK하이닉스 지분 변동) 가능성 잠재.</p>
+        <p>중국 공장 VEU 정책 변화 시 일회성 fab 가동 차질 비용 가능. Solidigm(전 Intel NAND) 인수 후 영업권·무형자산이 BS에 누적되어 cycle 둔화 시 손상 위험.</p>` },
+      { no: "3.E", title: "회계 위험",
+        body: `<p>2025년 사업보고서(제78기) 기준 <strong>감사인의 핵심감사사항(KAM)</strong>은 다음 1개 항목이다.</p>
+        <ul>
+          <li><strong>(별도·연결) 기계장치의 감가상각개시시점에 대한 적정성 검토</strong> — 신규 fab 라인 가동 시점에 따라 감가상각 개시 시점이 결정되며 손익에 직접 영향. HBM·1c DRAM·Solidigm 등 신규 capex가 막대해 KAM의 핵심.</li>
+        </ul>
+        <p>참고로 제77기(FY2024)에는 KIOXIA Holdings 투자 공정가치 평가가 KAM이었고, 제76기(FY2023)에는 KIOXIA 평가 + Solidigm CGU 손상평가 + 기계장치 감가상각개시시점 + 종속·관계기업 회수가능액 검토 4건이 KAM이었다. 2025년 KAM이 1건으로 줄어든 점은 회계 정합성이 안정화되고 있음을 시사.</p>
+        <p>매출채권 대손충당금 설정비율 0.01%로 매우 낮음. 채권 18.2조원에 대한 대손충당금 27억원에 불과. cycle 호황기 회수 양호 신호.</p>` },
+      { no: "3.F", title: "운영 위험",
+        body: `<p>NVIDIA 단일 고객 의존이 HBM에서 매우 큼. 가격·물량 정책 변화에 직접 노출. 중국 우시 fab은 DRAM 핵심 거점이라 정책 reversal 시 영향이 가장 큼.</p>
+        <p>핵심 인력은 곽노정 사장과 R&D 엔지니어 그룹. HBM 핵심 인력 유출(중국·미국 경쟁사) 가능성도 산업 risk.</p>` },
+      { no: "3.G", title: "주식 투자자 관점의 위험 신호 종합",
+        body: `<table class="tbl"><thead><tr><th>프레임</th><th>유발 사실</th><th>영향</th></tr></thead><tbody>
+        <tr><td>이익 조정 의심</td><td>재고평가환입, HBM 가격 협상 시점</td><td>분기 변동성</td></tr>
+        <tr><td>운전자본</td><td>cycle 호황 AR·재고 동반 증가</td><td>FCF 압박 시점</td></tr>
+        <tr><td>숨은 부채</td><td>SK그룹 거버넌스, Solidigm 영업권</td><td>일회성 손상</td></tr>
+        <tr><td>회계</td><td>HBM capex 자본화, 내용연수</td><td>분기 surprise</td></tr>
+        <tr><td>운영 집중</td><td>NVIDIA 의존, 중국 30%</td><td>지정학·고객 변동성</td></tr>
+        </tbody></table>` },
+      { no: "3.H", title: "경영진 질문 / 추가 확인 항목", body: `<p>이어지는 박스 참조.</p>` }
+    ],
+
+    part4: [
+      { no: "4.1", title: "핵심 사실 정리",
+        body: `<ul>
+          <li><strong>FY2025 사업보고서 기준</strong> 매출 97.15조원(+46.8%)·영업이익 47.21조원(+101.2%)·순이익 42.95조원(+116.9%) 모두 사상 최대. EPS 62,044원(전년 28,732원).</li>
+          <li>삼성전자 영업이익(43.60조원)을 처음 추월.</li>
+          <li>GP 마진 48.0%(FY24) → 60.4%(FY25)로 12.4%p 개선. 매출원가는 +11.9%만 늘어 operating leverage 강하게 작동.</li>
+          <li>HBM 점유율 57%(JP Morgan 기준), DRAM 점유율 25Q3 34.3%·NAND 19.7%(IDC 기준).</li>
+          <li>외부매출 지역별: 미국 68.9% (66.9조) · 중국 19.7% · 아시아 7.4% · 유럽 2.0% · 한국 2.0%.</li>
+          <li>자본 1년 만에 73.9조→120.7조로 +46.8조 누적, 이익잉여금 65.4→106.6조. Net cash 약 12.6조원.</li>
+          <li>중국 공장 비중 약 30% (우시·충칭·다롄). 2026 capex 약 30조원 추정.</li>
+          <li>FY2025 KAM 1건(기계장치 감가상각개시시점) — FY2023의 4건에서 단순화. 회계 정합성 안정화 신호.</li>
+          <li>Alpha 종합 7.8. HBM·실적 모멘텀이 score를 끌어올리지만 단일 사업 cycle risk와 NVIDIA 의존(68.9%)·SK그룹 거버넌스가 동전의 뒷면.</li>
+        </ul>` },
+      { no: "4.2", title: "산업·회사·회계 layer의 연결",
+        body: `<p>산업 layer의 AI 슈퍼사이클(1.4)이 회사 layer의 HBM 우위(2.6)와 직접 결합되어 사상 최대 실적(2.10)을 만든다. 다만 단일 사업 의존(2.2·2.12)으로 cycle 정점 후 하방 변동성도 그만큼 크다.</p>
+        <p>지정학 risk(1.7)는 회사 중국 공장 비중(2.5)에 직접 반영되며, 정책 reversal 시 fab 가동 차질이 회계 layer의 재고 평가·일회성 비용(3.A·3.D)으로 이어진다.</p>` },
+      { no: "4.3", title: "후속 작업이 필요한 항목",
+        body: `<ol>
+          <li>2025 사업보고서 — KAM, 관계사 거래, capex 가이던스, 분기 BS</li>
+          <li>HBM 분기 매출·영업이익 분해 (회사 별도 공시 X)</li>
+          <li>Solidigm(전 Intel NAND) 인수 영업권·무형자산 평가 정책</li>
+          <li>2026 capex 가이던스 정밀화</li>
+          <li>중국 fab capacity 비중과 VEU 시나리오</li>
+          <li>최태원 회장 이혼 소송 항소 진행과 그룹 자본 재편 가능성</li>
+        </ol>` },
+      { no: "4.4", title: "출처", body: `<p>아래 출처 섹션 참조.</p>` }
+    ],
+
+    mgmtQ: [
+      "HBM 분기 매출·영업이익 분해와 NVIDIA·AMD·Broadcom 별 비중은?",
+      "HBM4 양산 일정과 NVIDIA Rubin 공급 계약 규모는?",
+      "Micron·삼성의 HBM 추격에 대한 가격·물량 방어 전략은?",
+      "2026년 capex 30조원의 영역별 배분 (HBM·일반 DRAM·NAND·미국 인디애나)?",
+      "중국 우시 fab의 2026년 capacity 운영 계획과 VEU 허가권 활용은?",
+      "Solidigm(NAND) 인수 영업권·무형자산 평가 정책과 손상 test 가정은?",
+      "최태원 회장 이혼 소송이 SK스퀘어→SK하이닉스 지배구조에 미치는 영향은?",
+      "cycle 정점 신호 monitoring과 capex 조정 trigger는 어떻게 설계되어 있는가?"
+    ],
+
+    itemsToVerify: [
+      "2025 사업보고서 — KAM, 관계사 거래, 분기 BS, capex 가이던스",
+      "HBM 분기 매출 실측 (NVIDIA·하이퍼스케일러별)",
+      "Solidigm 인수 후 NAND 사업 분해 (한국 청주 + Solidigm)",
+      "2026년 capex 영역별 배분",
+      "중국 fab capacity 비중과 VEU 진행 상황",
+      "최태원 회장 사법·이혼 소송 진행과 그룹 차원 영향"
+    ],
+
+    sources: [
+      { title: "SK하이닉스 2025 연간 IR", url: "https://news.skhynix.co.kr/2025-business-results/" },
+      { title: "SK하이닉스 2025 연간 IR (영문)", url: "https://news.skhynix.co.kr/2025-business-results_yb/" },
+      { title: "디일렉 25Q4 컨콜", url: "https://www.thelec.kr/news/articleView.html?idxno=51581" },
+      { title: "기호일보 — 2025 사상 최대", url: "https://www.kihoilbo.co.kr/news/articleView.html?idxno=3011795" },
+      { title: "글로벌에픽 — 삼성 첫 추월", url: "https://www.globalepic.co.kr/view.php?ud=20260129101540489948439a4874_29" },
+      { title: "SK하이닉스 — 2026 메모리 슈퍼사이클 전망", url: "https://news.skhynix.co.kr/2026-market-outlook/" },
+      { title: "EBN — HBM 다자 경쟁", url: "https://www.ebn.co.kr/news/articleView.html?idxno=1674176" },
+      { title: "Counterpoint — DRAM·HBM 점유율", url: "https://korea.counterpointresearch.com/global-dram-and-hbm-market-share-quarterly/" },
+      { title: "Counterpoint — 메모리 가격 (2026.1)", url: "https://korea.counterpointresearch.com/memory-price-tracker-january-2026/" },
+      { title: "Daishin Research — 메모리 2026 전망", url: "http://money2.daishin.com/PDF/Out/intranet_data/product/researchcenter/report/2026/01/56208_260105_industry_report.pdf" },
+      { title: "FnGuide 컨센서스 — SK하이닉스", url: "https://comp.fnguide.com/SVO2/asp/SVD_Consensus.asp?pGB=1&gicode=A000660" },
+      { title: "Wisereport — 기업 정보", url: "https://comp.wisereport.co.kr/company/c1010001.aspx?cmp_cd=000660" },
+      { title: "SK하이닉스 사업보고서 (제78기, 2026.03.17 공시)", url: "https://dart.fss.or.kr" }
+    ]
+  }
+};
+
+// ============================================================
+//  STUDIES — 산업·기술·정책 스터디 노트
+//  사용자 필기·리서치 누적용. 새 노트 추가는 객체에 키 추가.
+// ============================================================
+const STUDIES = {
+  "semiconductor-value-chain": {
+    id: "semiconductor-value-chain",
+    title: "Semiconductor Value Chain Dashboard",
+    category: "산업",
+    asOfDate: "2026-05-06",
+    tags: ["반도체", "메모리", "HBM", "AI", "Foundry", "Policy"],
+    summary: "반도체 가치사슬 전체 — Memory·HBM·AI 데이터센터·Supply Chain·Policy·Roadmap 종합 노트",
+    body: `
+<nav class="sv-anchor-nav">
+  <a href="#sv-hero">Hero</a>
+  <a href="#sv-basic">기초 개념</a>
+  <a href="#sv-vc">Value Chain</a>
+  <a href="#sv-hbm">HBM Deep Dive</a>
+  <a href="#sv-demand">Demand Driver</a>
+  <a href="#sv-supply">Supply Structure</a>
+  <a href="#sv-policy">Policy</a>
+  <a href="#sv-roadmap">Roadmap</a>
+  <a href="#sv-investment">투자 관점</a>
+  <a href="#sv-glossary">Glossary</a>
+</nav>
+
+<section class="sv-section" id="sv-hero">
+  <div class="sv-hero">
+    <h1>Semiconductor Value Chain Dashboard</h1>
+    <div class="sub">Memory, HBM, AI Datacenter & Supply Chain Map — Research Note (2026.05 기준)</div>
+    <div class="sv-summary">
+      <div class="sv-summary-card"><div class="num">01</div><div class="ttl">Memory vs Non-Memory</div><div class="desc">메모리는 표준화·사이클 산업, 비메모리는 맞춤형·디자인 산업. 두 layer는 서로 다른 driver로 움직인다.</div></div>
+      <div class="sv-summary-card"><div class="num">02</div><div class="ttl">HBM as AI Memory Bottleneck</div><div class="desc">GPU 가속기 1대당 HBM 6~8개 탑재. 후공정·TSV 수율이 출하량을 좌우하는 신규 병목.</div></div>
+      <div class="sv-summary-card"><div class="num">03</div><div class="ttl">Advanced Packaging as New Moat</div><div class="desc">TSMC CoWoS capacity가 NVIDIA 가속기 출하 ceiling을 결정. 후공정이 새 moat의 layer.</div></div>
+      <div class="sv-summary-card"><div class="num">04</div><div class="ttl">AI Datacenter as Demand Driver</div><div class="desc">Training·Inference·Long-context 동시 폭증. DRAM·HBM·NAND 모두 동반 수요.</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="sv-section" id="sv-basic">
+  <h2>Basic Concept — 메모리 vs 비메모리</h2>
+  <div class="lead">반도체는 크게 메모리(저장)와 비메모리(연산·통신·아날로그)로 나뉜다. 두 layer의 사업 모델·진입장벽·cycle 성격이 완전히 다르다.</div>
+
+  <div class="sv-grid2">
+    <div class="sv-card">
+      <h4>메모리 반도체 <span class="pill b">Memory</span></h4>
+      <p>정보를 저장하고 기억하는 기능. 표준화된 제품으로 commoditized 사이클 산업에 가깝다.</p>
+      <div class="label">대표 제품</div>
+      <ul>
+        <li><strong>DRAM</strong>: 휘발성 메모리. 전원 끊기면 정보 소실. CPU/GPU와 가장 가까이.</li>
+        <li><strong>NAND Flash</strong>: 비휘발성. 전원 없어도 유지. SSD·USB·모바일 storage.</li>
+        <li><strong>HBM (High Bandwidth Memory)</strong>: DRAM die 8~16단을 TSV로 수직 적층한 초고성능 DRAM. AI 가속기 전용.</li>
+      </ul>
+      <div class="label">특징</div>
+      <p>표준화 → 가격 cycle 큼 / 진입장벽 = capex·미세화 know-how / 3사 과점(DRAM은 SK·삼성·Micron).</p>
+    </div>
+    <div class="sv-card">
+      <h4>비메모리 반도체 <span class="pill p">Non-Memory</span></h4>
+      <p>연산·통신·아날로그·이미지센서 등 메모리 외 모든 반도체. 맞춤형 디자인 영역.</p>
+      <div class="label">대표 제품</div>
+      <ul>
+        <li><strong>Logic / CPU</strong>: 중앙처리장치. Intel·AMD가 x86, ARM 진영이 모바일/서버 확장 중.</li>
+        <li><strong>GPU</strong>: 그래픽·AI 가속. NVIDIA가 압도적 지배.</li>
+        <li><strong>모바일 AP / 차량용 SoC / 통신칩 / 이미지센서</strong> 등.</li>
+      </ul>
+      <div class="label">특징</div>
+      <p>맞춤형 → 디자인 IP·생태계가 진입장벽 / Fabless(설계만)와 Foundry(생산만) 분업 일반화 / TSMC 압도적 1위.</p>
+    </div>
+  </div>
+
+  <div class="sv-callout"><strong>구조적 인사이트:</strong> 메모리는 가격·재고가 손익을 결정하고, 비메모리는 설계 IP와 생태계가 손익을 결정한다. 같은 "반도체 호황"이라도 두 그룹의 수혜·시점·지속성이 전혀 다르다.</div>
+
+  <div class="sv-grid3" style="margin-top:14px">
+    <div class="sv-card"><h4>Wafer</h4><p>실리콘 단결정 잉곳을 얇게 자른 원판. 한 장에 수백~수천 개 die가 들어간다. 12인치(300mm)가 표준.</p></div>
+    <div class="sv-card"><h4>Die</h4><p>웨이퍼 위에 만들어진 개별 반도체 칩 조각. 검사 후 절단되어 패키징 단계로 이동.</p></div>
+    <div class="sv-card"><h4>Package</h4><p>die를 외부 충격·습기·열로부터 보호하고 PCB와 연결할 수 있게 패키징한 완성 부품.</p></div>
+    <div class="sv-card"><h4>Module</h4><p>여러 패키지된 칩을 PCB에 결합한 솔루션. RDIMM(서버 메모리), eSSD 등.</p></div>
+    <div class="sv-card"><h4>Front-end</h4><p>전공정 — 웨이퍼 가공까지. 노광·식각·증착·세정 반복.</p></div>
+    <div class="sv-card"><h4>Back-end</h4><p>후공정 — Die cutting·stacking·bonding·packaging·test. HBM에서는 후공정이 critical.</p></div>
+  </div>
+</section>
+
+<section class="sv-section" id="sv-vc">
+  <h2>Value Chain Visualization</h2>
+  <div class="lead">반도체 가치사슬은 다섯 단계로 분해된다. 각 단계마다 다른 player·다른 진입장벽·다른 병목이 작동한다.</div>
+
+  <div class="sv-flow-overview">
+    <div class="sv-ov"><div class="step-num">STEP 1</div><div class="step-title">장비·소재</div><div class="step-tagline">EUV 장비·웨이퍼·소재 공급</div></div>
+    <div class="sv-ov"><div class="step-num">STEP 2</div><div class="step-title">전공정 (Wafer Fab)</div><div class="step-tagline">웨이퍼에 회로 형성<br>DRAM/NAND/Logic die</div></div>
+    <div class="sv-ov"><div class="step-num">STEP 3</div><div class="step-title">후공정 (Packaging)</div><div class="step-tagline">절단·적층·본딩<br>HBM·AI 신 병목</div></div>
+    <div class="sv-ov"><div class="step-num">STEP 4</div><div class="step-title">모듈·솔루션</div><div class="step-tagline">HBM Stack·RDIMM·eSSD<br>고객 맞춤 customization</div></div>
+    <div class="sv-ov"><div class="step-num">STEP 5</div><div class="step-title">최종 OEM</div><div class="step-tagline">AI 서버·데이터센터<br>PC·모바일·자동차</div></div>
+  </div>
+
+  <div class="sv-flow">
+    <div class="sv-stage">
+      <div class="stage-head"><div class="step">STEP 1</div><h4>장비·소재</h4><div style="font-size:11.5px;color:var(--text-soft);line-height:1.55">fab에 들어가는 장비와 소재. 미국·일본·네덜란드 과점 구조로 지정학 risk 가장 큰 layer.</div></div>
+      <div class="stage-body">
+        <div><div class="lab">역할</div><div>fab 가공에 필요한 장비와 소재를 공급. 산업 전체 capex의 시작점.</div></div>
+        <div><div class="lab">핵심</div><div>EUV·노광기·식각·증착·세정·검사 장비. 웨이퍼·포토레지스트·특수가스·CMP 슬러리·케미컬 등 소재.</div></div>
+        <div><div class="lab">주요 기업</div><div>장비: ASML(EUV 독점), AMAT, LAM, KLA, Tokyo Electron / 소재: SUMCO, JSR, 솔브레인, 동우화인켐.</div></div>
+        <div><div class="lab">투자 포인트</div><div>EUV·고NA EUV로 미세화 cycle 의존. 일본 소재 회사들의 점유율 안정.</div></div>
+        <div><div class="lab">병목</div><div>ASML EUV 단일 공급, 일본 소재 의존, 미국 수출통제 직격탄.</div></div>
+      </div>
+    </div>
+    <div class="sv-stage">
+      <div class="stage-head"><div class="step">STEP 2</div><h4>전공정 (Wafer Fab)</h4><div style="font-size:11.5px;color:var(--text-soft);line-height:1.55">웨이퍼 위에 회로를 형성하는 단계. 일반적으로 Front-end로 분류된다.</div></div>
+      <div class="stage-body">
+        <div><div class="lab">역할</div><div>웨이퍼 위에 회로 형성. die 단위로 가공 완료.</div></div>
+        <div><div class="lab">핵심 공정</div><div>노광·식각·증착·세정·검사를 수백 회 반복. 결과물: DRAM die / NAND die / Logic die.</div></div>
+        <div><div class="lab">주요 기업</div><div>파운드리: TSMC, 삼성 파운드리. IDM: Intel, SK하이닉스, Micron, 삼성 메모리.</div></div>
+        <div><div class="lab">투자 포인트</div><div>미세화 진척률·EUV 적용 노드 수율·신규 fab capex.</div></div>
+        <div><div class="lab">병목</div><div>EUV 미세화 한계, 수율 안정화. 2nm GAA에서 TSMC(70~90%) vs 삼성(50~60%) 격차.</div></div>
+      </div>
+    </div>
+    <div class="sv-stage">
+      <div class="stage-head"><div class="step">STEP 3</div><h4>후공정 (Packaging·Test)</h4><div style="font-size:11.5px;color:var(--text-soft);line-height:1.55">die를 절단·적층·본딩·패키징·검사. HBM·AI 시대의 신규 병목 layer.</div></div>
+      <div class="stage-body">
+        <div><div class="lab">역할</div><div>die cutting → stacking → bonding → packaging → test (Back-end).</div></div>
+        <div><div class="lab">핵심 기술</div><div>TSV(수직 통로), CoWoS(advanced packaging), SoIC, FOWLP, Bonding, Test.</div></div>
+        <div><div class="lab">주요 기업</div><div>TSMC(CoWoS·SoIC), ASE, Amkor, SK하이닉스·삼성(HBM 자체 후공정).</div></div>
+        <div><div class="lab">투자 포인트</div><div>CoWoS capacity 증설 일정, HBM 후공정 수율 추이.</div></div>
+        <div><div class="lab">병목</div><div>HBM 출하량 = 후공정 capacity·수율. CoWoS capacity가 NVIDIA 가속기 출하 ceiling.</div></div>
+      </div>
+    </div>
+    <div class="sv-stage">
+      <div class="stage-head"><div class="step">STEP 4</div><h4>모듈·솔루션</h4><div style="font-size:11.5px;color:var(--text-soft);line-height:1.55">패키지된 칩을 시스템 형태로 통합. 고객 맞춤형 customization 트렌드.</div></div>
+      <div class="stage-body">
+        <div><div class="lab">역할</div><div>패키지된 칩을 모듈·시스템 형태로 통합해 OEM에 공급.</div></div>
+        <div><div class="lab">핵심 제품</div><div>HBM Stack, DDR5 RDIMM(서버 메모리), eSSD(기업용), GPU 보드.</div></div>
+        <div><div class="lab">주요 기업</div><div>메모리 모듈: SK하이닉스·삼성·Micron / GPU 보드: NVIDIA·AMD.</div></div>
+        <div><div class="lab">투자 포인트</div><div>고객 맞춤형 HBM4 customization. eSSD·CXL 메모리 신규 확대.</div></div>
+        <div><div class="lab">트렌드</div><div>NVIDIA·AMD·Broadcom 별 다른 HBM4 사양 공급으로 spec 분화.</div></div>
+      </div>
+    </div>
+    <div class="sv-stage">
+      <div class="stage-head"><div class="step">STEP 5</div><h4>최종 OEM</h4><div style="font-size:11.5px;color:var(--text-soft);line-height:1.55">완성된 칩·모듈을 시스템에 적용. 수요의 종착점이자 driver.</div></div>
+      <div class="stage-body">
+        <div><div class="lab">역할</div><div>완성된 칩·모듈을 AI 서버·PC·모바일·자동차·데이터센터에 적용.</div></div>
+        <div><div class="lab">주요 시장</div><div>AI 서버, 일반 서버, PC, 모바일, 자동차, 산업용.</div></div>
+        <div><div class="lab">주요 기업</div><div>하이퍼스케일러: MS·Google·AWS·Meta / 서버 OEM: Dell·HPE·Supermicro / 모바일·차량: Apple·삼성·BYD.</div></div>
+        <div><div class="lab">투자 포인트</div><div>하이퍼스케일러 capex 가이던스, AI 데이터센터 build-out 속도.</div></div>
+        <div><div class="lab">동향</div><div>하이퍼스케일러 자체 ASIC(Google TPU·AWS Trainium·Meta MTIA) 확대로 NVIDIA·HBM 동시 수요.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sv-insight"><strong>추가 인사이트 — IDM vs Fabless·Foundry 모델:</strong> 메모리는 IDM(설계+생산 통합) 모델 — 삼성·SK·Micron이 한 회사 안에서 다 한다. 비메모리는 Fabless(설계만, NVIDIA·AMD·Apple)와 Foundry(생산만, TSMC) 분리가 표준이다. 이 분리 구조가 TSMC 압도적 우위(점유 70%)의 원천이다. Intel은 IDM을 고수하다 파운드리 진입에 늦었고, 삼성은 메모리·시스템·파운드리 모두를 한 회사에 가진 유일한 IDM이지만 자원 분산의 trade-off를 안고 있다.</div>
+</section>
+
+<section class="sv-section" id="sv-hbm">
+  <h2>HBM Deep Dive</h2>
+  <div class="lead">HBM(High Bandwidth Memory)은 DRAM die 여러 장을 TSV(Through-Silicon Via)로 수직 적층한 초고성능 DRAM이다. AI 가속기와 함께 한 패키지에 들어가며, 일반 DRAM 대비 수 배 이상의 대역폭을 제공한다.</div>
+
+  <div class="sv-hbm-diagram">
+    <div class="sv-hbm-stack">
+      <div class="sv-hbm-die">DRAM die #16 (top)</div>
+      <div class="sv-hbm-die">DRAM die #15</div>
+      <div class="sv-hbm-die">⋮ TSV 연결 ⋮</div>
+      <div class="sv-hbm-die">DRAM die #2</div>
+      <div class="sv-hbm-die">DRAM die #1 (base logic)</div>
+      <div class="sv-hbm-die gpu">GPU (NVIDIA H200·B200·Rubin)</div>
+      <div class="sv-hbm-die interposer">Silicon Interposer (CoWoS)</div>
+      <div class="sv-hbm-die substrate">Substrate · Package</div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:14px">DRAM die 16단 적층 + GPU + Interposer + 패키지 단면도. TSV가 die 간 수직 연결, CoWoS가 GPU-HBM 가로 연결.</div>
+  </div>
+
+  <div class="sv-grid2" style="margin-top:18px">
+    <div class="sv-card">
+      <h4>HBM 핵심 사양</h4>
+      <ul>
+        <li><strong>적층 단수</strong>: HBM3E 8단/12단, HBM4 16단, HBM5 추진</li>
+        <li><strong>TSV</strong>: die 사이를 수직으로 관통하는 미세 통로 (한 칩당 수만 개)</li>
+        <li><strong>대역폭</strong>: HBM3E 약 1.2 TB/s, HBM4 1.5~2 TB/s 목표</li>
+        <li><strong>가격·마진</strong>: 일반 DRAM 대비 단가 5~10배, 마진 매우 높음</li>
+        <li><strong>로드맵</strong>: HBM3E (현재) → HBM4 (2025년 양산) → HBM5</li>
+      </ul>
+    </div>
+    <div class="sv-card">
+      <h4>비유로 이해하기</h4>
+      <ul>
+        <li><strong>일반 DRAM</strong> = 단층 아파트 (출입구 하나, 소수 통로)</li>
+        <li><strong>HBM</strong> = 초고속 엘리베이터가 있는 16층 고층 아파트 (다수 통로 동시 가동)</li>
+        <li><strong>TSV</strong> = 층간 엘리베이터 (수직 데이터 이동)</li>
+        <li><strong>Interposer / CoWoS</strong> = 아파트와 도시 중심을 잇는 고속 터미널 (GPU와 HBM 사이)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="sv-callout"><strong>왜 HBM이 핵심인가:</strong> AI 모델 학습·추론은 GPU가 데이터를 메모리에서 읽어오는 속도(memory bandwidth)에 발목 잡힌다. 일반 DDR로는 GPU 연산 속도를 따라갈 수 없다. HBM이 등장하면서 GPU와 메모리를 같은 패키지에 두고 수십 배 빠른 데이터 이동을 가능하게 했다. AI 가속기 성능의 절반 이상이 HBM에 의존한다.</div>
+
+  <div class="sv-insight"><strong>추가 인사이트 — CoWoS 병목이 진짜 ceiling:</strong> 흔히 "HBM 부족"이라고 하지만 실제 출하량은 TSMC의 CoWoS(Chip-on-Wafer-on-Substrate) 후공정 capacity로 결정된다. NVIDIA H200·B200을 만들려면 GPU die + HBM 8개를 CoWoS로 패키징해야 하는데, 이 capacity가 모자라 NVIDIA 가속기 출하량의 ceiling이 된다. 2026년 TSMC가 CoWoS capacity를 2배 이상 늘리는 capex가 진행 중이지만, 한동안 병목은 후공정에 머무를 가능성이 크다.</div>
+</section>
+
+<section class="sv-section" id="sv-demand">
+  <h2>Demand Driver — AI Supercycle 메커니즘</h2>
+  <div class="lead">현 사이클의 중심은 AI 데이터센터다. 수요는 4개 layer로 작동한다.</div>
+
+  <div class="sv-card">
+    <h4>수요 흐름</h4>
+    <p style="font-size:14px;line-height:2"><strong>AI 모델 고도화</strong> (LLM·멀티모달·Agent) → <strong>GPU 수요 증가</strong> → <strong>NVIDIA H200·B200·Rubin 출하 증가</strong> → <strong>가속기 1대당 HBM 6~8개 탑재</strong> → <strong>HBM 수요 폭증</strong></p>
+    <p>여기에 부수적으로 일반 서버 DRAM(DDR5 RDIMM), 기업용 SSD(eSSD), 데이터센터 build-out 자체에 따른 인프라 수요가 동반 폭증한다.</p>
+  </div>
+
+  <div class="sv-grid2" style="margin-top:14px">
+    <div class="sv-card">
+      <h4>Training (학습) <span class="pill r">고대역폭</span></h4>
+      <ul>
+        <li>대규모 GPU cluster (수천~수만 GPU)</li>
+        <li>초고속 HBM 절대 필수 — 메모리 bandwidth가 학습 속도 결정</li>
+        <li>모델 size 증가 → HBM 용량/단수 직접 영향</li>
+        <li>OpenAI·Anthropic·Google·Meta·xAI 등 frontier model 회사가 driver</li>
+      </ul>
+    </div>
+    <div class="sv-card">
+      <h4>Inference (추론) <span class="pill p">대용량+대역폭</span></h4>
+      <ul>
+        <li>실제 서비스 단계 (Chatbot·Agent·검색)</li>
+        <li>모델 size 증가 + Long-context (수십만 token) 추세로 메모리 용량 동시 중요</li>
+        <li>KV cache offload 수요로 NAND eSSD·CXL 메모리 확장 시장 동반 성장</li>
+        <li>API 호출 빈도 증가 → inference server 수요는 training보다 더 빠르게 확대 가능</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="sv-insight"><strong>추가 인사이트 — KV cache와 CXL 메모리:</strong> 추론 단계에서 long-context를 처리하려면 KV cache(이전 토큰의 key-value 정보)가 메모리에 누적된다. 이를 GPU의 비싼 HBM에 모두 두는 것은 비효율이라, GPU 외부의 빠른 메모리(CXL Memory)에 offload하는 아키텍처가 빠르게 자리 잡고 있다. SK하이닉스·삼성이 CXL 메모리에 투자하는 배경이다.</div>
+</section>
+
+<section class="sv-section" id="sv-supply">
+  <h2>Supply Structure</h2>
+  <div class="lead">메모리·HBM·NAND 각각 다른 과점 구조. 중국 fab 노출도 다르다.</div>
+
+  <table class="sv-tbl">
+    <thead><tr><th>제품</th><th>구조</th><th>주요 player·점유</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td><strong>DRAM</strong></td><td>3사 과점 (~95%)</td><td>SK하이닉스 ~36%·삼성전자 ~33%·Micron ~24%</td><td>HBM 포함 시 SK 1위</td></tr>
+      <tr><td><strong>NAND</strong></td><td>5사 과점</td><td>삼성·SK하이닉스(Solidigm 포함)·Kioxia·Western Digital·Micron</td><td>SK가 Solidigm 인수로 2위 도약</td></tr>
+      <tr><td><strong>HBM</strong></td><td>SK 우위 + 추격</td><td>SK ~57%·Micron ~24%·삼성 ~17% (JP Morgan 추정)</td><td>HBM4부터 경쟁 격화 가능성</td></tr>
+      <tr><td><strong>Foundry</strong></td><td>TSMC 압도</td><td>TSMC 69.9%·삼성 7.2%·SMIC·UMC·GF</td><td>2nm GAA에서 격차 영구화 우려</td></tr>
+    </tbody>
+  </table>
+
+  <div class="sv-card" style="margin-top:14px">
+    <h4>중국 fab 노출 <span class="pill y">지정학</span></h4>
+    <ul>
+      <li><strong>SK하이닉스</strong>: 우시(DRAM 메인)·충칭(NAND 후공정)·다롄(NAND, Solidigm) — DRAM·NAND 생산량의 약 30%</li>
+      <li><strong>삼성전자</strong>: 시안·쑤저우 (NAND 후공정·Set 생산) — 비중 상대적으로 낮음</li>
+      <li>두 회사 합산 약 40% 추정. 미국 VEU 정책 변화에 직접 노출.</li>
+      <li>2024.8 VEU 전면 승인 철회 → 2025.1 장비 출하 승인제 → 2026.1 연간 단위 허가권 (일부 완화)</li>
+    </ul>
+  </div>
+
+  <div class="sv-insight"><strong>추가 인사이트 — LTA(Long-Term Agreement) 트렌드:</strong> 2024년 후반부터 SK하이닉스·삼성·Micron 모두 NVIDIA·하이퍼스케일러와 다년 LTA(Long-Term Agreement)를 체결하기 시작했다. 메모리 가격 cycle 변동성을 hedge하려는 양사 공동의 노력이다. LTA가 일반화되면 메모리 회사의 분기 가격 변동성이 낮아지지만, 동시에 cycle 정점 가격을 상한 캡으로 가두는 trade-off가 있다.</div>
+</section>
+
+<section class="sv-section" id="sv-policy">
+  <h2>Policy & Regulation Timeline</h2>
+  <div class="lead">미·중 갈등이 반도체 산업의 가장 큰 정책 변수. 2022년 CHIPS Act 이후 정책 빈도와 강도가 모두 증가.</div>
+
+  <div class="sv-policy">
+    <div class="sv-policy-item"><div class="yr">2022.8</div><div class="desc"><strong>미국 CHIPS Act 시행</strong> — 미국 내 fab 투자에 약 527억 달러 보조금·세제지원. 동시에 보조금 수령 시 향후 10년간 중국 내 첨단 반도체 fab 신증설 제한 조항(가드레일).</div></div>
+    <div class="sv-policy-item"><div class="yr">2022.10</div><div class="desc"><strong>미국 對중국 첨단 반도체 수출통제</strong> — Logic 14nm 이하, DRAM 18nm 이하, NAND 128단 이상 장비 수출 제한.</div></div>
+    <div class="sv-policy-item"><div class="yr">2023.8</div><div class="desc"><strong>한국 K-반도체 클러스터</strong> 발표 — 용인 622조원 규모 메가 클러스터. 삼성·SK 동시 참여.</div></div>
+    <div class="sv-policy-item"><div class="yr">2024.8</div><div class="desc"><strong>VEU(Validated End User) 전면 승인 철회</strong> — 삼성·SK 중국 공장에 대한 자동 장비 반입 자격 박탈. 120일 유예.</div></div>
+    <div class="sv-policy-item"><div class="yr">2025.1</div><div class="desc"><strong>장비 출하 개별 승인제 시작</strong> — VEU 유예 종료. 매 출하마다 미국 승인 필요.</div></div>
+    <div class="sv-policy-item"><div class="yr">2025.10</div><div class="desc"><strong>중국 희토류 수출통제 강화</strong> — 사마륨·디스프로슘·가돌리늄 등 합금 수출 통제. 모터·자석 다운스트림에 영향.</div></div>
+    <div class="sv-policy-item"><div class="yr">2026.1</div><div class="desc"><strong>미국, 삼성·SK·TSMC에 연간 단위 장비 반입 허가권 부여</strong> — VEU 철회 이후 완화 조치. 2026년 운영 가시성 일부 회복.</div></div>
+  </div>
+
+  <div class="sv-callout"><strong>CHIPS Act 별도 박스:</strong>
+    <ul style="margin:6px 0;padding-left:20px;">
+      <li>미국 반도체 제조 역량 강화를 위한 보조금·세제지원 정책 (총 527억 달러)</li>
+      <li>미국 내 fab 투자 인센티브 (Intel·TSMC·삼성·SK·Micron 모두 미국 신규 fab 발표)</li>
+      <li>중국 내 첨단 반도체 투자 10년 제한 조항(가드레일)</li>
+      <li>삼성: Texas Taylor fab 약 250억 달러 투자, SK하이닉스: Indiana advanced packaging fab, TSMC: Arizona fab, Intel: Ohio·Arizona 확장</li>
+      <li>실효성 — 보조금 지급 지연·투자 변경 사례 다수. 정치적 cycle에 따라 변동 가능 (<em>추가 확인 필요</em>)</li>
+    </ul>
+  </div>
+</section>
+
+<section class="sv-section" id="sv-roadmap">
+  <h2>Technology Roadmap</h2>
+  <div class="lead">DRAM·NAND·HBM·Foundry 4축의 기술 진화 타임라인.</div>
+
+  <div class="sv-roadmap">
+    <div class="sv-roadmap-row">
+      <div class="axis">DRAM</div>
+      <div class="stages">
+        <span class="stage-pill">1z (15nm)</span>
+        <span class="stage-pill">1α (13nm)</span>
+        <span class="stage-pill">1β (12nm)</span>
+        <span class="stage-pill now">1γ (11nm) — 현재</span>
+        <span class="stage-pill">3D 적층 솔루션 확대</span>
+      </div>
+    </div>
+    <div class="sv-roadmap-row">
+      <div class="axis">NAND</div>
+      <div class="stages">
+        <span class="stage-pill">128단</span>
+        <span class="stage-pill">200단대 (V8·176단)</span>
+        <span class="stage-pill now">300단대 — 현재 (SK 321단 QLC, 삼성 V9 286단)</span>
+        <span class="stage-pill">QLC·PLC 확대</span>
+      </div>
+    </div>
+    <div class="sv-roadmap-row">
+      <div class="axis">HBM</div>
+      <div class="stages">
+        <span class="stage-pill">HBM3 (12단)</span>
+        <span class="stage-pill now">HBM3E (8단·12단) — 현재</span>
+        <span class="stage-pill">HBM4 (16단, 2025 양산)</span>
+        <span class="stage-pill">HBM5 (개발)</span>
+      </div>
+    </div>
+    <div class="sv-roadmap-row">
+      <div class="axis">Foundry</div>
+      <div class="stages">
+        <span class="stage-pill">7nm/5nm (EUV)</span>
+        <span class="stage-pill">3nm GAA (TSMC N3·삼성 SF3E)</span>
+        <span class="stage-pill now">2nm GAA — 현재 (TSMC N2·삼성 SF2)</span>
+        <span class="stage-pill">A16/1.4nm 추진</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sv-callout"><strong>핵심 변곡점:</strong>
+    <ul style="margin:6px 0;padding-left:20px;">
+      <li>DRAM 미세화는 1γ 이후 한계 → 3D 적층(3D DRAM)이 차세대 솔루션 (~2027 양산 목표)</li>
+      <li>NAND는 단수 경쟁 외에도 셀당 비트 수(QLC→PLC)로 용량 확대</li>
+      <li>HBM4부터 customization 트렌드 — NVIDIA·AMD·Broadcom 별 다른 사양 공급</li>
+      <li>2nm GAA에서 TSMC vs 삼성 수율 격차가 점유율을 결정</li>
+    </ul>
+  </div>
+</section>
+
+<section class="sv-section" id="sv-investment">
+  <h2>투자 관점 — Research Note Watchlist</h2>
+  <div class="lead">분기 IR·정책 발표 시 점검할 체크리스트. 단정적 forecast가 아닌 monitoring 질문들.</div>
+
+  <div class="sv-checklist">
+    <div class="sv-check">AI 메모리 수요는 일시적 사이클인가, 구조적 변화인가? — Training capex peak 시점, Inference 수요 지속성, 자체 ASIC 확대 vs NVIDIA 의존도</div>
+    <div class="sv-check">HBM 공급 부족이 얼마나 지속될 것인가? — TSMC CoWoS capacity 증설 일정, SK·삼성·Micron HBM 라인 증설 timeline</div>
+    <div class="sv-check">삼성전자가 HBM에서 SK하이닉스를 추격할 수 있는가? — HBM3E NVIDIA 인증 후 본격 공급 비중, HBM4 진입 시점, 가격 협상력</div>
+    <div class="sv-check">CoWoS·advanced packaging 병목은 언제 해소되는가? — TSMC capex·새 fab 가동 일정, 대안 packaging 솔루션 등장 여부</div>
+    <div class="sv-check">DRAM·NAND 가격 상승이 EPS 추정 상향으로 이어지는가? — 컨센서스 EPS 추이, LTA 비중 확대로 cycle 정점 가격 캡 영향</div>
+    <div class="sv-check">LTA가 메모리 실적 변동성을 낮출 수 있는가? — LTA 비중·기간·가격 hedge 효과, 양사 매출 안정성 변화</div>
+    <div class="sv-check">미국 수출통제가 중국 fab 생산에 어떤 영향을 주는가? — 연간 허가권 갱신·VEU 재도입 가능성, 중국 capacity 운영률</div>
+    <div class="sv-check">중국 CXMT의 범용 DRAM 추격이 가격에 어떤 영향을 주는가? — CXMT 출하량 추이, 일반 DDR5 가격 압박 시나리오</div>
+    <div class="sv-check">하이퍼스케일러 자체 ASIC(Google TPU·AWS Trainium·Meta MTIA) 확대가 NVIDIA 점유에 미치는 영향은? — HBM 직접 공급 가능성·NVIDIA 의존 분산 trend</div>
+  </div>
+</section>
+
+<section class="sv-section" id="sv-glossary">
+  <h2>Glossary</h2>
+  <div class="lead">검색 가능 용어집. 위 검색창에 영어/한글 입력 시 필터.</div>
+  <input class="sv-glossary-search" id="svGlossarySearch" placeholder="용어 검색 (예: HBM, TSV, EUV)..." oninput="document.querySelectorAll('.sv-gloss').forEach(g => { g.style.display = g.dataset.term.toLowerCase().includes(this.value.toLowerCase()) ? '' : 'none'; });" />
+  <div class="sv-glossary-grid">
+    <div class="sv-gloss" data-term="Wafer 웨이퍼"><div class="term">Wafer (웨이퍼)</div><div class="def">실리콘 단결정 잉곳을 얇게 자른 원판. 12인치(300mm) 표준. 한 장에 수백~수천 개 die가 만들어진다.</div></div>
+    <div class="sv-gloss" data-term="Die 다이"><div class="term">Die (다이)</div><div class="def">웨이퍼 위에 만들어진 개별 반도체 칩 조각. 검사 후 절단되어 패키징 단계로 이동.</div></div>
+    <div class="sv-gloss" data-term="Front-end 전공정"><div class="term">Front-end (전공정)</div><div class="def">웨이퍼 가공까지의 단계. 노광·식각·증착·세정·검사를 수백 회 반복.</div></div>
+    <div class="sv-gloss" data-term="Back-end 후공정"><div class="term">Back-end (후공정)</div><div class="def">die cutting·stacking·bonding·packaging·test. HBM·AI 시대의 신 병목.</div></div>
+    <div class="sv-gloss" data-term="DRAM 디램"><div class="term">DRAM</div><div class="def">Dynamic Random Access Memory. 휘발성 메모리. 전원 끊기면 정보 소실. CPU/GPU 옆에서 빠른 접근 메모리 역할.</div></div>
+    <div class="sv-gloss" data-term="NAND 낸드"><div class="term">NAND Flash</div><div class="def">비휘발성 메모리. 전원 없어도 정보 유지. SSD·USB·모바일 storage.</div></div>
+    <div class="sv-gloss" data-term="HBM 에이치비엠"><div class="term">HBM (High Bandwidth Memory)</div><div class="def">DRAM die 8~16단을 TSV로 수직 적층한 초고성능 DRAM. AI 가속기 전용.</div></div>
+    <div class="sv-gloss" data-term="TSV"><div class="term">TSV (Through-Silicon Via)</div><div class="def">실리콘 die를 수직으로 관통하는 미세 통로. HBM 적층 die 간 연결의 핵심.</div></div>
+    <div class="sv-gloss" data-term="CoWoS"><div class="term">CoWoS (Chip-on-Wafer-on-Substrate)</div><div class="def">TSMC의 advanced packaging 기술. GPU + HBM + Interposer를 한 패키지로 결합. NVIDIA 가속기의 capacity ceiling.</div></div>
+    <div class="sv-gloss" data-term="Advanced Packaging"><div class="term">Advanced Packaging</div><div class="def">2.5D·3D 등 첨단 후공정 기술 통칭. CoWoS·SoIC·FOWLP·TSV 모두 포함.</div></div>
+    <div class="sv-gloss" data-term="Interposer"><div class="term">Interposer</div><div class="def">GPU와 HBM 사이를 연결하는 실리콘 중간층. 고대역폭 가로 연결 담당.</div></div>
+    <div class="sv-gloss" data-term="GPU"><div class="term">GPU (Graphics Processing Unit)</div><div class="def">대규모 병렬 연산용 프로세서. NVIDIA 압도적 지배. AI 학습·추론의 메인 가속기.</div></div>
+    <div class="sv-gloss" data-term="CPU"><div class="term">CPU (Central Processing Unit)</div><div class="def">중앙처리장치. 범용 연산. Intel·AMD가 x86, ARM 진영이 모바일·서버 확장.</div></div>
+    <div class="sv-gloss" data-term="RDIMM"><div class="term">RDIMM (Registered DIMM)</div><div class="def">서버용 DDR 메모리 모듈. 64GB·128GB 등 대용량. AI 데이터센터 build-out 핵심.</div></div>
+    <div class="sv-gloss" data-term="eSSD 기업용"><div class="term">eSSD (Enterprise SSD)</div><div class="def">기업·데이터센터용 고용량 SSD. NAND 기반. AI 추론용 KV cache offload·데이터 lake에 활용.</div></div>
+    <div class="sv-gloss" data-term="LTA"><div class="term">LTA (Long-Term Agreement)</div><div class="def">메모리 회사와 고객(NVIDIA·하이퍼스케일러) 간 다년 가격·물량 합의. cycle 변동성 hedge.</div></div>
+    <div class="sv-gloss" data-term="CAPEX 자본지출"><div class="term">CAPEX (자본지출)</div><div class="def">신규 fab·장비 투자 비용. 메모리·파운드리는 capex가 매출의 30~50% 수준.</div></div>
+    <div class="sv-gloss" data-term="ASP 평균"><div class="term">ASP (Average Selling Price)</div><div class="def">평균 판매가격. 메모리 cycle을 가격 측면에서 추적하는 핵심 metric.</div></div>
+    <div class="sv-gloss" data-term="Yield 수율"><div class="term">Yield (수율)</div><div class="def">생산된 전체 die 중 양품 비율. 미세화·신공정에서 수율이 곧 손익. TSMC 70~90% vs 삼성 50~60%(2nm).</div></div>
+    <div class="sv-gloss" data-term="Fab 팹"><div class="term">Fab (Fabrication facility)</div><div class="def">웨이퍼 가공 공장. 신규 fab 1개 = 수십조 capex.</div></div>
+    <div class="sv-gloss" data-term="EUV 극자외선"><div class="term">EUV (Extreme Ultraviolet)</div><div class="def">극자외선 노광 기술. 7nm 이하 미세공정 필수. ASML이 단독 공급.</div></div>
+    <div class="sv-gloss" data-term="GAA"><div class="term">GAA (Gate-All-Around)</div><div class="def">트랜지스터 구조 진화. FinFET 다음 세대. 3nm 이하에서 적용. 누설전류 감소·성능 향상.</div></div>
+    <div class="sv-gloss" data-term="CHIPS Act 칩스법"><div class="term">CHIPS Act</div><div class="def">미국 반도체 산업 육성법(2022). 527억 달러 보조금 + 미국 내 fab 투자 인센티브 + 중국 첨단 fab 제한.</div></div>
+    <div class="sv-gloss" data-term="VEU"><div class="term">VEU (Validated End User)</div><div class="def">미국 상무부의 사전 승인 제도. VEU 자격이 있으면 개별 라이선스 없이 미국 장비 반입 가능. 2024.8 한국·대만 중국 fab에 대해 철회.</div></div>
+    <div class="sv-gloss" data-term="CXL"><div class="term">CXL (Compute Express Link)</div><div class="def">CPU와 메모리·가속기 간 고속 인터커넥트 표준. 메모리 확장(memory pooling)에 활용. AI 추론 KV cache offload 가능.</div></div>
+    <div class="sv-gloss" data-term="IDM"><div class="term">IDM (Integrated Device Manufacturer)</div><div class="def">설계+생산 통합 회사. Intel·삼성·SK하이닉스·Micron이 대표.</div></div>
+    <div class="sv-gloss" data-term="Fabless 팹리스"><div class="term">Fabless</div><div class="def">설계만 하고 생산은 외주(Foundry)에 맡기는 회사. NVIDIA·AMD·Apple·Qualcomm 등.</div></div>
+    <div class="sv-gloss" data-term="Foundry 파운드리"><div class="term">Foundry</div><div class="def">설계 없이 위탁생산만 하는 회사. TSMC·삼성 파운드리·UMC·SMIC.</div></div>
+  </div>
+</section>
+
+<div class="sv-callout" style="margin-top:24px"><strong>본 노트 한계·면책:</strong> 본 자료는 산업 fact 정리·메커니즘 분석을 목적으로 한다. 시장점유율·timeline·로드맵은 외부 출처 인용이며 정책 변화·재고·가격은 분기 단위로 갱신해야 한다. 단정적 forecast나 투자 의견은 포함하지 않는다.</div>
+`,
+    sources: [
+      { title: "삼성전자 사업보고서 제57기 (2026.03.10 공시)", url: "https://dart.fss.or.kr" },
+      { title: "SK하이닉스 사업보고서 제78기 (2026.03.17 공시)", url: "https://dart.fss.or.kr" },
+      { title: "Counterpoint — DRAM·HBM 점유율", url: "https://korea.counterpointresearch.com/global-dram-and-hbm-market-share-quarterly/" },
+      { title: "JP Morgan HBM 점유율 분석", url: "https://www.jpmorgan.com" },
+      { title: "ASML — EUV 시장 동향", url: "https://www.asml.com" },
+      { title: "TSMC CoWoS Capacity 발표", url: "https://www.tsmc.com" },
+      { title: "미국 CHIPS Act 본문", url: "https://www.commerce.gov/issues/chips" },
+      { title: "한국 K-반도체 클러스터 보도자료", url: "https://www.motie.go.kr" }
+    ]
+  },
+
+  "memory-cycle-mechanism": {
+    id: "memory-cycle-mechanism",
+    title: "메모리 cycle과 KAM 단계 변화",
+    category: "산업",
+    asOfDate: "2026-05-06",
+    tags: ["반도체", "메모리", "DRAM", "회계"],
+    summary: "메모리 cycle 4단계와 KAM 변화로 cycle 위치 추적",
+    body: `<p>메모리 반도체 산업은 약 3~4년 주기로 호황·정점·둔화·회복을 반복한다. 흥미로운 점은 두 한국 메모리사(삼성전자·SK하이닉스)의 <strong>핵심감사사항(KAM)</strong> 항목이 cycle 단계에 따라 체계적으로 바뀐다는 것이다.</p>
+
+<table class="tbl"><thead><tr><th>cycle 단계</th><th>전형적 KAM</th><th>의미</th></tr></thead><tbody>
+<tr><td>둔화·부진기 (가격 하락)</td><td>메모리 재고 순실현가치 평가</td><td>재고가 장부가 이하로 떨어질 위험 — 평가손실 인식 적정성</td></tr>
+<tr><td>회복기 초기</td><td>관계기업·자회사 회수가능액 검토 / 영업권·CGU 손상</td><td>전 cycle에서 인수한 자회사(Solidigm 등) 손상 여부</td></tr>
+<tr><td>호황·확장기</td><td>건설중인자산·기계장치 감가상각개시시점 평가</td><td>대규모 capex로 늘어난 신규 fab의 감가상각 시작 시점이 손익에 직접 영향</td></tr>
+<tr><td>정점·재고 누적</td><td>다시 재고 평가로 회귀</td><td>cycle 반복</td></tr>
+</tbody></table>
+
+<p><strong>실제 사례</strong>: 삼성전자 FY2023 KAM = "메모리 반도체 재고자산 순실현가치 평가" → FY2025 KAM = "건설중인자산 감가상각개시시점 + 판매장려활동 매출차감". SK하이닉스 FY2023 KAM = 4건(KIOXIA 평가·Solidigm CGU 손상·기계장치 감가상각개시시점·종속기업 회수가능액) → FY2025 KAM = 1건(기계장치 감가상각개시시점).</p>
+
+<p>cycle 위치 추적의 실무 활용:</p>
+<ul>
+  <li>매년 3월 사업보고서 제출 시점에 KAM 항목을 비교해 cycle 단계를 cross-check</li>
+  <li>KAM이 capex 가동 시점으로 이동했다는 것은 호황 cycle 후반부의 신호일 수 있음</li>
+  <li>다음 cycle 둔화 신호: KAM에 재고 평가가 다시 등장하는 시점</li>
+</ul>
+
+<p><strong>출처</strong>: 삼성전자 사업보고서 제55~57기, SK하이닉스 사업보고서 제76~78기.</p>`
+  }
+};
+
+// ============================================================
+//  CHART HELPERS (inline SVG)
+// ============================================================
+
+function donutChartSVG(data, opts) {
+  opts = opts || {};
+  const size = opts.size || 220;
+  const inner = opts.inner || 70;
+  const cx = size / 2, cy = size / 2;
+  const total = data.reduce((a, d) => a + d.value, 0);
+  let acc = 0;
+  const arcs = data.map(d => {
+    const start = (acc / total) * Math.PI * 2 - Math.PI / 2;
+    acc += d.value;
+    const end = (acc / total) * Math.PI * 2 - Math.PI / 2;
+    const large = (d.value / total) > 0.5 ? 1 : 0;
+    const x1 = cx + Math.cos(start) * (size/2 - 2);
+    const y1 = cy + Math.sin(start) * (size/2 - 2);
+    const x2 = cx + Math.cos(end) * (size/2 - 2);
+    const y2 = cy + Math.sin(end) * (size/2 - 2);
+    const xi1 = cx + Math.cos(start) * inner;
+    const yi1 = cy + Math.sin(start) * inner;
+    const xi2 = cx + Math.cos(end) * inner;
+    const yi2 = cy + Math.sin(end) * inner;
+    const path = `M${x1},${y1} A${size/2-2},${size/2-2} 0 ${large} 1 ${x2},${y2} L${xi2},${yi2} A${inner},${inner} 0 ${large} 0 ${xi1},${yi1} Z`;
+    return `<path d="${path}" fill="${d.color}" />`;
+  }).join('');
+  const legend = data.map(d =>
+    `<div class="lg"><span class="lg-dot" style="background:${d.color}"></span><span><strong>${d.name}</strong> ${d.value.toFixed(2)}%</span></div>`
+  ).join('');
+  return `
+    <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap">
+      <svg viewBox="0 0 ${size} ${size}" style="width:${size}px;height:${size}px;flex-shrink:0">${arcs}</svg>
+      <div class="chart-legend" style="flex-direction:column;align-items:flex-start;gap:8px">${legend}</div>
+    </div>`;
+}
+
+function niceCeil(v) {
+  if (v <= 0) return 1;
+  if (v < 5) return Math.ceil(v);
+  if (v < 20) return Math.ceil(v / 2) * 2;
+  if (v < 50) return Math.ceil(v / 5) * 5;
+  if (v < 100) return Math.ceil(v / 10) * 10;
+  if (v < 500) return Math.ceil(v / 50) * 50;
+  if (v < 2000) return Math.ceil(v / 200) * 200;
+  if (v < 10000) return Math.ceil(v / 1000) * 1000;
+  return Math.ceil(v / 5000) * 5000;
+}
+function fmtNum(v) {
+  if (Math.abs(v) >= 1000) return v.toLocaleString();
+  if (Number.isInteger(v)) return v.toString();
+  return v.toFixed(1);
+}
+
+function quarterlyTrendChartSVG(data, opts) {
+  opts = opts || {};
+  const w = opts.width || 760, h = opts.height || 300;
+  const padL = 56, padR = 64, padT = 24, padB = 44;
+  const innerW = w - padL - padR, innerH = h - padT - padB;
+  const periods = data.map(d => d.period);
+  const revMaxRaw = Math.max(...data.map(d => d.revenue));
+  const profitMaxRaw = Math.max(...data.map(d => Math.max(d.opIncome, d.ni)));
+  const revMax = niceCeil(revMaxRaw * 1.1);
+  const profitMax = niceCeil(profitMaxRaw * 1.1);
+  const x = i => padL + (innerW * i) / Math.max(1, periods.length - 1);
+  const yL = v => padT + innerH * (1 - v / revMax);
+  const yR = v => padT + innerH * (1 - v / profitMax);
+
+  const gridLines = [];
+  const gridSteps = 5;
+  for (let i = 0; i <= gridSteps; i++) {
+    const v = (revMax * i) / gridSteps;
+    const y = yL(v);
+    gridLines.push(`<line x1="${padL}" y1="${y}" x2="${w-padR}" y2="${y}" stroke="#e2e6ed" stroke-width="1"/>`);
+    gridLines.push(`<text x="${padL-8}" y="${y+4}" text-anchor="end" font-size="10" fill="#8a93a3">${fmtNum(v)}</text>`);
+  }
+  for (let i = 0; i <= gridSteps; i++) {
+    const v = (profitMax * i) / gridSteps;
+    const y = yR(v);
+    gridLines.push(`<text x="${w-padR+8}" y="${y+4}" text-anchor="start" font-size="10" fill="#8a93a3">${fmtNum(v)}</text>`);
+  }
+  // x labels
+  const xLabels = periods.map((p, i) =>
+    `<text x="${x(i)}" y="${h-padB+18}" text-anchor="middle" font-size="11" fill="#475065">${p}</text>`
+  ).join('');
+
+  // revenue bars
+  const barW = innerW / periods.length * 0.55;
+  const bars = data.map((d, i) =>
+    `<rect x="${x(i) - barW/2}" y="${yL(d.revenue)}" width="${barW}" height="${innerH - (yL(d.revenue) - padT)}" fill="#1f6feb" opacity="0.18" rx="2"/>`
+  ).join('');
+  // op income line
+  const opPath = data.map((d, i) => `${i===0?'M':'L'}${x(i)},${yR(d.opIncome)}`).join('');
+  const opPoints = data.map((d, i) => `<circle cx="${x(i)}" cy="${yR(d.opIncome)}" r="3.5" fill="#1a7f5a"/>`).join('');
+  // ni line
+  const niPath = data.map((d, i) => `${i===0?'M':'L'}${x(i)},${yR(d.ni)}`).join('');
+  const niPoints = data.map((d, i) => `<circle cx="${x(i)}" cy="${yR(d.ni)}" r="3.5" fill="#6d3ec5"/>`).join('');
+
+  // axis labels
+  const yLabelL = `<text x="${padL-36}" y="${padT-6}" font-size="10" fill="#8a93a3" font-weight="600">매출 ($M)</text>`;
+  const yLabelR = `<text x="${w-padR+8}" y="${padT-6}" font-size="10" fill="#8a93a3" font-weight="600">손익 ($M)</text>`;
+
+  return `
+    <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">
+      ${gridLines.join('')}
+      ${bars}
+      <path d="${opPath}" fill="none" stroke="#1a7f5a" stroke-width="2.5"/>
+      ${opPoints}
+      <path d="${niPath}" fill="none" stroke="#6d3ec5" stroke-width="2.5"/>
+      ${niPoints}
+      ${xLabels}
+      ${yLabelL}${yLabelR}
+    </svg>
+    <div class="chart-legend">
+      <span class="lg"><span class="lg-dot" style="background:#1f6feb;opacity:0.4"></span>매출 (좌축)</span>
+      <span class="lg"><span class="lg-dot" style="background:#1a7f5a"></span>영업이익 (우축)</span>
+      <span class="lg"><span class="lg-dot" style="background:#6d3ec5"></span>순이익 (우축)</span>
+    </div>
+    <div class="chart-meta">단위: 백만 달러. 23Q4 매출은 보도 환산치, 24Q3 이후는 분기 손익계산서 기준.</div>`;
+}
+
+function marginTrendChartSVG(data, opts) {
+  opts = opts || {};
+  const w = 760, h = 240;
+  const padL = 50, padR = 30, padT = 24, padB = 40;
+  const innerW = w - padL - padR, innerH = h - padT - padB;
+  const periods = data.map(d => d.period);
+  const allMargins = data.flatMap(d => [d.opMargin, d.npMargin]);
+  const dataMax = Math.max(...allMargins);
+  const dataMin = Math.min(0, ...allMargins);
+  let max, step;
+  if (dataMax <= 20) { max = 20; step = 4; }
+  else if (dataMax <= 40) { max = 40; step = 8; }
+  else if (dataMax <= 60) { max = 60; step = 10; }
+  else if (dataMax <= 80) { max = 80; step = 20; }
+  else { max = Math.ceil(dataMax / 20) * 20; step = max / 5; }
+  const min = dataMin < 0 ? Math.floor(dataMin / 10) * 10 : 0;
+  const x = i => padL + (innerW * i) / Math.max(1, periods.length - 1);
+  const y = v => padT + innerH * (1 - (v - min) / (max - min));
+
+  let grid = '';
+  for (let v = min; v <= max; v += step) {
+    grid += `<line x1="${padL}" y1="${y(v)}" x2="${w-padR}" y2="${y(v)}" stroke="#e2e6ed"/>`;
+    grid += `<text x="${padL-8}" y="${y(v)+4}" text-anchor="end" font-size="10" fill="#8a93a3">${v}%</text>`;
+  }
+  const xLabels = periods.map((p, i) => `<text x="${x(i)}" y="${h-padB+18}" text-anchor="middle" font-size="11" fill="#475065">${p}</text>`).join('');
+  const opPath = data.map((d, i) => `${i===0?'M':'L'}${x(i)},${y(d.opMargin)}`).join('');
+  const npPath = data.map((d, i) => `${i===0?'M':'L'}${x(i)},${y(d.npMargin)}`).join('');
+  const opPoints = data.map((d, i) => `<circle cx="${x(i)}" cy="${y(d.opMargin)}" r="3.5" fill="#1a7f5a"/><text x="${x(i)}" y="${y(d.opMargin)-8}" text-anchor="middle" font-size="9" fill="#1a7f5a" font-weight="600">${d.opMargin.toFixed(1)}</text>`).join('');
+  const npPoints = data.map((d, i) => `<circle cx="${x(i)}" cy="${y(d.npMargin)}" r="3" fill="#6d3ec5"/>`).join('');
+
+  return `
+    <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">
+      ${grid}
+      <path d="${opPath}" fill="none" stroke="#1a7f5a" stroke-width="2.5"/>
+      <path d="${npPath}" fill="none" stroke="#6d3ec5" stroke-width="2"/>
+      ${opPoints}${npPoints}
+      ${xLabels}
+    </svg>
+    <div class="chart-legend">
+      <span class="lg"><span class="lg-dot" style="background:#1a7f5a"></span>영업이익률</span>
+      <span class="lg"><span class="lg-dot" style="background:#6d3ec5"></span>순이익률</span>
+    </div>`;
+}
+
+// ============================================================
+//  RENDER
+// ============================================================
+let activeType = 'stock';   // 'stock' | 'study'
+let activeId = null;         // ticker or study id
+let activeTab = 'part1';
+
+function scoreClass(s) {
+  if (s >= 8) return 's-high';
+  if (s >= 6) return 's-mid';
+  if (s >= 4) return 's-low';
+  return 's-bad';
+}
+
+function renderSidebar() {
+  // Studies (위)
+  const studyNav = document.getElementById('study-nav');
+  const studies = Object.values(STUDIES);
+  studyNav.innerHTML = studies.length
+    ? studies.map(st => `
+      <div class="study-item ${activeType === 'study' && activeId === st.id ? 'active' : ''}" data-id="${st.id}">
+        <div class="s-title">${st.title}</div>
+        <div class="s-meta">${st.category} · ${st.asOfDate}</div>
+        <div class="s-tags">${(st.tags || []).slice(0, 4).map(t => `<span class="s-tag">#${t}</span>`).join('')}</div>
+      </div>`).join('')
+    : '<div class="sidebar-empty">저장된 노트가 없습니다.<br>대화창에 필기·리서치를 보내주세요.</div>';
+  studyNav.querySelectorAll('.study-item').forEach(el => {
+    el.addEventListener('click', () => {
+      activeType = 'study';
+      activeId = el.dataset.id;
+      renderSidebar(); renderMain();
+      window.scrollTo(0, 0);
+    });
+  });
+
+  // Tickers (아래)
+  const nav = document.getElementById('ticker-nav');
+  const tickers = Object.values(STOCKS);
+  nav.innerHTML = tickers.map(s => `
+    <div class="ticker-item ${activeType === 'stock' && s.ticker === activeId ? 'active' : ''}" data-ticker="${s.ticker}">
+      <div class="t-symbol">${s.ticker} · ${s.nameKr}</div>
+      <div class="t-name">${s.nameEn}</div>
+      <div class="t-meta">${s.exchange} · 기준일 ${s.asOfDate}</div>
+      ${s.alphaScore ? `<div class="t-score">α ${s.alphaScore.composite.toFixed(1)}</div>` : ''}
+    </div>`).join('');
+  nav.querySelectorAll('.ticker-item').forEach(el => {
+    el.addEventListener('click', () => {
+      activeType = 'stock';
+      activeId = el.dataset.ticker;
+      activeTab = 'part1';
+      renderSidebar(); renderMain();
+      window.scrollTo(0, 0);
+    });
+  });
+}
+
+function renderStudy(st) {
+  const main = document.getElementById('main-content');
+  if (!st) { main.innerHTML = '<div class="empty-state">스터디를 선택하세요.</div>'; return; }
+  const tagsHTML = (st.tags || []).map(t => `<span class="badge">#${t}</span>`).join(' ');
+  const sourcesHTML = (st.sources && st.sources.length)
+    ? `<section class="sources">
+        <h2>출처</h2>
+        <div class="sources-list">${st.sources.map(src => `<a href="${src.url}" target="_blank" rel="noopener">${src.title}</a>`).join('')}</div>
+      </section>` : '';
+  main.innerHTML = `
+    <header class="header">
+      <div class="header-l">
+        <h1>${st.title} <span class="badge industry">${st.category}</span></h1>
+        <div class="subtitle" style="margin-top:8px">${tagsHTML}</div>
+      </div>
+      <div class="header-r">${st.asOfDate}<br>스터디 노트</div>
+    </header>
+    <article class="section-card"><div class="body">${st.body}</div></article>
+    ${sourcesHTML}`;
+}
+
+function renderAlphaScore(s) {
+  const a = s.alphaScore;
+  const components = a.components.map(c => `
+    <div class="alpha-bar">
+      <div class="alpha-bar-label">${c.label}</div>
+      <div class="alpha-bar-track"><div class="alpha-bar-fill ${scoreClass(c.score)}" style="width:${c.score*10}%"></div></div>
+      <div class="alpha-bar-score">${c.score}/10</div>
+      <div class="alpha-bar-rationale">${c.rationale}</div>
+    </div>`).join('');
+  return `
+    <section class="alpha-score">
+      <div class="alpha-head">
+        <div class="alpha-composite-wrap">
+          <div class="alpha-composite">${a.composite.toFixed(1)}</div>
+          <div class="alpha-composite-label">Alpha Score</div>
+        </div>
+        <div class="alpha-rationale">${a.rationale}</div>
+        <div class="alpha-tag-wrap">
+          <span class="alpha-tag signal-${a.signal}">${a.signalLabel}</span>
+          ${s.market && s.market.range52w ? `<span style="font-size:11px;color:var(--muted);text-align:center">현재가 $${s.market.price} · 52w $${s.market.range52w[0]}~$${s.market.range52w[1]}</span>` : ''}
+        </div>
+      </div>
+      <div class="alpha-bars-title">Components</div>
+      <div class="alpha-bars">${components}</div>
+    </section>`;
+}
+
+function renderQuarterlyPLTable(data) {
+  const head = `<tr><th>지표</th>${data.map(d => `<th>${d.period}</th>`).join('')}</tr>`;
+  const fmt = v => v == null ? '-' : (typeof v === 'number' ? v.toLocaleString(undefined, {maximumFractionDigits: v < 100 ? 1 : 0}) : v);
+  const rows = [
+    ['매출', data.map(d => fmt(d.revenue))],
+    ['영업이익', data.map(d => fmt(d.opIncome))],
+    ['순이익', data.map(d => fmt(d.ni))],
+    ['영업이익률 (%)', data.map(d => d.opMargin.toFixed(2))],
+    ['순이익률 (%)', data.map(d => d.npMargin.toFixed(2))],
+  ];
+  const body = rows.map(r => `<tr><td><strong>${r[0]}</strong></td>${r[1].map(c => `<td>${c}</td>`).join('')}</tr>`).join('');
+  return `<table class="tbl numeric"><thead>${head}</thead><tbody>${body}</tbody></table>`;
+}
+
+function renderQuarterlyPLDetailTable(data) {
+  const filtered = data.filter(d => d.gp != null);
+  const head = `<tr><th>항목 ($M)</th>${filtered.map(d => `<th>${d.period}</th>`).join('')}</tr>`;
+  const rows = [
+    { label: '매출액', key: 'revenue', emph: true },
+    { label: '매출원가', key: 'cogs' },
+    { label: '매출총이익', key: 'gp' },
+    { label: '총 영업비용', key: 'opex' },
+    { label: '영업이익', key: 'opIncome', emph: true },
+    { label: '순이익', key: 'ni', emph: true },
+  ];
+  const body = rows.map(r => `<tr ${r.emph ? 'class="row-emph"' : ''}><td><strong>${r.label}</strong></td>${filtered.map(d => `<td>${d[r.key].toLocaleString()}</td>`).join('')}</tr>`).join('');
+  return `<table class="tbl numeric"><thead>${head}</thead><tbody>${body}</tbody></table>`;
+}
+
+function renderQuarterlyBSTable(data) {
+  const head = `<tr><th>항목 ($M)</th>${data.map(d => `<th>${d.period}</th>`).join('')}</tr>`;
+  const rows = [
+    { label: '자산총계', key: 'assets', emph: true },
+    { label: '  유동자산', key: 'ca' },
+    { label: '    현금성 자산', key: 'cash' },
+    { label: '    AR (총 미수금)', key: 'ar' },
+    { label: '    재고자산', key: 'inv' },
+    { label: '    선급비용', key: 'prepaid' },
+    { label: '  유형자산 순액', key: 'ppe' },
+    { label: '  영업권 (Goodwill)', key: 'gw' },
+    { label: '  무형자산', key: 'intangible' },
+    { label: '  기타 비유동자산', key: 'otherNCA' },
+    { label: '부채총계', key: 'liab', emph: true },
+    { label: '  유동부채', key: 'cl' },
+    { label: '  Long-term debt', key: 'ltd' },
+    { label: '  이연법인세', key: 'deferredTax' },
+    { label: '  기타부채', key: 'otherL' },
+    { label: '자본총계', key: 'equity', emph: true },
+  ];
+  const body = rows.map(r => `<tr ${r.emph ? 'class="row-emph"' : ''}><td>${r.label}</td>${data.map(d => `<td>${d[r.key].toLocaleString()}</td>`).join('')}</tr>`).join('');
+  return `<table class="tbl numeric"><thead>${head}</thead><tbody>${body}</tbody></table>`;
+}
+
+function renderMain() {
+  const main = document.getElementById('main-content');
+  if (activeType === 'study') return renderStudy(STUDIES[activeId]);
+  if (!activeId) { main.innerHTML = '<div class="empty-state">왼쪽에서 스터디 또는 종목을 선택하세요.</div>'; return; }
+  const s = STOCKS[activeId];
+  if (!s) { main.innerHTML = '<div class="empty-state">선택한 항목을 찾을 수 없습니다.</div>'; return; }
+
+  const tldrHTML = `
+    <section class="tldr">
+      <h2>한 화면 요약</h2>
+      <div class="what">${s.tldr.whatItDoes}</div>
+      <div class="metrics-grid">${s.tldr.keyMetrics.map(m => `<div class="metric"><div class="label">${m.label}</div><div class="value">${m.value}</div></div>`).join('')}</div>
+      <div class="moat-line"><strong>Moat</strong>${s.tldr.moatSummary}</div>
+      <h2 style="margin-top: 16px">주요 우려 사항</h2>
+      <ul class="concerns">${s.tldr.keyConcerns.map(c => `<li>${c}</li>`).join('')}</ul>
+    </section>`;
+
+  const risksHTML = `
+    <section>
+      <h2 style="margin-bottom:10px;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:0.6px;font-weight:700;">우선순위 위험</h2>
+      <div class="risk-grid">${s.risks.map(r => `
+        <div class="risk-card sev-${r.severity}">
+          <span class="sev-label">${r.severity === 'high' ? '높음' : r.severity === 'med' ? '중간' : '낮음'}</span>
+          <div class="r-title">${r.title}</div>
+          <div class="r-detail">${r.detail}</div>
+          <div class="r-source">출처 · ${r.source}</div>
+        </div>`).join('')}</div>
+    </section>`;
+
+  const tabsHTML = `
+    <nav class="tabs">
+      <div class="tab ${activeTab === 'part1' ? 'active' : ''}" data-tab="part1">1. 산업</div>
+      <div class="tab ${activeTab === 'part2' ? 'active' : ''}" data-tab="part2">2. 회사</div>
+      <div class="tab ${activeTab === 'part3' ? 'active' : ''}" data-tab="part3">3. FDD 부록</div>
+      <div class="tab ${activeTab === 'part4' ? 'active' : ''}" data-tab="part4">4. 종합</div>
+    </nav>`;
+
+  function sectionCards(arr) {
+    return arr.map(sec => `<article class="section-card"><h3><span class="sc-num">${sec.no}</span>${sec.title}</h3><div class="body">${sec.body}</div></article>`).join('');
+  }
+
+  const hasPLDetail = s.quarterlyPL && s.quarterlyPL.some(d => d.gp != null);
+  const hasBSDetail = s.quarterlyBS && s.quarterlyBS.length > 1;
+  const bsNote = (s.quarterlyBS && s.quarterlyBS[0] && s.quarterlyBS[0].note) ? s.quarterlyBS[0].note : '분기 BS는 사업보고서 별도 read 필요.';
+
+  const part3FinancialsHTML = `
+    <article class="section-card">
+      <h3><span class="sc-num">3.0</span>분기 손익계산서 추이</h3>
+      <div class="body">
+        <p>분기 매출과 영업이익·순이익을 시계열로 보여준다.</p>
+        <div class="chart-block">${quarterlyTrendChartSVG(s.quarterlyPL)}</div>
+        <p style="margin-top:14px"><strong>분기 손익 요약</strong></p>
+        ${renderQuarterlyPLTable(s.quarterlyPL)}
+        <p style="margin-top:14px"><strong>마진 추이</strong></p>
+        <div class="chart-block">${marginTrendChartSVG(s.quarterlyPL)}</div>
+        ${hasPLDetail ? `<p style="margin-top:14px"><strong>분기 손익계산서 상세</strong></p>${renderQuarterlyPLDetailTable(s.quarterlyPL)}` : ''}
+      </div>
+    </article>
+    <article class="section-card">
+      <h3><span class="sc-num">3.0b</span>분기 재무상태표 (BS)</h3>
+      <div class="body">
+        ${hasBSDetail
+          ? `<p>최근 분기 BS 시계열.</p>${renderQuarterlyBSTable(s.quarterlyBS)}`
+          : `<p style="color:var(--muted)">${bsNote}</p>`}
+      </div>
+    </article>`;
+
+  const sectionsHTML = `
+    <section class="section ${activeTab === 'part1' ? 'active' : ''}">
+      <div class="section-intro">시장 정의·규모·value chain·수요 메커니즘·공급 동학·5 forces·정책·기술·cycle·구조적 위험을 다룬다.</div>
+      ${sectionCards(s.part1)}
+    </section>
+    <section class="section ${activeTab === 'part2' ? 'active' : ''}">
+      <div class="section-intro">회사의 사업 구조·매출 mix·moat 메커니즘·경쟁사 비교·경영진·자본구조·실적 사실·전략·구조적 위험을 다룬다. 자체 추정과 forecast는 포함하지 않는다.</div>
+      ${sectionCards(s.part2)}
+    </section>
+    <section class="section ${activeTab === 'part3' ? 'active' : ''}">
+      <div class="section-intro">증권사 리포트에 일반적으로 포함되지 않는 회계·재무·법률 위험을 공시 한도 내에서 검증한다. 분기 P&L·BS 자료를 시각화한 뒤, 8개 영역(QoE·WC·CF·Hidden Liability·Accounting·Operational·Synthesis·Mgmt Q)으로 점검한다.</div>
+      ${part3FinancialsHTML}
+      ${sectionCards(s.part3)}
+      <div class="qa-grid">
+        <div class="qa-box"><h2>경영진에게 던질 질문 (IR 콜용)</h2><ul>${s.mgmtQ.map(q => `<li>${q}</li>`).join('')}</ul></div>
+        <div class="qa-box verify"><h2>후속 확인이 필요한 항목</h2><ul>${s.itemsToVerify.map(q => `<li>${q}</li>`).join('')}</ul></div>
+      </div>
+    </section>
+    <section class="section ${activeTab === 'part4' ? 'active' : ''}">
+      <div class="section-intro">앞 layer의 사실들을 모아 핵심 정리, 산업과 회사·회계 layer 사이의 연결을 짚고, 후속 확인이 필요한 항목을 남긴다.</div>
+      ${sectionCards(s.part4)}
+    </section>`;
+
+  const sourcesHTML = `
+    <section class="sources">
+      <h2>출처</h2>
+      <div class="sources-list">${s.sources.map(src => `<a href="${src.url}" target="_blank" rel="noopener">${src.title}</a>`).join('')}</div>
+      <div class="disclaimer">본 자료는 산업·회사 본질을 깊게 정리하고 공시 자료 한도 내에서 위험을 검증하는 것을 목적으로 한다. 적정 주가, 투자 의견, 매수·매도 판단, 자체 forecast는 포함되지 않는다. Alpha Score는 deep dive의 fact base를 6개 차원으로 정량화한 것이며, 사용자 본인의 시그널 시스템과 align해 가중치 조정이 가능하다. 2025년 20-F 본문을 직접 확인하지 못한 상태로 작성되었으며, 후속 검증을 통해 다수의 의심 신호가 정량화될 수 있다. 의사결정의 대체 수단이 아니다.</div>
+    </section>`;
+
+  main.innerHTML = `
+    <header class="header">
+      <div class="header-l">
+        <h1>${s.ticker} · ${s.nameKr} <span class="badge exchange">${s.exchange}</span></h1>
+        <div class="subtitle">${s.nameEn} <span class="badge industry">${s.industry}</span></div>
+      </div>
+      <div class="header-r">기준일 ${s.asOfDate}<br>Alpha Deep-Dive</div>
+    </header>
+    ${renderAlphaScore(s)}
+    ${tldrHTML}
+    ${risksHTML}
+    ${tabsHTML}
+    ${sectionsHTML}
+    ${sourcesHTML}`;
+
+  // donut chart for revenue mix (part 2.4)
+  const mixHost = document.getElementById('revenueMixChart');
+  if (mixHost && s.revenueMix) mixHost.innerHTML = `<div class="chart-block">${donutChartSVG(s.revenueMix)}<div class="chart-meta">25년 12월 기준 (출처: 연합인포맥스 및 기업 IR자료).</div></div>`;
+  // summary trend (part 2.10)
+  const trendHost = document.getElementById('quarterlyTrendChartSummary');
+  if (trendHost && s.quarterlyPL) trendHost.innerHTML = `<div class="chart-block">${quarterlyTrendChartSVG(s.quarterlyPL)}</div>`;
+
+  main.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => { activeTab = t.dataset.tab; renderMain(); }));
+}
+
+// init — 종목이 있으면 첫 종목, 없으면 첫 스터디
+const tickerKeys = Object.keys(STOCKS);
+const studyKeys = Object.keys(STUDIES);
+if (tickerKeys.length) {
+  activeType = 'stock';
+  activeId = tickerKeys[0];
+} else if (studyKeys.length) {
+  activeType = 'study';
+  activeId = studyKeys[0];
+}
+renderSidebar();
+renderMain();
+</script>
+
+</body>
+</html>
