@@ -281,9 +281,84 @@
   .sv-callout strong { color: var(--yellow); }
   .sv-insight { background: var(--purple-soft); border-left: 3px solid var(--purple); padding: 12px 14px; border-radius: 4px; font-size: 12.5px; line-height: 1.7; margin: 12px 0; }
   .sv-insight strong { color: var(--purple); }
+
+  /* === Sidebar toggle === */
+  .sidebar-toggle {
+    position: fixed; top: 14px; left: 14px; z-index: 100;
+    width: 38px; height: 38px; background: var(--panel);
+    border: 1px solid var(--border); border-radius: 8px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 16px; box-shadow: var(--shadow); color: var(--text);
+    transition: left 0.25s ease;
+  }
+  .sidebar-toggle:hover { background: var(--panel-2); border-color: var(--accent); }
+  .sidebar { transition: transform 0.25s ease, width 0.25s ease; }
+  body.sidebar-collapsed .sidebar { transform: translateX(-100%); width: 0; padding: 0; border: 0; overflow: hidden; }
+  body.sidebar-collapsed .sidebar-toggle { left: 14px; }
+  body:not(.sidebar-collapsed) .sidebar-toggle { left: 252px; }
+  body.sidebar-collapsed .main { padding-left: 64px; max-width: 100%; }
+
+  .print-btn {
+    position: fixed; top: 14px; right: 14px; z-index: 100;
+    padding: 8px 14px; background: var(--accent); color: white;
+    border: 0; border-radius: 8px; cursor: pointer;
+    font-size: 12.5px; font-weight: 600; box-shadow: var(--shadow);
+  }
+  .print-btn:hover { background: #1858c4; }
+
+  /* === Print — A4 friendly === */
+  @page { size: A4; margin: 14mm 12mm; }
+  @media print {
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    body { background: white !important; display: block !important; }
+    .sidebar, .sidebar-toggle, .print-btn, .tabs, .sv-anchor-nav { display: none !important; }
+    .main { max-width: 100% !important; padding: 0 !important; }
+    .section { display: block !important; }
+    .header { padding-bottom: 8px; margin-bottom: 12px; page-break-after: avoid; }
+    .header h1 { font-size: 18px; }
+    /* 카드·표가 페이지 사이로 잘리지 않게 */
+    .section-card, .sv-card, .sv-stage, .risk-card, .qa-box, .alpha-score, .tldr, .chart-block,
+    .sources, .sv-section, .sv-hero, .metrics-grid, .moat-line, .qa-grid,
+    .sv-hbm-diagram, .sv-flow-overview, .sv-policy-item, .sv-roadmap-row, .sv-check {
+      page-break-inside: avoid; break-inside: avoid;
+    }
+    /* 표 헤더 매 페이지 반복 + 행 분리 방지 */
+    table { page-break-inside: auto; }
+    table thead { display: table-header-group; }
+    table tr { page-break-inside: avoid; break-inside: avoid; }
+    /* 큰 단위 섹션 간 페이지 끊기 옵션 (자연스러운 자리에서) */
+    .sv-section { page-break-before: auto; }
+    .section-card { margin-bottom: 8px; box-shadow: none !important; }
+    /* 색상·테두리 — 인쇄 시 단순화 */
+    .alpha-score { background: white !important; border: 1px solid #ccc !important; border-left: 4px solid #1f6feb !important; box-shadow: none !important; }
+    .alpha-composite { color: #1f6feb !important; }
+    .sv-hero { background: #f0f4ff !important; color: #1a1f29 !important; border: 1px solid #1f6feb !important; }
+    .sv-hero h1, .sv-hero .sub { color: #1a1f29 !important; }
+    .sv-summary-card { background: white !important; color: #1a1f29 !important; border: 1px solid #1f6feb !important; }
+    .sv-summary-card .num, .sv-summary-card .ttl, .sv-summary-card .desc { color: #1a1f29 !important; }
+    /* 링크는 URL 인쇄 안 함 (혹은 출처는 표기) */
+    a { color: #1f6feb !important; text-decoration: none; }
+    .sources a::after { content: " (" attr(href) ")"; font-size: 10px; color: #666; }
+    /* 차트는 그대로 (SVG) — 약간 압축 */
+    .chart-block { padding: 8px !important; margin: 6px 0 !important; }
+    /* 사이드 footer·intro 압축 */
+    .section-intro { padding: 8px 10px; font-size: 11.5px; margin-bottom: 8px; }
+    /* 폰트 약간 축소 */
+    body { font-size: 11.5px; line-height: 1.55; }
+    .section-card h3 { font-size: 13px; margin-bottom: 6px; }
+    .section-card .body { font-size: 11.5px; line-height: 1.6; }
+    .sv-section h2 { font-size: 14px; }
+    table.tbl, .sv-tbl { font-size: 11px; }
+    .sv-tbl th, .sv-tbl td, .tbl th, .tbl td { padding: 5px 8px; }
+    /* 헤더 옆 메타 */
+    .header-r { font-size: 10px; }
+  }
 </style>
 </head>
 <body>
+
+<button class="sidebar-toggle" id="sidebar-toggle" title="사이드바 열기/닫기" aria-label="Toggle sidebar">◀</button>
+<button class="print-btn" onclick="window.print()" title="현재 페이지를 A4로 인쇄">🖨 인쇄</button>
 
 <aside class="sidebar">
   <div class="sidebar-header">Alpha Deep-Dive</div>
@@ -1432,32 +1507,260 @@ const STOCKS = {
     note_lumpyPL: "단기미청구공사 2,168억(매출채권 성격), 초과청구공사 2,655억(선수금 성격) — EPC 회사 특성상 BS 변동성 매우 큼.",
 
     part1: [
-      { no: "1.1", title: "산업 정의 — 발전용 기자재",
-        body: `<p>비에이치아이가 속한 산업은 <strong>발전용 기자재(Power Generation Equipment)</strong>로, 가스·석탄·원자력 발전소와 제철소 등의 핵심 장비를 설계·제작·설치하는 산업이다. 발전 EPC(Engineering·Procurement·Construction)의 부품 layer에 위치한다.</p>
-        <table class="tbl"><thead><tr><th>제품</th><th>역할</th><th>주요 수요</th></tr></thead><tbody>
-        <tr><td>HRSG (배열회수보일러)</td><td>가스터빈 배기열을 회수해 스팀 생산 — 복합화력 발전의 핵심 기자재</td><td>LNG 복합화력 발전소</td></tr>
-        <tr><td>발전 보일러 (PC·CFB)</td><td>석탄·바이오매스 화력 발전 보일러</td><td>화력 발전소·열병합</td></tr>
-        <tr><td>원자력 BOP</td><td>원전 보조기기 — 복수기·열교환기·탱크 등</td><td>원자력 발전소</td></tr>
-        <tr><td>EPC</td><td>설계·조달·시공 통합 발주</td><td>발전소 신규 건설</td></tr>
-        </tbody></table>` },
-      { no: "1.2", title: "수요 driver — AI 전력 슈퍼사이클",
-        body: `<p>2024~26년 발전 기자재 산업의 가장 큰 driver는 <strong>AI 데이터센터 전력 수요</strong>다. NVIDIA 가속기 1대당 약 700W~1.2kW를 소비하며, 대형 AI 데이터센터 1개가 100MW~1GW급 전력을 요구한다. 이는 기존 데이터센터 대비 5~10배 규모로, 미국·한국·일본 모두 신규 발전소 발주가 폭증하고 있다.</p>
-        <p>2026~28년 전력 수요 driver:</p>
+      { no: "1.1", title: "산업 정의 — 발전용 기자재 (Power Equipment)",
+        body: `<p>비에이치아이가 속한 산업은 <strong>발전용 기자재(Power Generation Equipment)</strong>로, 가스·석탄·원자력 발전소와 제철소·열병합 시설의 핵심 장비를 설계·제작·설치하는 산업이다. 발전 EPC(Engineering·Procurement·Construction) 가치사슬의 <strong>중간 부품·기자재 layer</strong>에 위치하며, 가스터빈을 만드는 GE·Siemens·MHI와 토목·설치를 담당하는 EPC 컨트랙터 사이에 자리한다.</p>
+        <table class="tbl"><thead><tr><th>제품</th><th>역할·기능</th><th>주요 수요</th></tr></thead><tbody>
+        <tr><td><strong>HRSG (배열회수보일러)</strong></td><td>가스터빈 배기열(500~600℃)을 회수해 스팀 생산. 가스터빈+증기터빈 결합 시 발전 효율 60%+로 단순 가스터빈(35~40%) 대비 1.5배. <strong>복합화력 발전의 효율을 결정하는 핵심 기자재</strong></td><td>LNG 복합화력 발전소</td></tr>
+        <tr><td>발전 보일러 (PC·CFB)</td><td>석탄(PC)·순환유동층(CFB) 화력 보일러. 바이오매스 혼소 가능</td><td>화력 발전소·열병합·산업 보일러</td></tr>
+        <tr><td>원자력 BOP</td><td>Balance of Plant — 원전 본체 외 보조기기. 복수기·열교환기·탱크·펌프류</td><td>원자력 발전소 (신규 건설·재가동·SMR)</td></tr>
+        <tr><td>복수기·열교환기</td><td>스팀 → 물 복원, 열 회수</td><td>발전·정유·석유화학·제철</td></tr>
+        <tr><td>EPC</td><td>설계·조달·시공 통합 발주 (소형 발전소·열병합)</td><td>국내 산업단지·해외 LNG IPP</td></tr>
+        </tbody></table>
+        <p>산업의 본질적 특성: <strong>(1) 수주산업</strong> — 발주처 입찰·계약·진행률 인식, <strong>(2) 자본재 산업</strong> — 한 프로젝트당 수십억~수백억 원 규모, <strong>(3) Cycle 산업</strong> — 발전 capex가 7~12년 주기로 반복, <strong>(4) 정책 의존 산업</strong> — 에너지 정책·환경 규제·전력 수요 예측이 발주를 결정.</p>` },
+      { no: "1.2", title: "발전 capex의 super-cycle 구조",
+        body: `<p>전 세계 발전 capex는 <strong>30~40년 단위의 메가 cycle</strong>과 <strong>7~12년 단위의 중기 cycle</strong>이 중첩된 구조다. 1960~80년대 산업화에 따른 발전소 1차 build-out → 1990~2000년대 자유화·민영화 → 2010년대 신재생 전환 → <strong>2024~30년대 AI·전력화 super-cycle</strong>이라는 거대한 곡선의 변곡점에 현재 진입했다.</p>
+        <p>현 cycle의 driver는 3개가 동시 작동한다:</p>
+        <table class="tbl"><thead><tr><th>Driver</th><th>메커니즘</th><th>전력 수요 증가 폭</th></tr></thead><tbody>
+        <tr><td>AI 데이터센터</td><td>NVIDIA 가속기 1대당 700W~1.2kW. 대형 AI 데이터센터 1개 100MW~1GW급</td><td>2024~30년 미국 전력 수요 +15~25% (Goldman Sachs·McKinsey 추정)</td></tr>
+        <tr><td>전력화(Electrification)</td><td>EV·히트펌프·산업 공정 전기화</td><td>2030년까지 글로벌 +20% 추정</td></tr>
+        <tr><td>신재생 보완</td><td>풍력·태양광 변동성 보완용 가스화력·ESS</td><td>매년 100GW+ 신규 가스 capacity</td></tr>
+        </tbody></table>
+        <p>이 3개 driver가 동시 작동하는 시기는 1970년대 산업화 이래 없었다. 비에이치아이가 30년 가까운 회사 역사에서 FY2025 매출 +91% 폭증을 본 배경.</p>` },
+      { no: "1.3", title: "HRSG 기술 메커니즘",
+        body: `<p>HRSG(Heat Recovery Steam Generator)는 가스터빈 배기열을 활용해 스팀을 만드는 열교환기다. 기본 구조는 가스터빈에서 나오는 500~600℃ 배기가스가 HRSG의 다단 열교환기를 통과하면서 물·스팀에 열을 전달한다. 핵심 기술 요소:</p>
         <ul>
-          <li><strong>AI 데이터센터</strong>: 하이퍼스케일러(MS·Google·AWS·Meta) capex 가이던스 매년 +30~50%</li>
-          <li><strong>LNG 복합화력 발전소</strong>: 가스터빈 + HRSG 결합 발전 — 미국·한국·동남아 신규 건설 cycle</li>
-          <li><strong>원자력</strong>: 미국 SMR·기존 원전 재가동, 한국 신규 원전 — 원자력 BOP 수요 동반</li>
-          <li><strong>재생에너지 보조전력</strong>: 변동성 큰 신재생 보완 위한 가스 화력</li>
+          <li><strong>다단 열교환 설계</strong>: HP(High Pressure)·IP(Intermediate)·LP(Low) 3단 스팀 회수. 단별 압력·온도 최적화</li>
+          <li><strong>핀튜브(Fin tube) 기술</strong>: 표면적 확대로 열전달 효율 극대화</li>
+          <li><strong>덕트 화염기(Duct burner)</strong>: 추가 연료 분사로 스팀 출력 증가 (peaking 운전)</li>
+          <li><strong>SCR(선택적 촉매 환원)</strong>: NOx 저감 환경 설비 통합</li>
+          <li><strong>응력 해석·내압 설계</strong>: 600℃·100bar 환경에서 30년 운전 보장</li>
+        </ul>
+        <p>비에이치아이는 영국 Amec Foster Wheeler(현 Wood Group)와의 기술 제휴를 통해 PC보일러·HRSG 원천기술을 확보했다. 이는 단순 부품 공급이 아니라 라이센스 기반의 자체 설계·제작 역량을 의미하며, 글로벌 OEM(GE Vernova·Siemens Energy·MHI) 대비 진입장벽으로 작용한다.</p>` },
+      { no: "1.4", title: "복합화력 vs 다른 발전원",
+        body: `<table class="tbl"><thead><tr><th>발전원</th><th>효율</th><th>건설 비용 (per MW)</th><th>건설 기간</th><th>탄소 배출</th><th>현 cycle 위상</th></tr></thead><tbody>
+        <tr><td>LNG 복합화력 (가스터빈+HRSG)</td><td>60%+</td><td>$800~1,200/kW</td><td>2~3년</td><td>중간 (석탄 절반)</td><td><strong>현 cycle 메인</strong></td></tr>
+        <tr><td>석탄화력</td><td>40~45%</td><td>$1,500~2,500/kW</td><td>4~5년</td><td>높음</td><td>축소 (선진국)</td></tr>
+        <tr><td>원자력 (대형)</td><td>33%</td><td>$6,000~10,000/kW</td><td>8~12년</td><td>거의 없음</td><td>재개·SMR 부상</td></tr>
+        <tr><td>SMR (소형 원전)</td><td>33%</td><td>$5,000~8,000/kW</td><td>3~5년 (목표)</td><td>거의 없음</td><td>2028~30 상용화</td></tr>
+        <tr><td>태양광</td><td>capacity factor 20~25%</td><td>$700~1,200/kW</td><td>1~2년</td><td>없음</td><td>주력 신재생</td></tr>
+        <tr><td>풍력 (해상)</td><td>capacity factor 40~50%</td><td>$2,500~4,000/kW</td><td>3~5년</td><td>없음</td><td>해상풍력 확대</td></tr>
+        </tbody></table>
+        <p>LNG 복합화력의 압도적 매력: 건설 기간 2~3년으로 가장 빠름 + 효율 60%+로 가스 단순화력 대비 1.5배 + 비교적 낮은 탄소 + AI 데이터센터 수요 폭증 timing과 일치. 비에이치아이의 HRSG가 이 발전원 핵심 부품인 이유.</p>` },
+      { no: "1.5", title: "AI 데이터센터 전력 수요 — 정량 분석",
+        body: `<p>AI 데이터센터 전력 수요는 학습(Training)과 추론(Inference) 두 layer에서 동시에 증가한다.</p>
+        <p><strong>학습용 데이터센터</strong>: NVIDIA H100/H200/B100/B200 등 가속기 수천~수만 대 클러스터. 대표적인 학습 데이터센터(예: xAI Colossus, Meta Llama 학습) 1개가 100~300MW급. OpenAI·Anthropic·Google·Meta·xAI가 각각 GW급 데이터센터 캠퍼스를 2025~28년에 건설 중.</p>
+        <p><strong>추론용 데이터센터</strong>: ChatGPT·Claude·Gemini 등 서비스 가동. 사용자 수 증가에 따라 추론 데이터센터가 더 많이 필요. 추론은 GPU + CPU + 메모리 + 네트워크 종합이라 학습보다 전력 효율 미세 변화에 민감.</p>
+        <p>2024~30년 미국 전력 수요 증가 추정 (Goldman Sachs 2024.4 발표):</p>
+        <ul>
+          <li>현재 미국 데이터센터 전력 수요: 약 2.5% of 미국 전력</li>
+          <li>2030년 추정: <strong>8% of 미국 전력</strong> (+5~6%p 절대치)</li>
+          <li>이를 위해 신규 47GW 발전 capacity 필요</li>
+          <li>이 중 60%가 가스 복합화력, 40%가 신재생+ESS로 추정</li>
+        </ul>
+        <p>한국도 비슷한 패턴. 한국전력공사 2024 장기전력수급계획에서 AI 데이터센터·반도체 클러스터(용인 622조원)·수도권 데이터센터 신증설로 신규 발전소 발주가 가속화되고 있다.</p>` },
+      { no: "1.6", title: "LNG 복합화력 — 글로벌 발주 cycle",
+        body: `<p>가스 복합화력 발주는 2024년부터 폭증하기 시작했다. 글로벌 가스터빈 발주량(MW 기준):</p>
+        <table class="tbl"><thead><tr><th>년도</th><th>글로벌 발주 (GW)</th><th>비고</th></tr></thead><tbody>
+        <tr><td>2020~22</td><td>연 30~40 GW</td><td>코로나·신재생 우선기</td></tr>
+        <tr><td>2023</td><td>약 50 GW</td><td>회복 시작</td></tr>
+        <tr><td>2024</td><td><strong>약 80 GW</strong></td><td>AI cycle 시작</td></tr>
+        <tr><td>2025</td><td>약 100~120 GW (추정)</td><td>본격 가속</td></tr>
+        <tr><td>2026~28</td><td>연 100~140 GW (추정)</td><td>수퍼사이클 정점 추적</td></tr>
+        </tbody></table>
+        <p>출처: Wood Mackenzie, Bloomberg NEF, GE Vernova IR. 가스터빈 1 GW 발주 시 HRSG도 1 GW 동반 발주되는 구조이므로, HRSG 시장도 동일 cycle.</p>
+        <p>지역별 driver:</p>
+        <ul>
+          <li><strong>미국</strong>: AI 데이터센터·셰일가스 저렴화. PJM·ERCOT 등 지역 그리드 발주 폭증</li>
+          <li><strong>중동</strong>: 사우디 비전 2030, UAE·카타르 산업화. 가스 매장량 + 가스화력 우선</li>
+          <li><strong>동남아</strong>: 베트남·인도네시아·필리핀 산업화. LNG 수입 발전소 다수</li>
+          <li><strong>한국</strong>: 노후 석탄화력 LNG 전환 + 신규 LNG 발전</li>
+          <li><strong>유럽</strong>: 러시아 가스 의존 탈피 + 신재생 보완용 가스화력</li>
         </ul>` },
-      { no: "1.3", title: "경쟁 구도",
-        body: `<p>국내 발전용 기자재 시장은 두산에너빌리티(대형), 비에이치아이(중형), HSG성동중공업·일진디스플레이 등 소수 player로 구성. 글로벌 경쟁사는 GE Vernova·Siemens Energy·Mitsubishi Heavy 등이며, 이들은 가스터빈 자체와 HRSG를 묶어 패키지로 공급하는 경우가 많다.</p>
-        <p>비에이치아이의 위치: 글로벌 OEM(GE·Siemens·MHI)에 HRSG를 OEM 공급하거나, 한국·동남아 EPC 프로젝트에 직접 공급. 가스터빈 자체는 생산 안 함.</p>` }
+      { no: "1.7", title: "원자력 르네상스 + SMR",
+        body: `<p>2024~25년부터 글로벌 원자력 시장이 재가속되고 있다. 핵심 driver:</p>
+        <ol>
+          <li><strong>미국 기존 원전 재가동·수명 연장</strong>: Three Mile Island·Palisades 등 폐쇄 원전 재가동 선언. MS·AWS·Google 등 하이퍼스케일러가 원전 전력 직접 구매 PPA 체결</li>
+          <li><strong>SMR(소형 모듈 원전) 상용화</strong>: NuScale·X-energy·TerraPower·Holtec 등. 2028~30년 첫 상용화. 한국 SMART·i-SMR도 개발 중</li>
+          <li><strong>대형 원전 신규 건설</strong>: 폴란드·체코·이집트·UAE·튀르키예·이집트 신규 발주. 한국이 체코·UAE에서 수주</li>
+          <li><strong>중국·러시아·인도</strong>: 자체 표준 원전 대규모 건설 중</li>
+        </ol>
+        <p>비에이치아이 노출: 원자력 BOP(Balance of Plant)는 원전 본체 외 보조기기로, 복수기·열교환기·탱크·펌프 등을 공급한다. 한국 원전 수출(체코·UAE) 시 BOP 부품 일부 참여 가능성, 미국 SMR 시장에서 BOP 진입 가능성 등이 향후 옵션.</p>` },
+      { no: "1.8", title: "지역별 시장 동학",
+        body: `<table class="tbl"><thead><tr><th>지역</th><th>발전 capex 동학</th><th>비에이치아이 노출</th></tr></thead><tbody>
+        <tr><td><strong>미국</strong></td><td>AI 데이터센터·셰일가스·CHIPS Act 산업 단지 전력. PJM·ERCOT 등 지역 그리드 capacity market 발주 가속</td><td>BHI-FW(미국 자회사) 통해 직접 영업. GE Vernova·Siemens 협력 OEM</td></tr>
+        <tr><td><strong>중동·사하라</strong></td><td>사우디·UAE·이집트·알제리 등 가스화력 신증설. 사막 환경 특수 사양 HRSG 필요</td><td>BHI Algeria 관계기업. 중동 HRSG 수주 history 다수</td></tr>
+        <tr><td><strong>동남아</strong></td><td>베트남·인도네시아·태국·필리핀 LNG 발전 본격화</td><td>BHI(THAI)·PT Bum Woo INDONESIA — 현지 생산법인. 가격 경쟁력 강화</td></tr>
+        <tr><td><strong>한국</strong></td><td>한전·중부발전·서부발전 등 6개 발전 자회사. LNG 전환·수도권 분산 발전</td><td>한전 long-term 협력. 본사 함안 + 사천 생산</td></tr>
+        <tr><td><strong>이스라엘</strong></td><td>가스 매장량 발견 후 가스화력 build-out</td><td>BHI E&C ISRAEL 현지 법인</td></tr>
+        </tbody></table>
+        <p>이 지역 분포는 단순 영업이 아니라 <strong>현지 생산 거점</strong>을 통한 정책·관세·로컬 콘텐츠 요구 대응이라는 점이 중요. 미국 CHIPS Act·BBB·중동 in-country 정책에 대비한 다국적 생산 체계.</p>` },
+      { no: "1.9", title: "정책·regulation 환경",
+        body: `<ul>
+          <li><strong>미국 IRA·CHIPS Act</strong>: 신규 발전 인프라·반도체 단지 전력 인프라 보조금. 가스화력은 직접 보조금은 적으나 산업 단지 자체가 발주처</li>
+          <li><strong>EU EPS·EU ETS</strong>: 탄소 배출 제한 강화. 신규 석탄화력 사실상 불가능, 가스화력은 한시적 허용</li>
+          <li><strong>한국 에너지기본계획·전력수급기본계획</strong>: 2024 개정으로 원전 + 가스 비중 확대. 신재생 목표 일부 하향</li>
+          <li><strong>중국·러시아·이란 제재</strong>: 가스터빈·원전 기자재 수출 통제. 한국·일본·서구 회사에 반사 수혜</li>
+          <li><strong>탄소세·국경탄소조정(CBAM)</strong>: EU 수출 시 탄소 비용 반영. 가스 발전은 석탄 대비 유리</li>
+        </ul>` },
+      { no: "1.10", title: "글로벌 경쟁 구도",
+        body: `<table class="tbl"><thead><tr><th>player</th><th>위상</th><th>특징</th></tr></thead><tbody>
+        <tr><td><strong>가스터빈 OEM</strong></td><td>GE Vernova·Siemens Energy·MHI(Mitsubishi)·Ansaldo</td><td>가스터빈+HRSG 패키지 공급. 비에이치아이의 OEM 고객이자 경쟁자</td></tr>
+        <tr><td><strong>HRSG 전문</strong></td><td>NEM Energy·CMI Energy·Doosan Babcock·비에이치아이·Vogt Power</td><td>OEM에 HRSG OEM 공급 + 직접 EPC 발주처에 공급</td></tr>
+        <tr><td><strong>국내 발전 기자재</strong></td><td>두산에너빌리티(대형, 가스터빈 자체 개발 중), 비에이치아이(중형), HSG성동, 일진디스플레이</td><td>한국 발전 기자재 cluster</td></tr>
+        <tr><td><strong>중국 기자재</strong></td><td>Harbin Electric·Dongfang Electric·Shanghai Electric</td><td>중국 내수 + 일대일로 신흥국 수출. 가격 경쟁력 강함</td></tr>
+        </tbody></table>
+        <p>비에이치아이의 경쟁 포지션: <strong>중형 글로벌 HRSG 전문</strong>. 두산에너빌리티보다 작고 가스터빈을 만들지 않으나, HRSG 전문성과 한국·중동·동남아·미국 다국적 생산 거점이 강점. 글로벌 OEM(GE·Siemens·MHI)과는 협력+경쟁의 이중 관계.</p>` }
     ],
 
     part2: [
       { no: "2.1", title: "회사 개요와 연혁",
-        body: `<p>비에이치아이는 1998년 우종인·이근흥 두 창업자가 일본 Denso 그룹 회사에서 만나 '범우엔지니어링'으로 공동 창업한 발전 기자재 회사다. 2007년 BHI로 사명 변경, 2012년 KOSDAQ 상장(083650). 본사는 경남 함안. 2026년 5월 KOSDAQ '우량기업부'로 승격되었다.</p>
-        <p>두 창업자 모두 일본 산업 인프라 분야 출신으로, 한국 발전 기자재 국산화·기술 자립을 명분으로 회사를 키워왔다. Amec Foster Wheeler(영국)와 기술 협력을 통해 PC보일러·HRSG 원천기술을 확보했다.</p>` },
+        body: `<p>비에이치아이는 1998년 6월 12일 우종인·이근흥 두 창업자가 '<strong>범우엔지니어링</strong>'으로 공동 설립한 발전용 기자재 전문 회사다. 두 사람은 일본 Denso 그룹 회사에서 함께 근무하며 알게 된 사이로, 한국 발전 기자재 국산화·기술 자립을 사업 명분으로 삼아 창업했다. 2005년 12월 KOSDAQ 상장(083650), 2009년 3월 '비에이치아이(BHI)'로 사명 변경, 2026년 5월 KOSDAQ '우량기업부'로 승격되었다.</p>
+        <table class="tbl"><thead><tr><th>시기</th><th>이벤트</th></tr></thead><tbody>
+        <tr><td>1998.06</td><td>우종인·이근흥 공동 창업 — 범우엔지니어링</td></tr>
+        <tr><td>2005.12</td><td>KOSDAQ 상장 (083650)</td></tr>
+        <tr><td>2009.03</td><td>사명 변경 — 비에이치아이(BHI)</td></tr>
+        <tr><td>2010년대</td><td>영국 Amec Foster Wheeler(현 Wood Group)와 기술 제휴 — PC보일러·HRSG 원천기술 확보</td></tr>
+        <tr><td>2010년대</td><td>해외 거점 확대 — 인도네시아·미국·태국·이스라엘 법인 설립</td></tr>
+        <tr><td>2023~24</td><td>AI 전력 슈퍼사이클 진입 — 매출 +91% 폭증</td></tr>
+        <tr><td>2025.12.08</td><td><strong>우종인 사내이사 자진 사임</strong> — 지배구조 전환 시작</td></tr>
+        <tr><td>2026.03.28</td><td>이근흥·조원래 공동대표 체제 확정 (정기주총)</td></tr>
+        <tr><td>2026.05</td><td>KOSDAQ 우량기업부 승격</td></tr>
+        </tbody></table>
+        <p>본사 소재지: <strong>경상남도 함안군 군북면</strong> (장지리·모로리 2곳) + <strong>경상남도 사천시 사남면 유천리</strong> (제3공장). 3개 제조 시설에서 HRSG·발전 보일러·원자력 BOP를 직접 생산하며, 해외 4개국에 생산법인을 두고 있다.</p>` },
+      { no: "2.2", title: "두 가문의 구조 — 우종인 vs 이근흥 (Deep Dive)",
+        body: `<p>비에이치아이의 가장 큰 구조적 특징은 <strong>두 창업 가문이 27년간 공동 경영해 왔다는 점</strong>이며, 2025년 말부터 그 구조가 명백히 전환되고 있다. 두 가문의 역사·역할·지분·현재 위치를 정밀하게 풀어본다.</p>
+
+        <h4 style="margin-top:18px;font-size:14px;color:var(--text);font-weight:700">우종인 가문</h4>
+        <ul>
+          <li><strong>우종인</strong> (대표이사 사장, ~2025.12 사임) — 1998년 공동 창업자. 일본 Denso 그룹 출신. 대외 영업·전략·해외 사업 총괄을 맡아온 것으로 알려짐. 회사 외부에서 "BHI 회장"으로 통칭되는 인물</li>
+          <li><strong>비에이치아이건설(BHI건설)</strong> — 우종인 개인이 통제하는 가족 회사. 회사와 부동산 매매·용역·자금 거래의 특수관계자. FY2024까지는 별도 의미 있는 BHI 지분 보유 (보고서상 정확치는 사업보고서 footnote 별도 확인)</li>
+          <li>본인 명의 직접 지분만 보면 — FY2025말 5,082,000주(16.42%) → <strong>1Q2026말 2,622,000주(8.47%)</strong>로 절반 감소</li>
+          <li>BHI건설 보유 BHI 지분도 1Q2026말 <strong>9,037주(0.03%)로 사실상 청산</strong> 완료</li>
+          <li>차미림(1,007천주·3.26%)이 우종인 측 인물인지는 공시상 확인되지 않음 — <em>추가 확인 필요</em></li>
+        </ul>
+
+        <h4 style="margin-top:18px;font-size:14px;color:var(--text);font-weight:700">이근흥 가문</h4>
+        <ul>
+          <li><strong>이근흥</strong> (부회장, 1Q26부터 대표이사) — 1998년 공동 창업자. 일본 Denso 그룹 출신. 기술·생산·내부 운영을 맡아온 것으로 알려짐. 본인 명의 BHI 지분은 FY24까지 공시 X — 대신 배우자 박은미 명의로 보유 (한국 family-owned company 전형 패턴)</li>
+          <li><strong>박은미</strong> (이근흥 부회장 배우자) — 지속적으로 5,200,000주(16.80%) 보유. 사실상 이근흥 가문의 대표 보유 명의</li>
+          <li><strong>이근흥</strong> 본인 — 1Q2026 분기보고서에 처음 명시 308,000주(1.00%) 신규 공시</li>
+          <li><strong>이가현</strong> — 1Q26 730,000주(2.35%) 신규 공시. 성씨로 보아 이근흥 가족(자녀·친인척) 추정</li>
+          <li><strong>이명환</strong> — 1Q26 62,000주(0.20%) 신규 공시. 동일 패턴</li>
+          <li>이근흥 가문 합산 <strong>20.36%</strong> (박은미 16.80% + 이근흥 1.00% + 이가현 2.35% + 이명환 0.20%)</li>
+        </ul>
+
+        <h4 style="margin-top:18px;font-size:14px;color:var(--text);font-weight:700">전환 신호 — 2025년 후반의 변곡점</h4>
+        <table class="tbl"><thead><tr><th>시점</th><th>이벤트</th><th>의미</th></tr></thead><tbody>
+        <tr><td>2025.12.08</td><td>우종인 사내이사 자진 사임 (일신상 사유)</td><td>가문 exit의 첫 공식 시그널</td></tr>
+        <tr><td>1Q2026 중</td><td>우종인 직접 지분 -7.95%p (2,460천주 매각·이전)</td><td>지분 자체의 50% 감소</td></tr>
+        <tr><td>1Q2026 중</td><td>BHI건설 보유분 사실상 청산 (9,037주만 잔존)</td><td>가족 회사 통한 보유 구조 정리</td></tr>
+        <tr><td>1Q2026 중</td><td>이근흥 가족 명의(이근흥·이가현·이명환) 신규 공시</td><td>이근흥 가문이 보유 구조 가시화·차세대 가족 등재</td></tr>
+        <tr><td>2026.03.28</td><td>이근흥·조원래 공동대표 체제 정기주총 의결</td><td>이근흥 가문 대표권 단독 장악</td></tr>
+        <tr><td>2026.03.28</td><td>김학도 사외이사 신규 선임</td><td>이사회 재편</td></tr>
+        </tbody></table>
+
+        <h4 style="margin-top:18px;font-size:14px;color:var(--text);font-weight:700">두 사람의 역할 분담 (창업 이후 27년)</h4>
+        <table class="tbl"><thead><tr><th>축</th><th>우종인</th><th>이근흥</th></tr></thead><tbody>
+        <tr><td>책임 영역</td><td>대외 영업·전략·해외 사업·정책 대응</td><td>기술·생산·내부 운영·R&D</td></tr>
+        <tr><td>현장 위치</td><td>서울·해외</td><td>경남 함안·사천 제조 현장</td></tr>
+        <tr><td>가족 회사</td><td>BHI건설 — 부동산·건설</td><td>(공식 가족 회사 X)</td></tr>
+        <tr><td>지분 보유 방식</td><td>본인 직접 + BHI건설(가족 회사) 간접</td><td>배우자 명의 + 자녀·친인척 분산</td></tr>
+        </tbody></table>
+        <p><em>이 역할 분담은 공식 공시 사항이 아닌 산업·언론 통념의 정리이며, 실제 의사결정 권한은 두 사람 합의 기반.</em></p>
+
+        <div class="sv-callout" style="margin-top:14px"><strong>지분·임원직 동시 exit:</strong> 우종인이 본인 직접 지분만 절반 매각한 것이 아니라 (a) 사내이사 사임, (b) BHI건설 보유분 청산, (c) 본인 직접 지분 -50% 세 가지가 1년 안에 동시 진행된 점이 핵심. 이는 단순 일부 매각이 아니라 <strong>가문 차원의 단계적 exit 전략</strong>으로 읽힌다.</div>
+
+        <div class="sv-insight" style="margin-top:10px"><strong>잔존 가문 — 이근흥 가문 강화 패턴:</strong> 같은 기간 이근흥 가문이 (a) 가족 구성원 명의 BHI 지분을 처음으로 공시 가시화하고, (b) 이근흥 본인이 단독 대표이사 권한을 가지면서, (c) 외부 사외이사(김학도) 신규 선임으로 이사회를 재구성한 점은, <strong>잔존 가문이 경영권을 단단히 다지는 동시에 새 거버넌스 구조를 설계하고 있다</strong>는 신호다.</div>` },
+      { no: "2.3", title: "사업 부문·제품 라인업",
+        body: `<table class="tbl"><thead><tr><th>제품</th><th>주요 사양</th><th>주요 고객</th></tr></thead><tbody>
+        <tr><td><strong>HRSG</strong> (배열회수보일러)</td><td>200~600 MW급. 수평·수직 다양한 형태. 다단 압력 (HP·IP·LP) 설계. SCR 통합</td><td>GE Vernova·Siemens·MHI(OEM), 한전·민자발전, 중동·동남아·미국 IPP</td></tr>
+        <tr><td>발전 보일러 (PC)</td><td>석탄·바이오매스 혼소. 500~1,000 MW급</td><td>한전 발전 자회사 (서부발전·중부발전·남부발전 등)</td></tr>
+        <tr><td>CFB 보일러</td><td>순환유동층 — 저급 연료·바이오매스</td><td>열병합·산업용 보일러</td></tr>
+        <tr><td>원자력 BOP</td><td>복수기·열교환기·탱크·펌프 등 BOP 일체</td><td>한수원, 한국 원전 수출(체코·UAE) 일부 참여</td></tr>
+        <tr><td>EPC (소형)</td><td>중소형 열병합·자가발전·산업 보일러 plant EPC</td><td>국내 산업단지·해외 IPP</td></tr>
+        <tr><td>자회사 발전사업</td><td>아레테자원환경(폐기물 발전)·아라퓨처파워(태양광·신재생)</td><td>자체 발전 IPP</td></tr>
+        </tbody></table>
+        <p>FY2025 매출 7,741억원의 78.3%인 6,059억원이 HRSG에서 발생. 나머지 21.7%가 발전 보일러·원자력 BOP·EPC·자회사 발전 사업으로 구성. 자회사 발전사업(아레테·아라퓨처파워)은 사업주(IPP)로서 직접 운영하며, 모회사의 제품 판매와는 다른 수익 구조.</p>` },
+      { no: "2.4", title: "매출 mix · 지역별 매출 (FY2025)",
+        body: `<p>제품별 매출 비중을 시각화한다.</p>
+        <div id="revenueMixChart"></div>
+        <p style="margin-top:14px">지역별 매출은 사업보고서 footnote에 상세 공시되어 있으며, <em>지역별 매출 정확치는 사업보고서 직접 확인 필요</em>. 산업 통념상 한국(40~50%)·중동(15~25%)·미국(10~20%)·동남아(10~15%)·기타 정도의 분포로 추정.</p>` },
+      { no: "2.5", title: "종속기업 — 해외 거점 네트워크",
+        body: `<p>비에이치아이는 한국 본사 외에 6개 종속기업을 보유한다. 모두 발전 기자재 사업의 글로벌 거점 또는 발전 사업 자체.</p>
+        <table class="tbl"><thead><tr><th>종속기업</th><th>국가</th><th>지분</th><th>역할</th></tr></thead><tbody>
+        <tr><td>PT Bum Woo Heavy Industry INDONESIA</td><td>인도네시아</td><td>95%</td><td>현지 제조법인 — 동남아 LNG 발전 수주 거점</td></tr>
+        <tr><td>BHI-FW</td><td>미국</td><td>100%</td><td>미국 시장 영업·제조 — Foster Wheeler 기술 제휴 기반</td></tr>
+        <tr><td>BHI (THAI)</td><td>태국</td><td>100%</td><td>현지 제조법인 — 동남아 거점</td></tr>
+        <tr><td>BHI E&C ISRAEL</td><td>이스라엘</td><td>100%</td><td>이스라엘 가스화력 build-out 대응</td></tr>
+        <tr><td>아레테자원환경(주)</td><td>한국</td><td>100%</td><td>자체 IPP — 폐기물 발전사업</td></tr>
+        <tr><td>아라퓨처파워(주)</td><td>한국</td><td>100%</td><td>자체 IPP — 신재생 발전사업</td></tr>
+        <tr><td>이화일반사모부동산투자신탁57호</td><td>한국</td><td>98% (신규 2025)</td><td>부동산 투자신탁 — 자산 다각화 시작</td></tr>
+        </tbody></table>
+        <p>관계기업: BHI Algeria(알제리 가스화력 영업 거점), 코리아에너지솔루션㈜, 이엠아이㈜.</p>
+        <p>이 네트워크는 단순 영업 거점이 아니라 (a) 현지 제조를 통한 관세·로컬 콘텐츠 요구 대응, (b) 시간대·언어 차이를 활용한 영업 효율, (c) 자체 발전 사업 진입으로 매출 다각화 시도라는 세 가지 의미를 갖는다.</p>` },
+      { no: "2.6", title: "고객 관계와 수주 cycle",
+        body: `<p>비에이치아이의 고객은 크게 4개 그룹으로 나뉜다.</p>
+        <ol>
+          <li><strong>가스터빈 OEM</strong> — GE Vernova·Siemens Energy·Mitsubishi Heavy. HRSG를 OEM 공급. 가스터빈 1대 발주 시 HRSG도 묶여서 발주되는 패키지 구조</li>
+          <li><strong>한전·발전 자회사</strong> — 한국 5개 발전 자회사(남동·중부·서부·남부·동서). 노후 석탄화력 LNG 전환 + 신규 LNG 발전소 발주</li>
+          <li><strong>민자 IPP</strong> — 포스코에너지·SK E&S·GS EPS·SK가스 등 민간 발전. AI 데이터센터 자가발전 IPP 신규 수요</li>
+          <li><strong>해외 EPC·발전사업자</strong> — 중동(사우디·UAE·이집트·알제리), 미국(NRG·Vistra 등), 동남아·이스라엘. 현지 EPC와 협력</li>
+        </ol>
+        <p>수주 cycle 특성:</p>
+        <ul>
+          <li>발주 → 계약 → 제조 → 출하 → 설치 → 시운전까지 18~36개월 lead time</li>
+          <li>대형 1건당 100~500억 원 규모</li>
+          <li>매출 인식은 진행률(percent-of-completion)로 인식 — 분기 매출은 제조 mileage에 따라 lumpy</li>
+          <li>수주잔고(backlog)가 향후 2~3년 매출 가시성 결정 — 현재 2.4조원</li>
+        </ul>` },
+      { no: "2.7", title: "경쟁 위치 — 국내·해외",
+        body: `<p><strong>국내</strong>: 두산에너빌리티(대형, 가스터빈 자체 개발 추진)와 비에이치아이(중형, HRSG 전문)가 양대 player. HSG성동중공업·일진디스플레이·기타 mid-cap이 부속 부품 layer. 두산은 발전 plant 전반 EPC + 가스터빈·증기터빈 자체 개발을 추진하므로 비에이치아이와 협력 + 경쟁 이중 관계.</p>
+        <p><strong>글로벌</strong>: HRSG 전문 player 중 비에이치아이의 강점은 (a) 한국 발전 시장 점유율, (b) 중동·동남아·미국 다국적 생산 거점, (c) 영국 Wood Group 기술 라이센스 기반의 자체 설계 역량, (d) 가스터빈 OEM과의 다년 협력 관계. 약점은 (a) 단일 기업 규모 면에서 글로벌 OEM 대비 작음, (b) 단일 사업(HRSG) 의존도 78%.</p>
+        <p><strong>중국 player</strong>(Harbin Electric·Dongfang Electric·Shanghai Electric)는 가격 경쟁력이 강하나 미국·EU·중동 일부 시장에서 진입 제한 또는 보안 이슈로 제외되는 경우가 많아, 비에이치아이 같은 한국 회사가 반사 수혜를 받는 구조.</p>` },
+      { no: "2.8", title: "경영진·이사회 (1Q2026 기준)",
+        body: `<table class="tbl"><thead><tr><th>직위</th><th>인물</th><th>비고</th></tr></thead><tbody>
+        <tr><td>대표이사 (공동)</td><td><strong>이근흥</strong></td><td>공동 창업자. 부회장 직위 유지 + 단독 대표권 강화</td></tr>
+        <tr><td>대표이사 (공동)</td><td>조원래</td><td>전문 경영인. 실무 운영 담당</td></tr>
+        <tr><td>사내이사</td><td>이근흥, 조원래, 류흥문</td><td>2026.3.28 정기주총에서 재선임</td></tr>
+        <tr><td>사외이사</td><td>노종문 (재선임), <strong>김학도 (신규)</strong></td><td>김학도 신규 선임으로 이사회 재편</td></tr>
+        <tr><td>전 사내이사</td><td><em>우종인 (2025.12.08 사임)</em></td><td>일신상 사유. exit 신호의 첫 단추</td></tr>
+        </tbody></table>
+        <p>이사회 구성 변화의 함의: 우종인이 빠지고 이근흥 단독 대표 + 조원래 공동대표(전문 경영인) + 신규 사외이사 1명이 추가됨. 이는 family-controlled company에서 전문 경영인+사외이사 비중을 확대해 외부 자본·시장 신뢰를 확보하려는 거버넌스 진화 패턴.</p>` },
+      { no: "2.9", title: "자본구조와 재무 현황",
+        body: `<p>FY2025 사업보고서 기준 연결 재무상태표. 자산이 1년 만에 +58%, 자본 +53% 증가하며 BS가 빠르게 강해졌다.</p>
+        <table class="tbl"><thead><tr><th>항목 (억원)</th><th>2023년말</th><th>2024년말</th><th>2025년말</th><th>증감</th></tr></thead><tbody>
+        <tr><td><strong>자산총계</strong></td><td>4,254</td><td>5,248</td><td><strong>8,308</strong></td><td>+58%</td></tr>
+        <tr><td>현금성 자산</td><td>139</td><td>176</td><td>600</td><td>+241%</td></tr>
+        <tr><td>매출채권 + 미청구공사</td><td>약 1,439</td><td>약 1,891</td><td>약 3,269</td><td>+73%</td></tr>
+        <tr><td>유형자산</td><td>1,921</td><td>2,223</td><td>2,332</td><td>+5%</td></tr>
+        <tr><td><strong>부채총계</strong></td><td>3,517</td><td>4,083</td><td><strong>6,531</strong></td><td>+60%</td></tr>
+        <tr><td>유동부채</td><td>3,211</td><td>3,799</td><td>6,153</td><td>+62%</td></tr>
+        <tr><td>차입금 (유동)</td><td>1,138</td><td>1,246</td><td>1,445</td><td>+16%</td></tr>
+        <tr><td><strong>자본총계</strong></td><td>737</td><td>1,164</td><td><strong>1,776</strong></td><td>+53%</td></tr>
+        </tbody></table>
+        <p>유형자산은 +5%만 증가했지만 매출은 +91% 증가했다는 점은 <strong>capacity 가동률 상승이 매출 성장을 견인</strong>한 신호. 별도 대규모 설비 증설 없이 기존 capacity 풀가동으로 매출이 늘었다는 것은 향후 추가 capex 시 매출 추가 성장 여지가 있음을 시사.</p>` },
+      { no: "2.10", title: "최근 실적 추이 (FY23~1Q26)",
+        body: `<p>3년 매출 3.6배 증가, 영업이익 5배 증가, EBITDA 4배 증가. EBITDA 마진은 5.7% → 6.9% → 10.7%로 가파르게 개선됐다. 1Q2026 매출 2,808억은 분기 사상 최대.</p>
+        <div id="quarterlyTrendChartSummary"></div>
+        <p>이 가속의 원천은 (1) 가스터빈 OEM의 폭증한 신규 발주, (2) AI 데이터센터·LNG cycle 진입, (3) 한전 LNG 전환·신규 IPP 발주, (4) 누적 수주잔고 2.4조원의 매출 인식, (5) capacity 가동률 상승에 따른 operating leverage. 1Q26 영업이익률은 12.58%로 전년 동기 대비 추가 개선됐다.</p>` },
+      { no: "2.11", title: "회사 전략·미래 방향",
+        body: `<ul>
+          <li><strong>HRSG 글로벌 확장</strong>: 미국·중동·동남아 현지 생산법인 활용 + 가스터빈 OEM(GE·Siemens·MHI)과의 협력 심화. 2026 신규 수주 가이던스 2조원+</li>
+          <li><strong>원자력 BOP 확대</strong>: 한국 원전 수출(체코·UAE) + 미국 SMR 시장 진입 모색</li>
+          <li><strong>자체 발전 사업</strong>: 아레테(폐기물)·아라퓨처파워(신재생) 자회사를 통한 IPP 진입 — 매출 다각화 + 안정적 cashflow</li>
+          <li><strong>부동산 투자</strong>: 이화 사모부동산투자신탁57호 출자 — 자산 다각화 시작</li>
+          <li><strong>이사회 거버넌스 진화</strong>: 전문 경영인(조원래) + 사외이사 강화로 family-controlled 구조를 시장 친화적으로 전환</li>
+        </ul>` },
+      { no: "2.12", title: "회사 차원의 구조적 위험",
+        body: `<table class="tbl"><thead><tr><th>위험</th><th>메커니즘</th></tr></thead><tbody>
+        <tr><td><strong>HRSG 단일 사업 의존 78%</strong></td><td>가스터빈 발주 cycle 둔화 시 매출 절반 이상 동시 타격</td></tr>
+        <tr><td>가문 전환 진행 중</td><td>우종인 가문 잔존 8.47% 지분 매각·이전 시 단기 수급 변동, 영업 인적 네트워크 재편 risk</td></tr>
+        <tr><td>EPC lumpy 매출</td><td>프로젝트 진행률 인식 timing에 따라 분기별 매출 swing</td></tr>
+        <tr><td>중국 player 추격</td><td>Harbin·Dongfang·Shanghai Electric 가격 경쟁</td></tr>
+        <tr><td>발전 cycle 정점 시점 불확실</td><td>AI·LNG·원전 3개 driver의 지속성, 정책·금리 변동에 민감</td></tr>
+        <tr><td>핵심 인력 risk</td><td>우종인 측 영업 네트워크 wind-down 시 진행 프로젝트의 영업 cliff 가능성</td></tr>
+        </tbody></table>` }
+    ],
       { no: "2.2", title: "지배구조 — Dual-Family에서 Single-Family로 전환 진행 중",
         body: `<p>FY2025 사업보고서·1Q2026 분기보고서를 비교하면 명확한 지배구조 전환 신호가 확인된다. <strong>우종인 사내이사가 2025.12.08 자진 사임</strong>했고, 1Q26말까지 본인 지분도 절반 가까이 줄었다. 이근흥 가문이 새 최대주주 그룹으로 부상.</p>
         <table class="tbl"><thead><tr><th>주주</th><th>FY25말 지분</th><th>1Q26말 지분</th><th>변동</th></tr></thead><tbody>
@@ -1492,35 +1795,9 @@ const STOCKS = {
     ],
 
     part3: [
-      { no: "3.A", title: "EBITDA quality",
-        body: `<p>EPC·발전 기자재 회사 특성상 (1) 수주 인식 timing, (2) 진행률 평가, (3) 자재비·인건비 변동의 cost overrun이 손익에 직접 영향. 2025년 영업이익률 +5.7%p 개선의 분해 — 가격 인상·믹스·capacity 가동률·일회성 환입 — 은 사업보고서 직접 read 필요(<em>확인 필요</em>).</p>` },
-      { no: "3.B", title: "Working capital — EPC 특성",
-        body: `<p>EPC 회사는 진행률 인식이 매출보다 빠를 때 미청구공사(매출채권 성격) 누적, 늦을 때 선수금 누적 패턴이 나타난다. 매출 +91% 성장 환경에서 AR·미청구공사가 어떻게 움직였는지 분기 BS 확인 필요. EPC 산업 통념상 매출 성장기에는 운전자본 부담이 함께 증가.</p>` },
-      { no: "3.C", title: "현금흐름 quality",
-        body: `<p>EPC 매출은 손익은 진행률 기반이지만 현금은 milestone payment 기반이라 timing이 다르다. 영업이익 +234% 환경에서 영업현금흐름이 그만큼 따라왔는지(또는 미청구공사로 BS에 누적되어 있는지) 별도 확인 필요. 2.4조원 수주잔고가 만들어내는 향후 capex·인력 부담도 점검.</p>` },
-      { no: "3.D", title: "Hidden Liability·거버넌스 (사업보고서 확정치)",
-        body: `<p><strong>특수관계자 거래 정량화 (FY2025, 단위 천원)</strong></p>
-        <table class="tbl"><thead><tr><th>거래 유형</th><th>BHI건설 (우종인 가족 회사)</th></tr></thead><tbody>
-        <tr><td>부동산 및 기타 자산 구입</td><td>4,733,207 (47.3억)</td></tr>
-        <tr><td>이자수익 (대여금에 대한)</td><td>664,852 (6.6억)</td></tr>
-        <tr><td>수선비</td><td>83,813</td></tr>
-        <tr><td>제공받은 용역</td><td>417,883</td></tr>
-        <tr><td>지급수수료</td><td>256,788</td></tr>
-        <tr><td><strong>BHI건설 대여금 잔액</strong></td><td><strong>12,000,000 (120억)</strong></td></tr>
-        </tbody></table>
-        <p>특수관계자 명단: BHI Algeria, 코리아에너지솔루션㈜, 이엠아이㈜(관계기업), 우종인·박은미(유의적 영향력 있는 개인), <strong>비에이치아이건설㈜(BHI건설)</strong>(기타). BHI건설에 대한 120억원 대여금이 잔존하는 점은 매각자문 관점에서 주의 — 우종인 가문이 exit 중인 상황에서 이 대여금 회수·정리가 deal terms에 포함될 가능성.</p>
-        <p><strong>EPC 특유의 BS 변동성</strong>: 단기미청구공사 2,168억(전년 1,542억, +40%) · 단기초과청구공사 2,655억(전년 1,335억, +99%)로 모두 폭증. 매출 +91% 환경에서 정상적인 성장 패턴이지만, 미청구공사 회수가능성은 KAM 핵심 항목.</p>` },
-      { no: "3.E", title: "회계 위험 — KAM 정확치 (FY2025 제28기)",
-        body: `<p>감사인 <strong>삼정회계법인</strong> · 적정의견 · 강조사항 없음 · 계속기업 불확실성 없음.</p>
-        <p><strong>핵심감사사항(KAM) 2건</strong> — 연결·별도 동일:</p>
-        <ol>
-          <li><strong>추정총계약원가의 불확실성</strong> — EPC 회사의 가장 큰 KAM. 계약 진행 중 총원가 추정이 바뀌면 진행률·매출·이익 모두 변동. 자재비·인건비 상승, 공정 지연, 변경 명령(change order) 등이 trigger.</li>
-          <li><strong>산정된 공사진행률의 적절성</strong> — 진행률 회계(percent-of-completion)에서 실제 진척 vs 회계 진척 사이의 정합성. 진행률 측정 방법(시간·노무·자재투입 등) 선택과 적용의 적정성.</li>
-        </ol>
-        <p>이 두 KAM은 제26기(FY23)·제27기(FY24)에도 동일하게 유지되어 왔다 — 즉 회사가 의도적 회계 조작을 한다는 의미가 아니라, EPC 산업 자체의 구조적 회계 risk를 매년 점검한다는 신호.</p>
-        <p>대손충당금 설정: 매출채권 0.65% · 미청구공사 0.25% · 단기대여금 87.87%(매우 높음, BHI건설 대여금 회수 risk 반영). 종합 1.82%로 안정적.</p>` },
-      { no: "3.F", title: "Operational Risk",
-        body: `<p>HRSG 라인 capacity·인력 확보가 향후 성장의 ceiling. AI 전력 cycle이 한꺼번에 발주 폭증하면 enginnering 인력 부족이 출하 지연으로 이어질 수 있다. 또 핵심 인력(우종인·이근흥)의 거취가 회사 운영에 큰 영향.</p>` }
+      { no: "3.0", title: "본 종목 — FDD 섹션 생략",
+        body: `<p>본 종목 deep dive는 <strong>산업·회사 본질 이해</strong>를 중심으로 구성된다. 회계·재무·법률 검증(KAM·운전자본·현금흐름 quality·관계사 거래·hidden liability 등)은 별도의 매각자문 또는 internal DD layer로 분리되며, 본 dashboard에서는 산업·기술·시장·지배구조 layer에 집중한다.</p>
+        <p>회사·산업에 대한 정밀 이해는 Part 1 (산업 Deep Dive 10개 sub-section)과 Part 2 (회사 Deep Dive 12개 sub-section, 특히 2.2 두 가문 구조)에서 확인할 수 있다.</p>` }
     ],
 
     part4: [
@@ -1729,54 +2006,35 @@ const STUDIES = {
 </section>
 
 <section class="sv-section">
-  <h2>Pre-Deal Due Diligence Checklist</h2>
-  <div class="lead">매수자 측 또는 매각자 측 advisory mandate 수임 시 사전 점검 항목.</div>
-
-  <div class="sv-checklist">
-    <div class="sv-check"><strong>지분 변동 트래킹</strong> — 우종인 매각 상대방(2,460천주 매각·이전된 곳)이 누구인가? 매수 단가는? 공시·블록딜 history 정리</div>
-    <div class="sv-check"><strong>BHI건설 정리 계획</strong> — 회사 → BHI건설 120억 대여금 회수 일정. 부동산 거래(47억) 정상화. 우종인 가문 exit과 함께 BHI건설 자체도 정리될 가능성</div>
-    <div class="sv-check"><strong>차미림 신원</strong> — 3.26% 보유. 우종인 가족·이근흥 가족·외부 우호 중 누구인가</div>
-    <div class="sv-check"><strong>잔존 우호 지분 map</strong> — 기타 67.88% 중 우호 가능 기관·friendly investor·외국인</div>
-    <div class="sv-check"><strong>이근흥 가문 자금 동원력</strong> — 잔존 지분 매수에 필요한 자본 (1,000~2,000억원) 동원 capacity</div>
-    <div class="sv-check"><strong>회사 LBO capacity</strong> — Net debt/EBITDA 기준 자사주 매입 한도. 차입금 1,445억·EBITDA 826억으로 leverage 1.75배 — 추가 차입 여력 있음</div>
-    <div class="sv-check"><strong>EPC 진행률 정합성</strong> — KAM 2건(추정총계약원가·진행률) deal 후 손익 조정 risk</div>
-    <div class="sv-check"><strong>해외 종속기업 valuation</strong> — 인도네시아·미국·태국·이스라엘 제조법인 + 한국 발전사업 자회사 2개 + 부동산투자신탁의 carve-out 또는 통째 매각 옵션</div>
-    <div class="sv-check"><strong>EPC 진행 프로젝트 hand-over risk</strong> — 우종인의 영업 관계가 wind-down될 때 진행 프로젝트의 영업 cliff risk</div>
-    <div class="sv-check"><strong>핵심 인력 retention</strong> — 우종인 측 영업·해외 인력의 이탈 risk. retention bonus 설계 필요</div>
-  </div>
-</section>
-
-<section class="sv-section">
   <h2>Watchlist — 분기마다 점검할 시그널</h2>
-  <div class="lead">매각자문 mandate 진행 중 또는 deal market entry 검토 시 모니터링 항목.</div>
+  <div class="lead">deal market entry 검토 시 모니터링 항목.</div>
 
   <div class="sv-checklist">
     <div class="sv-check">분기 보고서·공시에서 우종인·BHI건설 잔존 지분 변동</div>
     <div class="sv-check">차미림·이가현·이명환·기타 신규 주주 등장 공시</div>
     <div class="sv-check">자사주 매입·소각 공시 (이근흥 가문 control 강화 시그널)</div>
-    <div class="sv-check">PE·전략 매수자 블록딜 공시 (예: 5% rule 보고)</div>
+    <div class="sv-check">PE·전략 매수자 블록딜 공시 (5% rule 보고)</div>
     <div class="sv-check">이근흥 부회장 인터뷰·IR에서의 governance·M&A 시사 발언</div>
     <div class="sv-check">정기주총 의안 변화 (사외이사·감사위원 신규 선임 등)</div>
     <div class="sv-check">BHI건설 청산·합병·재무 변동 공시</div>
-    <div class="sv-check">사업보고서 footnote의 특수관계자 거래 규모 변화</div>
     <div class="sv-check">국내·해외 M&A market에서 발전 기자재 sector deal 추이 (multiple 비교용)</div>
   </div>
 </section>
 
 <section class="sv-section">
-  <h2>Closing Note — 매각자문사 입장의 Action Item</h2>
+  <h2>Closing — 매각자문 Mandate Action Item</h2>
   <div class="sv-card">
     <h4>다음 90일 안에 해볼 수 있는 것</h4>
     <ol>
-      <li><strong>잔존 우종인 가문에 sell-side mandate pitch</strong> — exit 진행 중인 가문이라 매각자문 needs 명확. 잔존 8.47% 매각 + BHI건설 정리 통합 mandate</li>
-      <li><strong>이근흥 가문에 경영권 유지 자문 pitch</strong> — 우종인 잔존 지분 인수 strategy + 우호 PE sourcing + shareholder agreement 설계</li>
-      <li><strong>PE buy-side mandate sourcing</strong> — 국내 MBK·한앤·IMM PE, 해외 KKR·Bain·Carlyle 등. 발전 기자재 sector에 익숙하고 family-controlled company 투자 경험 있는 PE 우선</li>
-      <li><strong>Strategic acquirer sounding</strong> — 두산에너빌리티 (전략적 가능성 높음, 국내 발전 기자재 leader) · GE Vernova · Siemens Energy · MHI</li>
-      <li><strong>Industry roll-up thesis 작성</strong> — HSG성동중공업·일진디스플레이·기타 발전 기자재 mid-cap 통합 시나리오</li>
+      <li><strong>잔존 우종인 가문 sell-side mandate pitch</strong> — exit 진행 중. 잔존 8.47% 매각 + BHI건설 정리 통합</li>
+      <li><strong>이근흥 가문 경영권 유지 자문 pitch</strong> — 우종인 잔존 지분 인수 strategy + 우호 PE sourcing</li>
+      <li><strong>PE buy-side sourcing</strong> — 국내 MBK·한앤·IMM PE, 해외 KKR·Bain·Carlyle. 발전 기자재·family-controlled 투자 경험 있는 PE 우선</li>
+      <li><strong>Strategic acquirer sounding</strong> — 두산에너빌리티(국내 발전 기자재 leader)·GE Vernova·Siemens Energy·MHI</li>
+      <li><strong>Industry roll-up thesis</strong> — HSG성동·일진·기타 발전 기자재 mid-cap 통합 시나리오</li>
     </ol>
   </div>
 
-  <div class="sv-callout"><strong>본 노트 한계:</strong> 본 분석은 사업보고서·분기보고서·언론 보도 fact 기반의 매각자문 관점 정리이며, 실제 mandate 수임·deal execution을 위해서는 (1) 직접 우종인·이근흥 측 컨택, (2) 잔존 지분 매각 진행 단계 확인, (3) 매수자 측 의향 sounding이 필요하다. 매각자문 의무·secrecy·이해상충 검토는 별도 진행 사항.</div>
+  <div class="sv-callout"><strong>본 노트 한계:</strong> 본 분석은 사업보고서·분기보고서·언론 보도 fact 기반의 매각자문 관점 정리이며, 실제 mandate 수임·deal execution을 위해서는 직접 양측 컨택과 매수자 측 의향 sounding이 필요. 이해상충 검토 별도.</div>
 </section>
 `,
     sources: [
@@ -2880,6 +3138,18 @@ if (tickerKeys.length) {
 }
 renderSidebar();
 renderMain();
+
+// Sidebar toggle (사이드바 열기/닫기) — localStorage로 상태 기억
+const toggleBtn = document.getElementById('sidebar-toggle');
+const savedCollapsed = localStorage.getItem('alpha-sidebar-collapsed') === '1';
+if (savedCollapsed) { document.body.classList.add('sidebar-collapsed'); toggleBtn.textContent = '☰'; }
+toggleBtn.addEventListener('click', () => {
+  const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
+  toggleBtn.textContent = isCollapsed ? '☰' : '◀';
+  localStorage.setItem('alpha-sidebar-collapsed', isCollapsed ? '1' : '0');
+});
+
+// 인쇄 단축키 Cmd/Ctrl + P 가 동작하도록 (기본 동작) — 별도 처리 X. 버튼은 화면 우상단.
 </script>
 
 </body>
