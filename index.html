@@ -1338,6 +1338,223 @@ const STOCKS = {
       { title: "Wisereport — 기업 정보", url: "https://comp.wisereport.co.kr/company/c1010001.aspx?cmp_cd=000660" },
       { title: "SK하이닉스 사업보고서 (제78기, 2026.03.17 공시)", url: "https://dart.fss.or.kr" }
     ]
+  },
+
+  "083650": {
+    ticker: "083650",
+    nameEn: "BHI Co., Ltd.",
+    nameKr: "비에이치아이",
+    exchange: "KOSDAQ",
+    asOfDate: "2026-05-07",
+    industry: "발전용 기자재 (HRSG·보일러·원자력 BOP)",
+
+    market: { note: "참고용. valuation 의견 X." },
+
+    alphaScore: {
+      composite: 7.0,
+      signal: "monitor",
+      signalLabel: "MONITOR · AI 전력 슈퍼사이클 + 원전 옵션",
+      rationale: "2025년 매출 +91% YoY, 영업이익 +234% YoY로 cycle 가속이 매우 강하다. 누적 수주잔고 2.4조원, 2026 신규 수주 가이던스 2조원+로 향후 2~3년 매출 가시성도 확보. AI 데이터센터 전력 수요·LNG 복합화력 신규 건설·미국 원전 시장 재개라는 3개 driver가 동시 작동. 다만 (1) HRSG 단일 사업 의존도 78%, (2) KOSDAQ 중형주(시총 1.5조원대)로 변동성 큼, (3) 우종인·이근흥 dual-family 지분 57%로 외부 견제 약함, (4) 발전 EPC 산업 특성상 분기 매출 lumpy하다는 점이 risk.",
+      components: [
+        { key: "value", label: "Value", score: 6, weight: 15,
+          rationale: "유안타 목표가 12만원·SK증권 11만원 등 증권사 강세 view. 12M Fwd PER 컨센서스 추가 확인 필요. 발전 기자재 동종 대비 multiple 평가는 사용자 판단 영역.", direction: "neutral" },
+        { key: "quality", label: "Quality (Moat)", score: 7, weight: 20,
+          rationale: "HRSG·PC보일러 원천기술 보유, Amec Foster Wheeler 기술 협력. 한전·주요 건설사 long-term 관계. 단 단일 사업 의존(HRSG 78.3%)으로 cycle 변동성 큼.", direction: "positive" },
+        { key: "momentum", label: "Growth Momentum", score: 9, weight: 20,
+          rationale: "2025 매출 7,741억원(+91% YoY)·영업이익 755억원(+234% YoY)·순이익 652억원(+233% YoY). 누적 수주잔고 2.4조원으로 향후 2~3년 매출 가시성 확보. 2026 매출 컨센서스 약 1.10조원(+41%).", direction: "positive" },
+        { key: "profitability", label: "Profitability", score: 7, weight: 15,
+          rationale: "2025 영업이익률 9.75% — 발전 기자재 산업 통상 수준. 매출 +91% 대비 영업이익 +234%로 operating leverage 강하게 작동. 단 EPC 프로젝트의 분기 lumpy 특성 잔존.", direction: "positive" },
+        { key: "balance", label: "Financial Health", score: 6, weight: 10,
+          rationale: "KOSDAQ 우량기업부 승격(2026.5). 정확한 자본구조는 사업보고서 별도 read 필요. EPC 회사 특성상 운전자본 변동성 큼.", direction: "neutral" },
+        { key: "governance", label: "Governance", score: 6, weight: 20,
+          rationale: "우종인 회장(BHI건설 통해 40.72%) + 이근흥 부회장 배우자 박은미(16.80%) = dual-family 합산 57.5%. 1998년 일본 Denso 그룹에서 만나 공동 창업한 안정적 관계지만 외부 견제 약함. 두 가문 간 지분·의사결정 분쟁 가능성은 잠재 risk.", direction: "neutral" }
+      ]
+    },
+
+    tldr: {
+      whatItDoes: "비에이치아이는 1998년 우종인·이근흥 두 사람이 일본 Denso 그룹 회사에서 만나 '범우엔지니어링'으로 공동 창업한 발전용 기자재 전문 회사다. 2007년 BHI로 사명을 변경했다. HRSG(배열회수보일러)를 중심으로 발전 보일러·원자력 BOP(보조기기)·EPC를 담당하며, 주요 고객은 한전(KEPCO)과 국내외 주요 건설사다. AI 데이터센터 전력 수요·LNG 복합화력 신규 건설·미국 원전 시장 재개라는 3개 driver가 동시 작동하면서 2025년 매출 7,741억원(+91% YoY)·영업이익 755억원(+234% YoY)을 기록했다. 2026.5 KOSDAQ '우량기업부'로 승격.",
+      keyMetrics: [
+        { label: "FY2025 매출", value: "7,741억원 (+91% YoY)" },
+        { label: "FY2025 영업이익", value: "755억원 (+234% YoY)" },
+        { label: "FY2025 순이익", value: "652억원 (+233% YoY)" },
+        { label: "영업이익률", value: "9.75%" },
+        { label: "누적 수주잔고", value: "2.4조원" },
+        { label: "HRSG 매출 비중", value: "78.3% (6,059억원)" }
+      ],
+      moatSummary: "HRSG·PC보일러 원천기술, Amec Foster Wheeler 기술 협력, 한전·건설사 long-term 관계, AI 전력·LNG·원전 3개 driver 동시 노출.",
+      keyConcerns: [
+        "HRSG 단일 사업 의존도 78.3%",
+        "EPC 프로젝트 lumpy — 분기 매출 변동성",
+        "우종인·이근흥 dual-family 57.5% 지배",
+        "KOSDAQ 중형주 — 변동성·유동성 risk",
+        "발전 cycle 정점 시점 불확실성",
+        "분기 BS·실적 정밀 데이터 미수집 (사업보고서 별도 read 필요)"
+      ]
+    },
+
+    risks: [
+      { severity: "high", title: "HRSG 단일 사업 의존",
+        detail: "2025년 매출 7,741억원 중 HRSG가 6,059억원으로 78.3% 비중. 가스터빈 발주 cycle이 둔화되면 매출 절반 이상이 한 번에 타격. 원자력 BOP·EPC가 보조 layer로 있으나 비중 제한적.",
+        source: "이베스트투자증권 2025.10 Company Brief" },
+      { severity: "med", title: "Dual-family 거버넌스 구조",
+        detail: "우종인 회장 + 특수관계인 40.72% (BHI건설 통해), 이근흥 부회장 배우자 박은미 16.80%. 두 창업자가 1998년 공동 창업한 안정적 파트너십이지만 합산 57.5%로 외부 견제가 약하다. 향후 두 가문 간 의사결정·지분 분쟁 가능성은 잠재 risk.",
+        source: "BusinessPost · Wisereport 지분 현황" },
+      { severity: "med", title: "EPC 프로젝트 lumpy 매출",
+        detail: "발전 EPC 산업 특성상 프로젝트 mileage에 따라 분기 매출이 큰 폭으로 swing한다. 수주잔고 2.4조원의 인식 시점이 손익에 직접 영향. 2026 매출 컨센서스 1.10조원도 EPC 진척률 가정에 따라 분기별 편차 큼.",
+        source: "산업 통념" },
+      { severity: "med", title: "발전 cycle 정점 시점",
+        detail: "AI 데이터센터·LNG·원전 3개 driver가 동시 작동 중이라 cycle 정점 시점이 멀어 보이지만, 발전 capex는 정책·금리·전력 수요 둔화에 민감. 미국 원전 시장 재개도 정책 변화에 따라 일정 변동 가능.",
+        source: "산업 통념" },
+      { severity: "low", title: "수출 위험",
+        detail: "해외 매출 비중 일부 있으며 환위험·지정학 risk 존재. 미국 reciprocal tariff 등 정책 변화 영향 잠재.",
+        source: "기업개요" }
+    ],
+
+    revenueMix: [
+      { name: "HRSG (배열회수보일러)", value: 78.3, color: "#1f6feb" },
+      { name: "발전 보일러·원자력 BOP·EPC", value: 21.7, color: "#1a7f5a" }
+    ],
+
+    quarterlyPL: [
+      { period: "23년", revenue: 2160, opIncome: 88, ni: 60, opMargin: 4.07, npMargin: 2.78 },
+      { period: "24년", revenue: 4053, opIncome: 226, ni: 196, opMargin: 5.58, npMargin: 4.83 },
+      { period: "25년", revenue: 7741, opIncome: 755, ni: 652, opMargin: 9.75, npMargin: 8.42 },
+      { period: "26F", revenue: 10955, opIncome: 1068, ni: 920, opMargin: 9.75, npMargin: 8.40 }
+    ],
+
+    quarterlyBS: [
+      { period: "25년말", assets: 0, ca: 0, cash: 0, ar: 0, inv: 0, prepaid: 0, ppe: 0, gw: 0, intangible: 0, otherNCA: 0, liab: 0, cl: 0, ltd: 0, deferredTax: 0, otherL: 0, equity: 0, note: "분기 BS는 사업보고서 별도 read 필요 — DART에서 확인 가능" }
+    ],
+
+    part1: [
+      { no: "1.1", title: "산업 정의 — 발전용 기자재",
+        body: `<p>비에이치아이가 속한 산업은 <strong>발전용 기자재(Power Generation Equipment)</strong>로, 가스·석탄·원자력 발전소와 제철소 등의 핵심 장비를 설계·제작·설치하는 산업이다. 발전 EPC(Engineering·Procurement·Construction)의 부품 layer에 위치한다.</p>
+        <table class="tbl"><thead><tr><th>제품</th><th>역할</th><th>주요 수요</th></tr></thead><tbody>
+        <tr><td>HRSG (배열회수보일러)</td><td>가스터빈 배기열을 회수해 스팀 생산 — 복합화력 발전의 핵심 기자재</td><td>LNG 복합화력 발전소</td></tr>
+        <tr><td>발전 보일러 (PC·CFB)</td><td>석탄·바이오매스 화력 발전 보일러</td><td>화력 발전소·열병합</td></tr>
+        <tr><td>원자력 BOP</td><td>원전 보조기기 — 복수기·열교환기·탱크 등</td><td>원자력 발전소</td></tr>
+        <tr><td>EPC</td><td>설계·조달·시공 통합 발주</td><td>발전소 신규 건설</td></tr>
+        </tbody></table>` },
+      { no: "1.2", title: "수요 driver — AI 전력 슈퍼사이클",
+        body: `<p>2024~26년 발전 기자재 산업의 가장 큰 driver는 <strong>AI 데이터센터 전력 수요</strong>다. NVIDIA 가속기 1대당 약 700W~1.2kW를 소비하며, 대형 AI 데이터센터 1개가 100MW~1GW급 전력을 요구한다. 이는 기존 데이터센터 대비 5~10배 규모로, 미국·한국·일본 모두 신규 발전소 발주가 폭증하고 있다.</p>
+        <p>2026~28년 전력 수요 driver:</p>
+        <ul>
+          <li><strong>AI 데이터센터</strong>: 하이퍼스케일러(MS·Google·AWS·Meta) capex 가이던스 매년 +30~50%</li>
+          <li><strong>LNG 복합화력 발전소</strong>: 가스터빈 + HRSG 결합 발전 — 미국·한국·동남아 신규 건설 cycle</li>
+          <li><strong>원자력</strong>: 미국 SMR·기존 원전 재가동, 한국 신규 원전 — 원자력 BOP 수요 동반</li>
+          <li><strong>재생에너지 보조전력</strong>: 변동성 큰 신재생 보완 위한 가스 화력</li>
+        </ul>` },
+      { no: "1.3", title: "경쟁 구도",
+        body: `<p>국내 발전용 기자재 시장은 두산에너빌리티(대형), 비에이치아이(중형), HSG성동중공업·일진디스플레이 등 소수 player로 구성. 글로벌 경쟁사는 GE Vernova·Siemens Energy·Mitsubishi Heavy 등이며, 이들은 가스터빈 자체와 HRSG를 묶어 패키지로 공급하는 경우가 많다.</p>
+        <p>비에이치아이의 위치: 글로벌 OEM(GE·Siemens·MHI)에 HRSG를 OEM 공급하거나, 한국·동남아 EPC 프로젝트에 직접 공급. 가스터빈 자체는 생산 안 함.</p>` }
+    ],
+
+    part2: [
+      { no: "2.1", title: "회사 개요와 연혁",
+        body: `<p>비에이치아이는 1998년 우종인·이근흥 두 창업자가 일본 Denso 그룹 회사에서 만나 '범우엔지니어링'으로 공동 창업한 발전 기자재 회사다. 2007년 BHI로 사명 변경, 2012년 KOSDAQ 상장(083650). 본사는 경남 함안. 2026년 5월 KOSDAQ '우량기업부'로 승격되었다.</p>
+        <p>두 창업자 모두 일본 산업 인프라 분야 출신으로, 한국 발전 기자재 국산화·기술 자립을 명분으로 회사를 키워왔다. Amec Foster Wheeler(영국)와 기술 협력을 통해 PC보일러·HRSG 원천기술을 확보했다.</p>` },
+      { no: "2.2", title: "지배구조 — Dual-Family 경영",
+        body: `<p>사용자가 언급한 "2개 가문 경영"의 핵심.</p>
+        <table class="tbl"><thead><tr><th>주체</th><th>지분</th><th>비고</th></tr></thead><tbody>
+        <tr><td><strong>우종인 회장 + 특수관계인</strong></td><td>약 40.72%</td><td>BHI건설(개인 보유 회사)을 통해 보유. 대표이사 사장·이사회 의장</td></tr>
+        <tr><td><strong>이근흥 부회장 배우자 (박은미)</strong></td><td>16.80%</td><td>2대 주주. 이근흥 부회장은 공동 창업자</td></tr>
+        <tr><td>외부 지분</td><td>약 42.5%</td><td>기관·외국인·개인</td></tr>
+        </tbody></table>
+        <p><strong>두 창업자 가문 합산 약 57.5%</strong> — 명확한 dual-family ownership. 1998년 공동 창업 이후 두 사람 모두 경영진으로 남아 있으며, 우종인은 대외(영업·전략), 이근흥은 기술·생산을 분담하는 구조로 알려져 있다.</p>` },
+      { no: "2.3", title: "사업 구조와 매출 mix (2025)",
+        body: `<div id="revenueMixChart"></div>
+        <p style="margin-top:14px">2025년 매출 7,741억원의 78.3%가 HRSG. 나머지 21.7%가 발전 보일러·원자력 BOP·EPC 등으로 구성. HRSG 단일 의존도가 매우 높다는 점은 cycle risk이자 핵심 driver.</p>` },
+      { no: "2.4", title: "최근 실적 추이",
+        body: `<div id="quarterlyTrendChartSummary"></div>
+        <p>2023년 매출 2,160억원에서 2025년 7,741억원으로 2년 만에 3.6배 증가. 영업이익도 88억→755억으로 8.6배 점프. 영업이익률은 4.07% → 5.58% → 9.75%로 가파른 개선. 2026년 컨센서스는 매출 1.10조원·영업이익 1,068억원으로 추가 +41%·+41% 성장 전망(외부 추정).</p>
+        <p>이 가속의 핵심 driver는 (1) AI 데이터센터·LNG 복합화력 발주 폭증, (2) 누적 수주잔고 2.4조원의 매출 인식, (3) HRSG 라인 capacity 가동률 상승에 따른 operating leverage. 단 EPC 산업 특성상 분기별 매출 lumpy함.</p>` },
+      { no: "2.5", title: "수주잔고와 향후 매출 가시성",
+        body: `<p>2025년 신규 수주 약 1.8조원(전년 대비 +20%). 2026년 신규 수주 가이던스 2조원+. 누적 수주잔고 2.4조원으로 향후 2~3년 매출 가시성 확보.</p>
+        <p>주요 수주 사례:</p>
+        <ul>
+          <li>2026.3 — LNG 복합화력 발전설비 566억원 공급계약</li>
+          <li>2025 — 미국·중동·동남아 HRSG 수주 다수</li>
+          <li>원자력 BOP — 미국 원전 시장 재개 수혜 잠재</li>
+        </ul>` }
+    ],
+
+    part3: [
+      { no: "3.A", title: "EBITDA quality",
+        body: `<p>EPC·발전 기자재 회사 특성상 (1) 수주 인식 timing, (2) 진행률 평가, (3) 자재비·인건비 변동의 cost overrun이 손익에 직접 영향. 2025년 영업이익률 +5.7%p 개선의 분해 — 가격 인상·믹스·capacity 가동률·일회성 환입 — 은 사업보고서 직접 read 필요(<em>확인 필요</em>).</p>` },
+      { no: "3.B", title: "Working capital — EPC 특성",
+        body: `<p>EPC 회사는 진행률 인식이 매출보다 빠를 때 미청구공사(매출채권 성격) 누적, 늦을 때 선수금 누적 패턴이 나타난다. 매출 +91% 성장 환경에서 AR·미청구공사가 어떻게 움직였는지 분기 BS 확인 필요. EPC 산업 통념상 매출 성장기에는 운전자본 부담이 함께 증가.</p>` },
+      { no: "3.C", title: "현금흐름 quality",
+        body: `<p>EPC 매출은 손익은 진행률 기반이지만 현금은 milestone payment 기반이라 timing이 다르다. 영업이익 +234% 환경에서 영업현금흐름이 그만큼 따라왔는지(또는 미청구공사로 BS에 누적되어 있는지) 별도 확인 필요. 2.4조원 수주잔고가 만들어내는 향후 capex·인력 부담도 점검.</p>` },
+      { no: "3.D", title: "Hidden Liability·거버넌스",
+        body: `<p>Dual-family 구조의 가장 큰 잠재 risk는 두 창업자 사이의 의사결정 충돌·세대 교체 시 분쟁이다. 1998년부터 27년간 안정적 파트너십을 유지해 왔다는 점은 긍정적이나, 우종인 회장·이근흥 부회장의 후계 구도가 명확한지는 외부에서 확인하기 어렵다. BHI건설(우종인 개인 보유)과 비에이치아이 간 related-party 거래도 점검 대상.</p>
+        <p>또 EPC 산업 특성상 진행 중인 lawsuit·하자 보수 충당부채 등이 BS에 누적될 수 있다. 사업보고서 footnote 확인 필요.</p>` },
+      { no: "3.E", title: "회계 위험",
+        body: `<p>KOSDAQ 상장사이므로 외부감사인의 KAM 보고가 매년 있다. EPC 회사 통상 KAM 후보: (1) 공사진행률 추정, (2) 미청구공사 회수가능성, (3) 충당부채(하자보수·소송), (4) 매출 인식 timing. 본 회차 직접 확인 미완료.</p>` },
+      { no: "3.F", title: "Operational Risk",
+        body: `<p>HRSG 라인 capacity·인력 확보가 향후 성장의 ceiling. AI 전력 cycle이 한꺼번에 발주 폭증하면 enginnering 인력 부족이 출하 지연으로 이어질 수 있다. 또 핵심 인력(우종인·이근흥)의 거취가 회사 운영에 큰 영향.</p>` }
+    ],
+
+    part4: [
+      { no: "4.1", title: "핵심 사실 정리",
+        body: `<ul>
+          <li>1998년 우종인·이근흥 공동 창업, 2007년 BHI 사명 변경, 2012년 KOSDAQ 상장.</li>
+          <li>발전 기자재 전문 — HRSG(78.3%) + 발전 보일러·원자력 BOP·EPC.</li>
+          <li>2025년 매출 7,741억원(+91%)·영업이익 755억원(+234%)·순이익 652억원(+233%).</li>
+          <li>누적 수주잔고 2.4조원, 2026 신규 수주 가이던스 2조원+.</li>
+          <li>2026 컨센서스: 매출 1.10조원, 영업이익 1,068억원.</li>
+          <li>지배구조: 우종인 40.72% + 이근흥 배우자 16.80% = dual-family 57.5%.</li>
+          <li>2026.5 KOSDAQ 우량기업부 승격.</li>
+          <li>증권사 view: 유안타 TP 12만원, SK증권 등 강세론 우세.</li>
+          <li>Alpha 종합 7.0 — momentum·profitability 강하나 단일 사업·dual-family·중형주 변동성이 score 누름.</li>
+        </ul>` },
+      { no: "4.2", title: "AI 슈퍼사이클의 두 layer — 반도체와 전력",
+        body: `<p>본 dashboard의 다른 종목(삼성전자·SK하이닉스)이 AI 슈퍼사이클의 <strong>메모리</strong> layer라면, 비에이치아이는 같은 cycle의 <strong>전력 기자재</strong> layer다. 두 layer 모두 동일한 driver(NVIDIA 가속기 출하·하이퍼스케일러 capex)에 의해 움직이지만 시간차가 있다.</p>
+        <p>일반적으로 메모리·HBM이 먼저 수요 폭증 → 데이터센터 build-out → 전력 인프라 → 발전소 신규 건설 → HRSG 발주 순으로 cycle이 전파된다. 따라서 비에이치아이의 cycle 정점은 메모리 cycle보다 1~2년 후행할 가능성. 반대로 cycle 둔화 시점도 후행.</p>` },
+      { no: "4.3", title: "후속 작업이 필요한 항목",
+        body: `<ol>
+          <li>2025 사업보고서 직접 read — KAM, 관계사 거래(BHI건설), 공사진행률·미청구공사, 충당부채</li>
+          <li>분기 BS·CF — 운전자본·EPC 진행 패턴</li>
+          <li>2026 신규 수주 1.8조원의 segment별 분해 (LNG·원전·해외)</li>
+          <li>우종인 회장·이근흥 부회장의 후계 구도</li>
+          <li>BHI건설과 비에이치아이 간 related-party 거래 규모·arm's length 검증</li>
+          <li>HRSG capacity 가동률·증설 계획</li>
+          <li>미국 SMR·기존 원전 재가동 정책 진척</li>
+        </ol>` },
+      { no: "4.4", title: "출처", body: `<p>아래 출처 섹션 참조.</p>` }
+    ],
+
+    mgmtQ: [
+      "2026년 신규 수주 2조원+ 가이던스의 segment별 (LNG·원전·해외) 분해는?",
+      "HRSG 매출 비중 78.3% — 원자력 BOP·EPC 비중을 늘려갈 전략은?",
+      "BHI건설과의 거래 규모·가격 산정 방식·arm's length 검증은?",
+      "우종인 회장·이근흥 부회장의 후계 구도와 차세대 경영진은?",
+      "AI 데이터센터 직접 발주 비중 vs 하이퍼스케일러 간접 수주 비중은?",
+      "HRSG 라인 capacity 가동률·증설 계획·인력 확보 계획은?",
+      "미국 원전 BOP 시장 진입 진척과 잠재 수주 규모는?",
+      "2025년 영업이익률 +5.7%p 개선의 driver (가격·믹스·가동률·일회성) 분해는?",
+      "수주잔고 2.4조원의 평균 인식 기간과 분기 매출 변동성 관리 방안은?"
+    ],
+
+    itemsToVerify: [
+      "2025 사업보고서 — KAM, 관계사 거래, 공사진행률·미청구공사, 충당부채, 분기 BS",
+      "BHI건설 관련 거래 규모·조건",
+      "HRSG 가동률·증설 계획",
+      "FY2026 분기별 매출·영업이익 컨센서스 정확치",
+      "미국 SMR·원전 재가동 정책 일정"
+    ],
+
+    sources: [
+      { title: "비에이치아이 공식 사이트", url: "https://www.bhi.co.kr/" },
+      { title: "BusinessPost — Who Is 우종인 대표이사", url: "https://www.businesspost.co.kr/BP?command=article_view&num=402566" },
+      { title: "Wikipedia — BHI(기업)", url: "https://ko.wikipedia.org/wiki/BHI_(%EA%B8%B0%EC%97%85)" },
+      { title: "이베스트투자증권 Company Brief (2025.10.27)", url: "https://www.imfnsec.com/upload/R_E08/2025/10/%5B27073206%5D_083650.pdf" },
+      { title: "유안타증권 TP 12만원 — Hellot", url: "https://www.hellot.net/news/article.html?no=111804" },
+      { title: "헤럴드경제 — 미국 원전 시장 재평가", url: "https://blog.ai-fortunate.com/2026/05/blog-post_9.html" },
+      { title: "한국경제 — LNG 복합화력 566억 공급계약", url: "https://www.hankyung.com/article/2026031136156" },
+      { title: "Newspim — KOSDAQ 우량기업부 승격", url: "https://www.newspim.com/news/view/20260504000462" },
+      { title: "FnGuide 컨센서스 — 083650", url: "https://comp.fnguide.com/SVO2/ASP/SVD_Main.asp?gicode=A083650" },
+      { title: "Wisereport 지분 현황", url: "https://comp.wisereport.co.kr/company/c1070001.aspx?cmp_cd=083650" }
+    ]
   }
 };
 
