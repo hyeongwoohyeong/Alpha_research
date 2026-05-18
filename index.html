@@ -1351,23 +1351,23 @@ const STOCKS = {
     market: { note: "참고용. valuation 의견 X." },
 
     alphaScore: {
-      composite: 7.0,
+      composite: 7.2,
       signal: "monitor",
-      signalLabel: "MONITOR · AI 전력 슈퍼사이클 + 원전 옵션",
-      rationale: "2025년 매출 +91% YoY, 영업이익 +234% YoY로 cycle 가속이 매우 강하다. 누적 수주잔고 2.4조원, 2026 신규 수주 가이던스 2조원+로 향후 2~3년 매출 가시성도 확보. AI 데이터센터 전력 수요·LNG 복합화력 신규 건설·미국 원전 시장 재개라는 3개 driver가 동시 작동. 다만 (1) HRSG 단일 사업 의존도 78%, (2) KOSDAQ 중형주(시총 1.5조원대)로 변동성 큼, (3) 우종인·이근흥 dual-family 지분 57%로 외부 견제 약함, (4) 발전 EPC 산업 특성상 분기 매출 lumpy하다는 점이 risk.",
+      signalLabel: "MONITOR · 사업 모멘텀 강세 + 지배구조 전환 진행",
+      rationale: "FY2025 사업보고서 fact 확정 — 매출 7,741억원(+91% YoY)·영업이익 754.97억원(+244% YoY)·EBITDA 826억원(EBITDA 마진 10.7%)·당기순이익 651.96억원(+233% YoY). EPS 633원→2,107원으로 3.3배 점프. EPC 회사 KAM은 (1) 추정총계약원가 불확실성, (2) 산정된 공사진행률 적절성 2건 — 진행률 회계 risk가 손익 직결. <strong>지배구조 전환이 진행 중인 가장 중요한 신호</strong>: 우종인 사내이사가 2025.12.08 자진 사임 → FY25말 지분 16.42% → 1Q2026말 8.47%로 절반 감소 + BHI건설 지분이 0.03%까지 청산 → 이근흥 가문(박은미 16.80%·이근흥 1.00%·이가현 2.35%·이명환 0.20% 합산 20.36%)이 새 최대주주 그룹으로 전환. 향후 2~3년 매출 가시성(수주잔고 2.4조)·1Q26 매출 2,808억(이미 연간의 36%)이 강력한 driver. Alpha 점수 7.0→7.2로 상향 — 사업 momentum과 transparent governance 전환 시그널.",
       components: [
         { key: "value", label: "Value", score: 6, weight: 15,
-          rationale: "유안타 목표가 12만원·SK증권 11만원 등 증권사 강세 view. 12M Fwd PER 컨센서스 추가 확인 필요. 발전 기자재 동종 대비 multiple 평가는 사용자 판단 영역.", direction: "neutral" },
+          rationale: "1Q2026 EPS는 약 165원 (지배 5,101백만원÷30,944천주). 연간화 시 660원, 컨센서스 EPS 약 2,500~3,000원 가정 시 12M Fwd PER 추정 30~40배 범위. 매각자문 관점에서 deal multiple은 EBITDA 826억 기준 trading EV/EBITDA 15~20배 범위(산업 통념).", direction: "neutral" },
         { key: "quality", label: "Quality (Moat)", score: 7, weight: 20,
-          rationale: "HRSG·PC보일러 원천기술 보유, Amec Foster Wheeler 기술 협력. 한전·주요 건설사 long-term 관계. 단 단일 사업 의존(HRSG 78.3%)으로 cycle 변동성 큼.", direction: "positive" },
-        { key: "momentum", label: "Growth Momentum", score: 9, weight: 20,
-          rationale: "2025 매출 7,741억원(+91% YoY)·영업이익 755억원(+234% YoY)·순이익 652억원(+233% YoY). 누적 수주잔고 2.4조원으로 향후 2~3년 매출 가시성 확보. 2026 매출 컨센서스 약 1.10조원(+41%).", direction: "positive" },
+          rationale: "HRSG·PC보일러 원천기술 보유, Amec Foster Wheeler 기술 협력. 한전·주요 건설사 long-term 관계. 6개 종속기업(인도네시아·미국·태국·이스라엘 제조 + 한국 발전사업 자회사 2개 + 부동산투자신탁) 보유. 단 HRSG 매출 의존 78%로 cycle 변동성 큼.", direction: "positive" },
+        { key: "momentum", label: "Growth Momentum", score: 10, weight: 20,
+          rationale: "FY25 매출 7,741억(+91%)·영업이익 755억(+244%)·EBITDA 826억(+195%). 1Q2026 매출 2,808억(분기 사상 최대)·영업이익 353억·EBITDA 약 371억(분기 마진 13.2%). 누적 수주잔고 2.4조원 → 향후 2~3년 매출 가시성. 1Q26 매출이 이미 연간 컨센서스(1.10조)의 25.5% 수준.", direction: "positive" },
         { key: "profitability", label: "Profitability", score: 7, weight: 15,
-          rationale: "2025 영업이익률 9.75% — 발전 기자재 산업 통상 수준. 매출 +91% 대비 영업이익 +234%로 operating leverage 강하게 작동. 단 EPC 프로젝트의 분기 lumpy 특성 잔존.", direction: "positive" },
+          rationale: "FY25 영업이익률 9.75%·EBITDA 마진 10.7%·순이익률 8.42%. 매출 +91% 대비 영업이익 +244%로 operating leverage 강함. 1Q26은 OPM 12.58%로 가속. 단 1Q 순이익률 1.82%(영업외 환차손·금융원가 영향) — 환위험 hedge 검증 필요.", direction: "positive" },
         { key: "balance", label: "Financial Health", score: 6, weight: 10,
-          rationale: "KOSDAQ 우량기업부 승격(2026.5). 정확한 자본구조는 사업보고서 별도 read 필요. EPC 회사 특성상 운전자본 변동성 큼.", direction: "neutral" },
-        { key: "governance", label: "Governance", score: 6, weight: 20,
-          rationale: "우종인 회장(BHI건설 통해 40.72%) + 이근흥 부회장 배우자 박은미(16.80%) = dual-family 합산 57.5%. 1998년 일본 Denso 그룹에서 만나 공동 창업한 안정적 관계지만 외부 견제 약함. 두 가문 간 지분·의사결정 분쟁 가능성은 잠재 risk.", direction: "neutral" }
+          rationale: "FY25 자산 8,308억(+58% YoY)·자본 1,776억(+53%)·부채 6,531억. 미청구공사(AR-like) 2,168억·초과청구공사(선수금-like) 2,655억으로 EPC 운전자본 사이클이 BS에 크게 반영. 차입금 1,445억(유동)으로 변동성 잠재. 2026.5 KOSDAQ 우량기업부 승격.", direction: "neutral" },
+        { key: "governance", label: "Governance Transition", score: 6, weight: 20,
+          rationale: "<strong>지배구조 대전환 진행 중</strong>: 우종인 사내이사 2025.12.08 사임 → 지분 16.42%(FY25말)→8.47%(1Q26말)로 절반 감소 + BHI건설 보유분 9,037주(0.03%)로 청산. 이근흥 가문(박은미 16.80% + 이근흥 1.00% + 이가현 2.35% + 이명환 0.20% = 20.36%)이 새 최대주주 그룹. 잔존 매각·외부 인수자 영입·이근흥 가문 지배강화 등 3개 시나리오 모두 잠재. 매각자문 angle: 핵심 deal opportunity.", direction: "neutral-flagged" }
       ]
     },
 
@@ -1416,15 +1416,20 @@ const STOCKS = {
     ],
 
     quarterlyPL: [
-      { period: "23년", revenue: 2160, opIncome: 88, ni: 60, opMargin: 4.07, npMargin: 2.78 },
-      { period: "24년", revenue: 4053, opIncome: 226, ni: 196, opMargin: 5.58, npMargin: 4.83 },
-      { period: "25년", revenue: 7741, opIncome: 755, ni: 652, opMargin: 9.75, npMargin: 8.42 },
-      { period: "26F", revenue: 10955, opIncome: 1068, ni: 920, opMargin: 9.75, npMargin: 8.40 }
+      { period: "23년", revenue: 3674, opIncome: 151, ebitda: 208, ni: 75, opMargin: 4.11, npMargin: 2.03 },
+      { period: "24년", revenue: 4047, opIncome: 219, ebitda: 280, ni: 196, opMargin: 5.42, npMargin: 4.84 },
+      { period: "25년", revenue: 7741, opIncome: 755, ebitda: 826, ni: 652, opMargin: 9.75, npMargin: 8.42 },
+      { period: "26Q1", revenue: 2808, opIncome: 353, ebitda: 371, ni: 51, opMargin: 12.58, npMargin: 1.82 }
     ],
 
     quarterlyBS: [
-      { period: "25년말", assets: 0, ca: 0, cash: 0, ar: 0, inv: 0, prepaid: 0, ppe: 0, gw: 0, intangible: 0, otherNCA: 0, liab: 0, cl: 0, ltd: 0, deferredTax: 0, otherL: 0, equity: 0, note: "분기 BS는 사업보고서 별도 read 필요 — DART에서 확인 가능" }
+      { period: "23년말", assets: 4254, ca: 1881, cash: 139, ar: 407, inv: 55, prepaid: 121, ppe: 1921, gw: 0, intangible: 170, otherNCA: 174, liab: 3517, cl: 3211, ltd: 306, deferredTax: 106, otherL: 0, equity: 737 },
+      { period: "24년말", assets: 5248, ca: 2473, cash: 176, ar: 349, inv: 108, prepaid: 259, ppe: 2223, gw: 0, intangible: 165, otherNCA: 357, liab: 4083, cl: 3799, ltd: 284, deferredTax: 7, otherL: 0, equity: 1164 },
+      { period: "25년말", assets: 8308, ca: 5337, cash: 600, ar: 1102, inv: 90, prepaid: 803, ppe: 2332, gw: 0, intangible: 139, otherNCA: 500, liab: 6531, cl: 6153, ltd: 378, deferredTax: 65, otherL: 0, equity: 1776 }
     ],
+
+    note_ebitda: "EBITDA = 영업이익 + 감가상각비 + 무형자산상각비. FY25: 영업이익 755 + 감가상각 51 + 무형상각 20 = 826억원.",
+    note_lumpyPL: "단기미청구공사 2,168억(매출채권 성격), 초과청구공사 2,655억(선수금 성격) — EPC 회사 특성상 BS 변동성 매우 큼.",
 
     part1: [
       { no: "1.1", title: "산업 정의 — 발전용 기자재",
@@ -1453,21 +1458,29 @@ const STOCKS = {
       { no: "2.1", title: "회사 개요와 연혁",
         body: `<p>비에이치아이는 1998년 우종인·이근흥 두 창업자가 일본 Denso 그룹 회사에서 만나 '범우엔지니어링'으로 공동 창업한 발전 기자재 회사다. 2007년 BHI로 사명 변경, 2012년 KOSDAQ 상장(083650). 본사는 경남 함안. 2026년 5월 KOSDAQ '우량기업부'로 승격되었다.</p>
         <p>두 창업자 모두 일본 산업 인프라 분야 출신으로, 한국 발전 기자재 국산화·기술 자립을 명분으로 회사를 키워왔다. Amec Foster Wheeler(영국)와 기술 협력을 통해 PC보일러·HRSG 원천기술을 확보했다.</p>` },
-      { no: "2.2", title: "지배구조 — Dual-Family 경영",
-        body: `<p>사용자가 언급한 "2개 가문 경영"의 핵심.</p>
-        <table class="tbl"><thead><tr><th>주체</th><th>지분</th><th>비고</th></tr></thead><tbody>
-        <tr><td><strong>우종인 회장 + 특수관계인</strong></td><td>약 40.72%</td><td>BHI건설(개인 보유 회사)을 통해 보유. 대표이사 사장·이사회 의장</td></tr>
-        <tr><td><strong>이근흥 부회장 배우자 (박은미)</strong></td><td>16.80%</td><td>2대 주주. 이근흥 부회장은 공동 창업자</td></tr>
-        <tr><td>외부 지분</td><td>약 42.5%</td><td>기관·외국인·개인</td></tr>
+      { no: "2.2", title: "지배구조 — Dual-Family에서 Single-Family로 전환 진행 중",
+        body: `<p>FY2025 사업보고서·1Q2026 분기보고서를 비교하면 명확한 지배구조 전환 신호가 확인된다. <strong>우종인 사내이사가 2025.12.08 자진 사임</strong>했고, 1Q26말까지 본인 지분도 절반 가까이 줄었다. 이근흥 가문이 새 최대주주 그룹으로 부상.</p>
+        <table class="tbl"><thead><tr><th>주주</th><th>FY25말 지분</th><th>1Q26말 지분</th><th>변동</th></tr></thead><tbody>
+        <tr><td><strong>우종인</strong> (개인)</td><td>16.42% (5,082천주)</td><td><strong>8.47%</strong> (2,622천주)</td><td><span style="color:var(--red)">-7.95%p (-2,460천주)</span></td></tr>
+        <tr><td>비에이치아이건설 (우종인 가족 회사)</td><td>(별도 보유)</td><td><strong>0.03%</strong> (9,037주)</td><td><span style="color:var(--red)">사실상 청산</span></td></tr>
+        <tr><td>박은미 (이근흥 부회장 배우자)</td><td>16.80% (5,200천주)</td><td>16.80% (5,200천주)</td><td>변동 없음</td></tr>
+        <tr><td>이근흥 (부회장 본인)</td><td>(미공시)</td><td>1.00% (308천주)</td><td><span style="color:var(--green)">신규 공시</span></td></tr>
+        <tr><td>이가현 (이근흥 가족 추정)</td><td>(미공시)</td><td>2.35% (730천주)</td><td><span style="color:var(--green)">신규 공시</span></td></tr>
+        <tr><td>이명환 (이근흥 가족 추정)</td><td>(미공시)</td><td>0.20% (62천주)</td><td><span style="color:var(--green)">신규 공시</span></td></tr>
+        <tr><td>차미림 (소속 미확인)</td><td>3.26% (1,007천주)</td><td>3.26% (1,007천주)</td><td>변동 없음 — <em>가문 소속 확인 필요</em></td></tr>
+        <tr><td>자기주식·기타</td><td>약 62.7%</td><td>약 67.9%</td><td>외부 매수 진행</td></tr>
         </tbody></table>
-        <p><strong>두 창업자 가문 합산 약 57.5%</strong> — 명확한 dual-family ownership. 1998년 공동 창업 이후 두 사람 모두 경영진으로 남아 있으며, 우종인은 대외(영업·전략), 이근흥은 기술·생산을 분담하는 구조로 알려져 있다.</p>` },
+        <p><strong>가문별 합산 (1Q26)</strong>: 우종인 가문 8.50%(BHI건설 0.03% 포함) vs <strong>이근흥 가문 20.36%</strong>(박은미·이근흥·이가현·이명환 합산). 차미림 3.26%의 소속에 따라 격차는 더 벌어질 수 있음. <strong>이근흥 가문이 명백히 새 최대주주 그룹</strong>으로 전환되었다.</p>
+        <p>이사회 변동: 우종인 사임 → 2026.3.28 정기주총에서 이근흥·조원래(공동대표)·류흥문 사내이사 재선임, 노종문 사외이사 재선임, <strong>김학도 사외이사 신규 선임</strong>. 우종인의 자리가 공석으로 남고, 이근흥 단독 대표이사 체제가 강화됨.</p>` },
       { no: "2.3", title: "사업 구조와 매출 mix (2025)",
         body: `<div id="revenueMixChart"></div>
         <p style="margin-top:14px">2025년 매출 7,741억원의 78.3%가 HRSG. 나머지 21.7%가 발전 보일러·원자력 BOP·EPC 등으로 구성. HRSG 단일 의존도가 매우 높다는 점은 cycle risk이자 핵심 driver.</p>` },
-      { no: "2.4", title: "최근 실적 추이",
+      { no: "2.4", title: "최근 실적 추이 (사업보고서·1Q 분기보고서 확정치)",
         body: `<div id="quarterlyTrendChartSummary"></div>
-        <p>2023년 매출 2,160억원에서 2025년 7,741억원으로 2년 만에 3.6배 증가. 영업이익도 88억→755억으로 8.6배 점프. 영업이익률은 4.07% → 5.58% → 9.75%로 가파른 개선. 2026년 컨센서스는 매출 1.10조원·영업이익 1,068억원으로 추가 +41%·+41% 성장 전망(외부 추정).</p>
-        <p>이 가속의 핵심 driver는 (1) AI 데이터센터·LNG 복합화력 발주 폭증, (2) 누적 수주잔고 2.4조원의 매출 인식, (3) HRSG 라인 capacity 가동률 상승에 따른 operating leverage. 단 EPC 산업 특성상 분기별 매출 lumpy함.</p>` },
+        <p>FY2023 매출 3,674억 → FY2024 4,047억(+10.2%) → <strong>FY2025 7,741억(+91.3%)</strong> 폭증. 영업이익은 151억 → 219억 → <strong>755억(+244%)</strong>. EBITDA(영업이익 + 감가상각 + 무형자산상각): 208억 → 280억 → <strong>826억(+195%)</strong>. EBITDA 마진은 5.7% → 6.9% → 10.7%로 가속.</p>
+        <p><strong>1Q2026 분기 fact</strong>: 매출 2,808억(분기 사상 최대) · 영업이익 353억(영업이익률 12.58%) · EBITDA 약 371억(분기 마진 13.2%) · 당기순이익 51억(순이익률 1.82%). 1분기 매출이 연간 컨센서스 1.10조원의 25.5%, FY25 연간의 36%에 도달 — 매우 빠른 시작.</p>
+        <div class="sv-callout" style="margin-top:10px"><strong>1Q 영업이익 vs 순이익 괴리에 주목:</strong> 영업이익 353억인데 순이익 51억으로 격차 큼. 영업외 손익(환차손·금융원가) 영향이 큰 것으로 보이며, 분기 보고서 footnote에서 정확한 driver 확인 필요. EPC 회사 특성상 외화 표시 계약·차입금이 많아 환변동 risk가 분기 손익에 직접 반영되는 패턴.</div>
+        <p>이 가속의 핵심 driver: (1) AI 데이터센터·LNG 복합화력 발주 폭증, (2) 누적 수주잔고 2.4조원의 매출 인식, (3) HRSG 라인 capacity 가동률 상승에 따른 operating leverage, (4) 미국·중동·동남아 HRSG 수출 확대.</p>` },
       { no: "2.5", title: "수주잔고와 향후 매출 가시성",
         body: `<p>2025년 신규 수주 약 1.8조원(전년 대비 +20%). 2026년 신규 수주 가이던스 2조원+. 누적 수주잔고 2.4조원으로 향후 2~3년 매출 가시성 확보.</p>
         <p>주요 수주 사례:</p>
@@ -1485,11 +1498,27 @@ const STOCKS = {
         body: `<p>EPC 회사는 진행률 인식이 매출보다 빠를 때 미청구공사(매출채권 성격) 누적, 늦을 때 선수금 누적 패턴이 나타난다. 매출 +91% 성장 환경에서 AR·미청구공사가 어떻게 움직였는지 분기 BS 확인 필요. EPC 산업 통념상 매출 성장기에는 운전자본 부담이 함께 증가.</p>` },
       { no: "3.C", title: "현금흐름 quality",
         body: `<p>EPC 매출은 손익은 진행률 기반이지만 현금은 milestone payment 기반이라 timing이 다르다. 영업이익 +234% 환경에서 영업현금흐름이 그만큼 따라왔는지(또는 미청구공사로 BS에 누적되어 있는지) 별도 확인 필요. 2.4조원 수주잔고가 만들어내는 향후 capex·인력 부담도 점검.</p>` },
-      { no: "3.D", title: "Hidden Liability·거버넌스",
-        body: `<p>Dual-family 구조의 가장 큰 잠재 risk는 두 창업자 사이의 의사결정 충돌·세대 교체 시 분쟁이다. 1998년부터 27년간 안정적 파트너십을 유지해 왔다는 점은 긍정적이나, 우종인 회장·이근흥 부회장의 후계 구도가 명확한지는 외부에서 확인하기 어렵다. BHI건설(우종인 개인 보유)과 비에이치아이 간 related-party 거래도 점검 대상.</p>
-        <p>또 EPC 산업 특성상 진행 중인 lawsuit·하자 보수 충당부채 등이 BS에 누적될 수 있다. 사업보고서 footnote 확인 필요.</p>` },
-      { no: "3.E", title: "회계 위험",
-        body: `<p>KOSDAQ 상장사이므로 외부감사인의 KAM 보고가 매년 있다. EPC 회사 통상 KAM 후보: (1) 공사진행률 추정, (2) 미청구공사 회수가능성, (3) 충당부채(하자보수·소송), (4) 매출 인식 timing. 본 회차 직접 확인 미완료.</p>` },
+      { no: "3.D", title: "Hidden Liability·거버넌스 (사업보고서 확정치)",
+        body: `<p><strong>특수관계자 거래 정량화 (FY2025, 단위 천원)</strong></p>
+        <table class="tbl"><thead><tr><th>거래 유형</th><th>BHI건설 (우종인 가족 회사)</th></tr></thead><tbody>
+        <tr><td>부동산 및 기타 자산 구입</td><td>4,733,207 (47.3억)</td></tr>
+        <tr><td>이자수익 (대여금에 대한)</td><td>664,852 (6.6억)</td></tr>
+        <tr><td>수선비</td><td>83,813</td></tr>
+        <tr><td>제공받은 용역</td><td>417,883</td></tr>
+        <tr><td>지급수수료</td><td>256,788</td></tr>
+        <tr><td><strong>BHI건설 대여금 잔액</strong></td><td><strong>12,000,000 (120억)</strong></td></tr>
+        </tbody></table>
+        <p>특수관계자 명단: BHI Algeria, 코리아에너지솔루션㈜, 이엠아이㈜(관계기업), 우종인·박은미(유의적 영향력 있는 개인), <strong>비에이치아이건설㈜(BHI건설)</strong>(기타). BHI건설에 대한 120억원 대여금이 잔존하는 점은 매각자문 관점에서 주의 — 우종인 가문이 exit 중인 상황에서 이 대여금 회수·정리가 deal terms에 포함될 가능성.</p>
+        <p><strong>EPC 특유의 BS 변동성</strong>: 단기미청구공사 2,168억(전년 1,542억, +40%) · 단기초과청구공사 2,655억(전년 1,335억, +99%)로 모두 폭증. 매출 +91% 환경에서 정상적인 성장 패턴이지만, 미청구공사 회수가능성은 KAM 핵심 항목.</p>` },
+      { no: "3.E", title: "회계 위험 — KAM 정확치 (FY2025 제28기)",
+        body: `<p>감사인 <strong>삼정회계법인</strong> · 적정의견 · 강조사항 없음 · 계속기업 불확실성 없음.</p>
+        <p><strong>핵심감사사항(KAM) 2건</strong> — 연결·별도 동일:</p>
+        <ol>
+          <li><strong>추정총계약원가의 불확실성</strong> — EPC 회사의 가장 큰 KAM. 계약 진행 중 총원가 추정이 바뀌면 진행률·매출·이익 모두 변동. 자재비·인건비 상승, 공정 지연, 변경 명령(change order) 등이 trigger.</li>
+          <li><strong>산정된 공사진행률의 적절성</strong> — 진행률 회계(percent-of-completion)에서 실제 진척 vs 회계 진척 사이의 정합성. 진행률 측정 방법(시간·노무·자재투입 등) 선택과 적용의 적정성.</li>
+        </ol>
+        <p>이 두 KAM은 제26기(FY23)·제27기(FY24)에도 동일하게 유지되어 왔다 — 즉 회사가 의도적 회계 조작을 한다는 의미가 아니라, EPC 산업 자체의 구조적 회계 risk를 매년 점검한다는 신호.</p>
+        <p>대손충당금 설정: 매출채권 0.65% · 미청구공사 0.25% · 단기대여금 87.87%(매우 높음, BHI건설 대여금 회수 risk 반영). 종합 1.82%로 안정적.</p>` },
       { no: "3.F", title: "Operational Risk",
         body: `<p>HRSG 라인 capacity·인력 확보가 향후 성장의 ceiling. AI 전력 cycle이 한꺼번에 발주 폭증하면 enginnering 인력 부족이 출하 지연으로 이어질 수 있다. 또 핵심 인력(우종인·이근흥)의 거취가 회사 운영에 큰 영향.</p>` }
     ],
@@ -1563,6 +1592,204 @@ const STOCKS = {
 //  사용자 필기·리서치 누적용. 새 노트 추가는 객체에 키 추가.
 // ============================================================
 const STUDIES = {
+  "bhi-ma-advisory": {
+    id: "bhi-ma-advisory",
+    title: "비에이치아이 M&A Advisory — 우종인 가문 Exit & 경영권 유지 Deal",
+    category: "M&A",
+    asOfDate: "2026-05-15",
+    tags: ["M&A", "비에이치아이", "Exit", "Succession", "Private Equity", "발전기자재"],
+    summary: "Dual-family 중 우종인 가문 exit 진행 중. 매각자문·인수자문·경영권 유지 자문 deal opportunity 정리",
+    body: `
+<section class="sv-section">
+  <h2>Deal Thesis — 한 줄 정리</h2>
+  <div class="lead">FY2025 사업보고서·1Q2026 분기보고서 fact 비교 시 <strong>우종인 가문이 비에이치아이에서 빠르게 exit 중</strong>이라는 점이 명확하다. 사업 모멘텀 강세 + 지배구조 전환 + 잔존 가문의 경영권 유지 needs가 동시에 작동하는 multi-track deal 환경.</div>
+
+  <div class="sv-callout"><strong>핵심 시그널 3개</strong>
+    <ol style="margin:6px 0;padding-left:20px">
+      <li>우종인 사내이사 <strong>2025.12.08 자진 사임</strong> (대표이사 2인 → 이근흥·조원래 체제로 전환)</li>
+      <li>우종인 개인 지분 <strong>16.42%(FY25말) → 8.47%(1Q26말)</strong> 절반으로 축소 (2,460천주 매각·이전)</li>
+      <li>BHI건설(우종인 가족 회사) 보유 지분 <strong>0.03%(9,037주)로 사실상 청산</strong></li>
+    </ol>
+  </div>
+</section>
+
+<section class="sv-section">
+  <h2>지배구조 Before & After</h2>
+  <div class="lead">FY2025말과 1Q2026말 사이 3개월 만에 dual-family에서 이근흥-led single-family 구조로 전환 중.</div>
+
+  <div class="sv-grid2">
+    <div class="sv-card">
+      <h4>BEFORE — FY2025말 (2025.12.31) <span class="pill b">Dual-family</span></h4>
+      <ul>
+        <li>우종인 16.42% · BHI건설 별도 보유 (특수관계자)</li>
+        <li>박은미 (이근흥 부회장 배우자) 16.80%</li>
+        <li>차미림 3.26% (소속 미확인)</li>
+        <li>이근흥·이가현·이명환 등 이근흥 가족 — 별도 공시 X</li>
+        <li>대표이사 2인: 이근흥, 우종인</li>
+        <li>사내이사: 이근흥, 우종인, 조원래</li>
+      </ul>
+    </div>
+    <div class="sv-card">
+      <h4>AFTER — 1Q2026말 (2026.3.31) <span class="pill g">Single-family 전환</span></h4>
+      <ul>
+        <li><strong>우종인 8.47%</strong> (절반 매각·이전)</li>
+        <li><strong>BHI건설 0.03%</strong> (사실상 청산)</li>
+        <li>박은미 16.80% (변동 없음)</li>
+        <li>이근흥 1.00% · 이가현 2.35% · 이명환 0.20% (이근흥 가족 신규 공시)</li>
+        <li>차미림 3.26% (소속 여전히 확인 필요)</li>
+        <li><strong>대표이사: 이근흥·조원래</strong> (우종인 사임)</li>
+        <li>신규 사외이사: 김학도 (2026.3.28 정기주총)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="sv-insight"><strong>이근흥 가문 합산 지분</strong> = 박은미 16.80% + 이근흥 1.00% + 이가현 2.35% + 이명환 0.20% = <strong>20.36%</strong>. 우종인 가문 잔존 = 우종인 8.47% + BHI건설 0.03% = 8.50%(차미림 제외). <strong>이근흥 가문이 새 최대주주 그룹으로 명백히 전환.</strong></div>
+</section>
+
+<section class="sv-section">
+  <h2>Deal Opportunity Map</h2>
+  <div class="lead">매각자문사 입장에서 잡을 수 있는 5가지 advisory mandate.</div>
+
+  <table class="sv-tbl">
+    <thead><tr><th>#</th><th>Mandate</th><th>고객</th><th>핵심 deliverable</th><th>딜 사이즈 추정</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>우종인 잔존 지분 매각 자문 (Sell-side)</td><td>우종인 가문</td><td>잔존 8.47%(2,622천주)의 block trade 또는 분할 매각. PE·전략 매수자 sourcing.</td><td>약 2,000~3,000억원 (현재 시가 기준 추정)</td></tr>
+      <tr><td>2</td><td>이근흥 가문 경영권 유지 자문</td><td>이근흥 가문</td><td>우호 지분 확보·자사주 매입·shareholder agreement·friendly PE 영입</td><td>Advisory fee 기반 (deal value % 협상)</td></tr>
+      <tr><td>3</td><td>외부 PE 인수 자문 (Buy-side)</td><td>국내·해외 PE</td><td>우종인 잔존 지분 인수 + 이근흥 가문과 co-control 구조 설계. Tender offer 옵션</td><td>Block + tender 합산 5,000억~1조원</td></tr>
+      <tr><td>4</td><td>Strategic 인수 자문 (Buy-side)</td><td>두산에너빌리티·GE Vernova·Siemens Energy·MHI 등</td><td>비에이치아이 통째 인수 또는 segment carve-out (HRSG 라인). 산업 합종연횡 시나리오</td><td>Full takeover 시 시총+프리미엄 (3조원+)</td></tr>
+      <tr><td>5</td><td>BHI건설 정리·관계사 거래 정상화 자문</td><td>회사/이근흥 가문</td><td>BHI건설과의 120억 대여금 회수, 부동산 거래(47억) 정리, related-party 거래 정상화</td><td>Advisory fee 기반</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="sv-section">
+  <h2>Valuation Framework (매각자문 deal multiple 관점)</h2>
+  <div class="lead">자체 forecast가 아닌 산업 통념 multiple 기반의 deal value 가늠.</div>
+
+  <table class="sv-tbl">
+    <thead><tr><th>지표</th><th>FY2025 실측</th><th>FY2026 1Q × 4 단순 환산</th><th>multiple range (산업 통념)</th><th>EV 추정</th></tr></thead>
+    <tbody>
+      <tr><td>매출</td><td>7,741억원</td><td>약 11,233억원</td><td>P/S 1.5~2.5배</td><td>1.7조~2.8조원</td></tr>
+      <tr><td>EBITDA</td><td>826억원</td><td>약 1,485억원</td><td>EV/EBITDA 12~20배</td><td>1.8조~3.0조원</td></tr>
+      <tr><td>영업이익</td><td>755억원</td><td>약 1,412억원</td><td>EV/EBIT 15~22배</td><td>2.1조~3.1조원</td></tr>
+      <tr><td>순이익</td><td>652억원</td><td>약 204억원 (1Q 환차손 영향)</td><td>PER 15~25배</td><td>참고용 (1Q 환차손 normalize 필요)</td></tr>
+    </tbody>
+  </table>
+
+  <div class="sv-callout"><strong>경영권 프리미엄</strong>: 한국 상장 중형주 M&A의 control premium은 통상 20~50% 수준. 매수자가 control을 가지려면 우종인 잔존 8.47% + 이근흥 가문 일부 + 시장 매수가 결합되어야 가능. <strong>전체 deal 사이즈는 control 구조 설계에 따라 5,000억~3조원 범위</strong>로 크게 갈림.</div>
+
+  <div class="sv-insight"><strong>Deal value 극대화 timing 관점</strong>: 사업 모멘텀이 강한 지금(FY25 영업이익 +244%·1Q26 영업이익률 12.58%)이 매각자에게는 valuation 최상. 단 우종인 가문 입장에서 (a) one-shot full exit으로 즉시 화이트 와인을 받을지 vs (b) staged exit으로 추가 upside를 누릴지의 trade-off. dashboard의 메모리 cycle 노트와 같이 cycle 후행성을 감안하면 발전 기자재 cycle은 2027~28까지 추가 매출 가시성 있음 — staged exit이 합리적일 수 있음.</div>
+</section>
+
+<section class="sv-section">
+  <h2>Deal 구조 옵션 (잔존 가문 경영권 유지 시나리오)</h2>
+  <div class="lead">이근흥 가문이 경영권을 안정적으로 유지하면서 우종인 가문 exit을 흡수하는 구조 옵션들.</div>
+
+  <div class="sv-grid2">
+    <div class="sv-card">
+      <h4>옵션 A — Friendly PE 영입 <span class="pill b">선호</span></h4>
+      <ul>
+        <li>이근흥 가문 + Friendly PE가 우종인 잔존 지분 분할 인수</li>
+        <li>PE는 5~10% 정도 우호 지분으로 board seat 확보</li>
+        <li>Shareholder agreement로 PE의 exit 시점·방법 사전 약정 (drag-along·tag-along 등)</li>
+        <li>장점: 이근흥 가문이 control 유지하면서 자본 부담 분담</li>
+        <li>단점: PE의 향후 exit이 또 다른 우려 — 5~7년 후 동일 issue 재발 가능</li>
+      </ul>
+    </div>
+    <div class="sv-card">
+      <h4>옵션 B — 자사주 매입 + 가문 추가 매수 <span class="pill g">단순</span></h4>
+      <ul>
+        <li>회사 자사주로 우종인 지분 일부 인수 (2,000~3,000억 capacity 확인 필요)</li>
+        <li>이근흥 가문이 자기 capital로 나머지 매수</li>
+        <li>장점: 외부 영향 없음, 가문 단독 control</li>
+        <li>단점: 자본 부담 큼. 자사주는 의결권 X라 control이 자동 강화되진 않음. 가문 자금 동원력 확인 필요</li>
+      </ul>
+    </div>
+    <div class="sv-card">
+      <h4>옵션 C — Strategic 매수자 영입 <span class="pill y">중간</span></h4>
+      <ul>
+        <li>두산에너빌리티·GE Vernova·Siemens Energy·MHI 중 한 곳이 우종인 지분 인수</li>
+        <li>이근흥 가문은 경영권 유지, Strategic은 minority 지분 + 사업 협력</li>
+        <li>장점: 사업 시너지(부품 공급·해외 영업·기술 협력)</li>
+        <li>단점: 경쟁사가 들어오면 의사결정 충돌 가능. 산업 합종연횡 risk</li>
+      </ul>
+    </div>
+    <div class="sv-card">
+      <h4>옵션 D — Full Takeover (control 매각) <span class="pill r">최후</span></h4>
+      <ul>
+        <li>이근흥 가문도 같이 매각 → 외부 인수자가 100% control</li>
+        <li>두산·GE·Siemens 또는 Mega PE</li>
+        <li>장점: 양 가문 모두 maximum value 실현</li>
+        <li>단점: 이근흥 가문 의지에 반함. 사용자가 명시한 "경영권 유지" deal이 아님</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="sv-callout"><strong>가장 가능성 높은 시나리오 (사용자 advisory 입장)</strong>: 옵션 A(Friendly PE)·옵션 B(자사주+가문 매수)의 결합. 우종인 8.47% 잔존 지분을 두 길로 split — 일부는 PE·일부는 자사주·일부는 이근흥 가문 직접 매수. 매각자문사가 양 측을 모두 advisory 가능한 sweet spot.</div>
+</section>
+
+<section class="sv-section">
+  <h2>Pre-Deal Due Diligence Checklist</h2>
+  <div class="lead">매수자 측 또는 매각자 측 advisory mandate 수임 시 사전 점검 항목.</div>
+
+  <div class="sv-checklist">
+    <div class="sv-check"><strong>지분 변동 트래킹</strong> — 우종인 매각 상대방(2,460천주 매각·이전된 곳)이 누구인가? 매수 단가는? 공시·블록딜 history 정리</div>
+    <div class="sv-check"><strong>BHI건설 정리 계획</strong> — 회사 → BHI건설 120억 대여금 회수 일정. 부동산 거래(47억) 정상화. 우종인 가문 exit과 함께 BHI건설 자체도 정리될 가능성</div>
+    <div class="sv-check"><strong>차미림 신원</strong> — 3.26% 보유. 우종인 가족·이근흥 가족·외부 우호 중 누구인가</div>
+    <div class="sv-check"><strong>잔존 우호 지분 map</strong> — 기타 67.88% 중 우호 가능 기관·friendly investor·외국인</div>
+    <div class="sv-check"><strong>이근흥 가문 자금 동원력</strong> — 잔존 지분 매수에 필요한 자본 (1,000~2,000억원) 동원 capacity</div>
+    <div class="sv-check"><strong>회사 LBO capacity</strong> — Net debt/EBITDA 기준 자사주 매입 한도. 차입금 1,445억·EBITDA 826억으로 leverage 1.75배 — 추가 차입 여력 있음</div>
+    <div class="sv-check"><strong>EPC 진행률 정합성</strong> — KAM 2건(추정총계약원가·진행률) deal 후 손익 조정 risk</div>
+    <div class="sv-check"><strong>해외 종속기업 valuation</strong> — 인도네시아·미국·태국·이스라엘 제조법인 + 한국 발전사업 자회사 2개 + 부동산투자신탁의 carve-out 또는 통째 매각 옵션</div>
+    <div class="sv-check"><strong>EPC 진행 프로젝트 hand-over risk</strong> — 우종인의 영업 관계가 wind-down될 때 진행 프로젝트의 영업 cliff risk</div>
+    <div class="sv-check"><strong>핵심 인력 retention</strong> — 우종인 측 영업·해외 인력의 이탈 risk. retention bonus 설계 필요</div>
+  </div>
+</section>
+
+<section class="sv-section">
+  <h2>Watchlist — 분기마다 점검할 시그널</h2>
+  <div class="lead">매각자문 mandate 진행 중 또는 deal market entry 검토 시 모니터링 항목.</div>
+
+  <div class="sv-checklist">
+    <div class="sv-check">분기 보고서·공시에서 우종인·BHI건설 잔존 지분 변동</div>
+    <div class="sv-check">차미림·이가현·이명환·기타 신규 주주 등장 공시</div>
+    <div class="sv-check">자사주 매입·소각 공시 (이근흥 가문 control 강화 시그널)</div>
+    <div class="sv-check">PE·전략 매수자 블록딜 공시 (예: 5% rule 보고)</div>
+    <div class="sv-check">이근흥 부회장 인터뷰·IR에서의 governance·M&A 시사 발언</div>
+    <div class="sv-check">정기주총 의안 변화 (사외이사·감사위원 신규 선임 등)</div>
+    <div class="sv-check">BHI건설 청산·합병·재무 변동 공시</div>
+    <div class="sv-check">사업보고서 footnote의 특수관계자 거래 규모 변화</div>
+    <div class="sv-check">국내·해외 M&A market에서 발전 기자재 sector deal 추이 (multiple 비교용)</div>
+  </div>
+</section>
+
+<section class="sv-section">
+  <h2>Closing Note — 매각자문사 입장의 Action Item</h2>
+  <div class="sv-card">
+    <h4>다음 90일 안에 해볼 수 있는 것</h4>
+    <ol>
+      <li><strong>잔존 우종인 가문에 sell-side mandate pitch</strong> — exit 진행 중인 가문이라 매각자문 needs 명확. 잔존 8.47% 매각 + BHI건설 정리 통합 mandate</li>
+      <li><strong>이근흥 가문에 경영권 유지 자문 pitch</strong> — 우종인 잔존 지분 인수 strategy + 우호 PE sourcing + shareholder agreement 설계</li>
+      <li><strong>PE buy-side mandate sourcing</strong> — 국내 MBK·한앤·IMM PE, 해외 KKR·Bain·Carlyle 등. 발전 기자재 sector에 익숙하고 family-controlled company 투자 경험 있는 PE 우선</li>
+      <li><strong>Strategic acquirer sounding</strong> — 두산에너빌리티 (전략적 가능성 높음, 국내 발전 기자재 leader) · GE Vernova · Siemens Energy · MHI</li>
+      <li><strong>Industry roll-up thesis 작성</strong> — HSG성동중공업·일진디스플레이·기타 발전 기자재 mid-cap 통합 시나리오</li>
+    </ol>
+  </div>
+
+  <div class="sv-callout"><strong>본 노트 한계:</strong> 본 분석은 사업보고서·분기보고서·언론 보도 fact 기반의 매각자문 관점 정리이며, 실제 mandate 수임·deal execution을 위해서는 (1) 직접 우종인·이근흥 측 컨택, (2) 잔존 지분 매각 진행 단계 확인, (3) 매수자 측 의향 sounding이 필요하다. 매각자문 의무·secrecy·이해상충 검토는 별도 진행 사항.</div>
+</section>
+`,
+    sources: [
+      { title: "비에이치아이 사업보고서 (제28기, FY2025, 2026.03.20 공시)", url: "https://dart.fss.or.kr" },
+      { title: "비에이치아이 분기보고서 (1Q2026, 2026.05.15 공시)", url: "https://dart.fss.or.kr" },
+      { title: "비에이치아이 공식 사이트", url: "https://www.bhi.co.kr/" },
+      { title: "BusinessPost — 우종인 대표이사 프로필", url: "https://www.businesspost.co.kr/BP?command=article_view&num=402566" },
+      { title: "Wikipedia — BHI(기업)", url: "https://ko.wikipedia.org/wiki/BHI_(%EA%B8%B0%EC%97%85)" },
+      { title: "유안타증권 TP 12만원", url: "https://www.hellot.net/news/article.html?no=111804" },
+      { title: "Newspim — KOSDAQ 우량기업부 승격", url: "https://www.newspim.com/news/view/20260504000462" }
+    ]
+  },
+
   "etf-tiger-sol-semi": {
     id: "etf-tiger-sol-semi",
     title: "보유 ETF 분석 — TIGER 반도체TOP10 레버리지 + SOL AI반도체TOP2플러스",
@@ -2252,7 +2479,7 @@ function quarterlyTrendChartSVG(data, opts) {
   const innerW = w - padL - padR, innerH = h - padT - padB;
   const periods = data.map(d => d.period);
   const revMaxRaw = Math.max(...data.map(d => d.revenue));
-  const profitMaxRaw = Math.max(...data.map(d => Math.max(d.opIncome, d.ni)));
+  const profitMaxRaw = Math.max(...data.map(d => Math.max(d.opIncome, d.ni, d.ebitda || 0)));
   const revMax = niceCeil(revMaxRaw * 1.1);
   const profitMax = niceCeil(profitMaxRaw * 1.1);
   const x = i => padL + (innerW * i) / Math.max(1, periods.length - 1);
@@ -2285,6 +2512,10 @@ function quarterlyTrendChartSVG(data, opts) {
   // op income line
   const opPath = data.map((d, i) => `${i===0?'M':'L'}${x(i)},${yR(d.opIncome)}`).join('');
   const opPoints = data.map((d, i) => `<circle cx="${x(i)}" cy="${yR(d.opIncome)}" r="3.5" fill="#1a7f5a"/>`).join('');
+  // EBITDA line (if present)
+  const hasEbitda = data.some(d => d.ebitda != null);
+  const ebPath = hasEbitda ? data.map((d, i) => `${i===0?'M':'L'}${x(i)},${yR(d.ebitda || d.opIncome)}`).join('') : '';
+  const ebPoints = hasEbitda ? data.map((d, i) => `<circle cx="${x(i)}" cy="${yR(d.ebitda || d.opIncome)}" r="3" fill="#b87900"/>`).join('') : '';
   // ni line
   const niPath = data.map((d, i) => `${i===0?'M':'L'}${x(i)},${yR(d.ni)}`).join('');
   const niPoints = data.map((d, i) => `<circle cx="${x(i)}" cy="${yR(d.ni)}" r="3.5" fill="#6d3ec5"/>`).join('');
@@ -2297,6 +2528,7 @@ function quarterlyTrendChartSVG(data, opts) {
     <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">
       ${gridLines.join('')}
       ${bars}
+      ${hasEbitda ? `<path d="${ebPath}" fill="none" stroke="#b87900" stroke-width="2" stroke-dasharray="4,3"/>${ebPoints}` : ''}
       <path d="${opPath}" fill="none" stroke="#1a7f5a" stroke-width="2.5"/>
       ${opPoints}
       <path d="${niPath}" fill="none" stroke="#6d3ec5" stroke-width="2.5"/>
@@ -2306,6 +2538,7 @@ function quarterlyTrendChartSVG(data, opts) {
     </svg>
     <div class="chart-legend">
       <span class="lg"><span class="lg-dot" style="background:#1f6feb;opacity:0.4"></span>매출 (좌축)</span>
+      ${hasEbitda ? '<span class="lg"><span class="lg-dot" style="background:#b87900"></span>EBITDA (우축)</span>' : ''}
       <span class="lg"><span class="lg-dot" style="background:#1a7f5a"></span>영업이익 (우축)</span>
       <span class="lg"><span class="lg-dot" style="background:#6d3ec5"></span>순이익 (우축)</span>
     </div>
