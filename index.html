@@ -1837,6 +1837,234 @@ const STOCKS = {
 //  사용자 필기·리서치 누적용. 새 노트 추가는 객체에 키 추가.
 // ============================================================
 const STUDIES = {
+  "hyundai-ib-deepdive": {
+    id: "hyundai-ib-deepdive",
+    title: "현대차(005380) — Manufacturing Cash Flow Meets Physical AI Optionality (IB Deep Dive)",
+    category: "Valuation",
+    asOfDate: "2026-05-25",
+    tags: ["현대차", "Hyundai", "Physical AI", "Boston Dynamics", "HEV", "Valuation", "SDV"],
+    summary: "증권사 리포트 9건 통합 + 글로벌 IB 스타일 deep dive. Forward PER 15~16x: cheap/fair/expensive 판정, Bull/Base/Bear scenario 포함",
+    body: `
+<section class="sv-section">
+  <h2>Thesis — 한 줄 정리</h2>
+  <div class="lead">현대차는 지난 18개월 사이 시장의 머릿속에서 "한국 디스카운트가 붙은 cyclical legacy OEM"에서 "제조 현금흐름 위에 Physical AI optionality가 얹힌 복합체"로 재분류됐다. 주가는 이를 이미 상당 부분 반영 — forward PER 4~8배 deep-value 종목이 현재 약 ₩700,000에서 <strong>forward PER 약 15~16배</strong>로 거래된다(2022년 BEV/SDV 버블 고점 14.8배마저 상회, 10년 내 최고 구간).</div>
+  <div class="sv-callout"><strong>핵심 판단</strong>
+    <ol style="margin:6px 0;padding-left:20px">
+      <li><strong>더 이상 cheap이 아니다.</strong> 본업만 보면 fully valued~다소 expensive, optionality 합리적 인정 시 fair. deep-value 시대 종료.</li>
+      <li><strong>Rerating의 절반은 정당, 절반은 선반영.</strong> PER 4~8 → 11~12배는 HEV 수익 엔진+주주환원이라는 실적 기반으로 정당. 11~12 → 15~16배는 narrative 기반 optionality premium이며 2028년 전까지 미검증.</li>
+      <li><strong>가장 큰 risk</strong>: "Tesla premium without Tesla economics" — 영업이익률 5~7% cyclical OEM 위에 얇게 얹힌 robotics narrative premium.</li>
+    </ol>
+  </div>
+  <div class="sv-insight"><strong>한 줄 결론</strong>: 현대차는 좋은 회사다(HEV 엔진은 진짜, 로봇 부품 수직계열화는 실재 강점). 그러나 ₩700,000의 주가는 이미 "좋은 회사"를 넘어 "Physical AI 플랫폼이 될 회사"를 가격에 담았다. 본업 fair value(약 ₩500,000)와 현재가의 차이 약 ₩200,000이 시장이 미리 지불한 로봇 베팅 — 첫 검증은 2028년.</div>
+</section>
+
+<section class="sv-section">
+  <h2>Key Debate — 단 하나의 핵심 논쟁</h2>
+  <div class="lead">현대차의 multiple은 "자동차 회사"의 것인가, "Physical AI 플랫폼"의 것인가? 이 답이 valuation을 ₩350,000(Toyota급 OEM)에서 ₩1,000,000(optionality 완전 반영)까지 갈라놓는다.</div>
+  <div class="sv-callout">증권사 리포트 9건 자체가 분열의 증거 — 동일 종목·동일 시점에 <strong>target PER이 10.0배(한화)에서 16.0배(교보·하나)</strong>까지 흩어진다. 같은 회사를 누구는 글로벌 전통 OEM peer로, 누구는 중국 신흥 기술 OEM peer로, 누구는 자사 2022년 성장주 고점으로 valuation. 본 리포트 입장: 현대차는 "제조 현금흐름 확실한 OEM" 위에 "아직 수익화되지 않은 Physical AI optionality"가 얹힌 hybrid. 시장은 이미 optionality 쪽에 무게를 실어 가격을 매겼다.</div>
+</section>
+
+<section class="sv-section">
+  <h2>Valuation Regime Shift — 왜 PER 4~8배가 15~16배가 되었나</h2>
+  <div class="sv-grid2">
+    <div class="sv-card">
+      <h4>과거 PER 4~8배 <span class="pill r">deep value</span></h4>
+      <ul>
+        <li>Korea discount — 지배구조·순환출자·낮은 주주환원</li>
+        <li>cyclical 인식 — 경기·환율·인센티브에 손익 출렁</li>
+        <li>성장 서사 부재 — "잘 만들지만 비싸게 못 파는" 회사</li>
+        <li>자본배분 우려 — 대규모 capex, 낮은 배당성향</li>
+      </ul>
+    </div>
+    <div class="sv-card">
+      <h4>현재 10~16배 — 4대 driver <span class="pill b">rerating</span></h4>
+      <ul>
+        <li><strong>HEV 수익 엔진</strong> (실적 기반·검증됨) → deep-value→fair OEM</li>
+        <li><strong>주주환원 개선</strong> TSR 35%·Value-up (실적/정책 기반)</li>
+        <li><strong>SDV/소프트웨어</strong> narrative (미검증·2028 첫 출시)</li>
+        <li><strong>Boston Dynamics/Physical AI</strong> narrative (미검증·2028 첫 양산)</li>
+      </ul>
+    </div>
+  </div>
+  <div class="sv-insight"><strong>결정적 구분</strong>: 4~8 → 11~12배 rerating은 정당(HEV·주주환원은 실제 EPS·배당으로 측정). 11~12 → 15~16배 추가 rerating은 Layer 2·3 optionality 선반영이며 2028년 전까지 P&L로 증명 불가.</div>
+  <table class="sv-tbl">
+    <thead><tr><th>국면</th><th>forward PER</th><th>성격</th></tr></thead>
+    <tbody>
+      <tr><td>2015~2020 ICE 성숙기</td><td>약 4~7배</td><td>deep value, Korea discount</td></tr>
+      <tr><td>2021~2022.1H BEV/SDV 1차 buzz</td><td>고점 약 14.8배</td><td>성장주 narrative 1차</td></tr>
+      <tr><td>2022.2H~2024</td><td>약 5~8배</td><td>cyclical 회귀</td></tr>
+      <tr class="row-emph"><td><strong>2026.5 현재 (₩700,000)</strong></td><td><strong>약 15~16배</strong></td><td><strong>Physical AI narrative 2차 — 사상 최고</strong></td></tr>
+    </tbody>
+  </table>
+  <div class="sv-callout"><strong>현재 현대차는 2022년 BEV/SDV 버블 고점(14.8배)보다도 높은 multiple.</strong> 가장 multiple에 관대한 증권사(대신)조차 2022 고점에 10% 할인해 target 13.3배 제시 — sell-side에서 가장 공격적인 historical 기준점마저 현재가 함의 multiple보다 낮다. "expensive 영역 진입"의 가장 직접적 증거.</div>
+</section>
+
+<section class="sv-section">
+  <h2>The HEV Profitability Engine — 진짜인 부분</h2>
+  <div class="lead">thesis에서 가장 견고한, narrative가 아니라 숫자로 입증되는 부분.</div>
+  <table class="sv-tbl">
+    <thead><tr><th>지표 (1Q26)</th><th>수치</th><th>함의</th></tr></thead>
+    <tbody>
+      <tr><td>글로벌 HEV 비중</td><td>17.8% (사상 최고)</td><td>mix-up 진행</td></tr>
+      <tr><td>미국 HEV 비중</td><td>24.8% (사상 최고)</td><td>최고 마진 시장에서 mix 집중</td></tr>
+      <tr><td>글로벌 산업수요</td><td>-7.2% YoY</td><td>업황 역풍 속 mix로 방어</td></tr>
+    </tbody>
+  </table>
+  <div class="sv-callout"><strong>메커니즘</strong>: 미국 EV 세액공제 축소 → 순수 BEV 수요 약화 → HEV 즉시 공급 가능한 소수 OEM에 기회. HEV는 ICE 대비 ASP↑, BEV 대비 보조금 의존도↓·마진 안정, 기존 라인 유연생산으로 capex 부담↓. <strong>그러나 — HEV 원조 Toyota도 forward PER 10~12배.</strong> HEV 엔진은 multiple을 deep-value→Toyota급 fair OEM으로 끌어올리는 근거일 뿐, 그 이상의 premium 근거는 아니다. <strong>HEV는 floor를 단단하게 하지만 ceiling을 올리지 못한다.</strong></div>
+</section>
+
+<section class="sv-section">
+  <h2>Boston Dynamics & Physical AI — premium의 진원지</h2>
+  <div class="lead">2026년 5월 양산 로드맵 (4/24 증권사 리포트가 담지 못한 새 정보).</div>
+  <div class="sv-grid2">
+    <div class="sv-card">
+      <h4>발표된 로드맵 <span class="pill b">2026.5</span></h4>
+      <ul>
+        <li>Atlas 양산 — 2028년 연 30,000대</li>
+        <li>현대차·기아 미국 공장에 25,000대+ 배치</li>
+        <li>미국 actuator 공장 — 연 350,000개 (현대모비스 운영)</li>
+        <li>2028 부품 시퀀싱 → 2030 부품 조립</li>
+        <li>연 50,000대 초과 시 대당 원가 약 $30,000 (노동자 1인 연봉)</li>
+      </ul>
+    </div>
+    <div class="sv-card">
+      <h4>BD valuation — premium의 취약 고리 <span class="pill y">5배 분산</span></h4>
+      <ul>
+        <li>시장 일반 추정: 약 ₩30조</li>
+        <li>KB증권: 약 ₩128조</li>
+        <li>한화 (SOTP에 사용): 약 ₩145~150조</li>
+        <li>한화는 ₩145조 채택 → 현대차 간접지분 27.9% = ₩40.2조 → 주당 ₩196,468 가산</li>
+      </ul>
+    </div>
+  </div>
+  <div class="sv-insight"><strong>현대차 valuation의 가장 중요한 단일 민감도</strong>: 현재가가 sell-side PER 목표(₩650~660,000)를 넘어선 초과분(약 ₩40,000~200,000)은 통째로 "BD를 ₩30조로 보느냐 ₩150조로 보느냐"라는 단 하나의 가정에 종속된다.</div>
+  <div class="sv-callout"><strong>"배치 ≠ 매출"</strong>: Atlas는 2028~2030년 외부에 팔리는 게 아니라 현대차 자사 공장에 배치된다. 초기 휴머노이드 사업은 P&L상 매출이 아니라 생산성 capex·비용 절감 항목. 시장이 "현대차가 로봇을 쓴다"를 "현대차가 로봇을 판다"로 혼동하면 narrative premium은 economics 없이 부푼다. 현대차 BD의 진짜 차별점은 알고리즘 우위가 아니라 captive demand(자사 공장)+부품 수직계열화.</div>
+</section>
+
+<section class="sv-section">
+  <h2>Peer 비교 — Hyundai vs Tesla / Toyota / BYD</h2>
+  <table class="sv-tbl">
+    <thead><tr><th>기업</th><th>Forward PER (2026.5)</th><th>시장의 분류</th></tr></thead>
+    <tbody>
+      <tr><td>Tesla</td><td>약 185~212배</td><td>순수 AI/Robot/FSD narrative</td></tr>
+      <tr><td>BYD</td><td>약 20배</td><td>수직계열화 EV+배터리, China 성장</td></tr>
+      <tr class="row-emph"><td><strong>현대차</strong></td><td><strong>약 15~16배</strong></td><td>OEM + HEV + Physical AI optionality hybrid</td></tr>
+      <tr><td>글로벌 OEM 중앙값</td><td>약 12.5배</td><td>산업 벤치마크</td></tr>
+      <tr><td>Toyota</td><td>약 10~12배</td><td>best-in-class 규율적 OEM, HEV 원조</td></tr>
+    </tbody>
+  </table>
+  <div class="sv-insight"><strong>비교의 타당성</strong>: 현대차 vs Tesla는 economics 기준 부당(Tesla 200배는 자동차 이익과 무관한 순수 optionality). <strong>현대차 vs Toyota가 정당한 기준선</strong> — 둘 다 HEV 중심 OEM. Toyota가 10~12배라면 현대차의 추가 3~5배는 전적으로 Physical AI optionality 대가. 질문: "아직 매출 없는 로봇·SDV에 Toyota 대비 +30~50% premium을 줄 만한가?" 교보·iM이 중국 OEM을 peer로 쓴 것은 — 그 중국 OEM이 동시에 현대차 최대 경쟁 위협이라 intellectually unstable.</div>
+</section>
+
+<section class="sv-section">
+  <h2>Sell-side Consensus — 증권사 9건</h2>
+  <table class="sv-tbl">
+    <thead><tr><th>증권사</th><th>의견</th><th>목표주가</th><th>Valuation 방법</th><th>Target Multiple</th></tr></thead>
+    <tbody>
+      <tr><td>키움</td><td>BUY</td><td>₩650,000</td><td>PER</td><td>15.0배</td></tr>
+      <tr><td>유진</td><td>BUY</td><td>₩1,000,000</td><td>PER 시사</td><td>outlier</td></tr>
+      <tr><td>한화</td><td>BUY</td><td>₩660,000</td><td><strong>SOTP</strong></td><td>PER 10.0 + PBR 1.0 + BD 지분</td></tr>
+      <tr><td>교보</td><td>BUY (Top Pick)</td><td>₩800,000 (하향)</td><td>PER</td><td>16.0배 (중국 OEM peer)</td></tr>
+      <tr><td>하나</td><td>BUY</td><td>₩660,000</td><td>PER</td><td>16.0배</td></tr>
+      <tr><td>대신</td><td>BUY</td><td>₩660,000</td><td>PER</td><td>13.3배 (자사 2022 고점 −10%)</td></tr>
+      <tr><td>DS투자</td><td>BUY</td><td>₩740,000</td><td>지표 제시</td><td>26F 11.3배</td></tr>
+      <tr><td>iM</td><td>BUY</td><td>₩650,000</td><td>PER</td><td>15.1배 (중국 OEM −20%)</td></tr>
+    </tbody>
+  </table>
+  <div class="sv-callout"><strong>만장일치 BUY (8/8), 목표주가 중앙값 ₩660,000.</strong> 그런데 현재 주가(약 ₩700,000)는 8개 목표주가 중 6개를 이미 상회 — 현재가를 정당화하는 리포트는 교보·유진뿐. <strong>시장이 sell-side 컨센서스를 추월했다.</strong> 로봇 가치를 목표주가에 명시적 금액으로 환산한 곳은 한화(SOTP)가 유일. 1Q26은 헤드라인 미스(컨센 -6%)였으나 환율·중동·관세 3대 일회성으로 설명 → 시장은 de-risking으로 해석(정상 OP 약 ₩3.0조).</div>
+</section>
+
+<section class="sv-section">
+  <h2>Valuation — cheap / fair / expensive 판정</h2>
+  <table class="sv-tbl">
+    <thead><tr><th>관점</th><th>fair value</th><th>현재가 ₩700,000 대비</th></tr></thead>
+    <tbody>
+      <tr><td>자동차 본업만 (PER 11~12배)</td><td>약 ₩490,000~560,000</td><td><strong>약 25~43% 비싸다</strong></td></tr>
+      <tr><td>본업 + 합리적 robot optionality (BD ₩60~90조)</td><td>약 ₩590,000~680,000</td><td><strong>fair value 상단</strong></td></tr>
+      <tr><td>본업 + robot 성공 선반영 (BD ₩130조+)</td><td>약 ₩850,000+</td><td><strong>여전히 upside</strong></td></tr>
+    </tbody>
+  </table>
+  <div class="sv-insight"><strong>판정</strong>: 더 이상 cheap이 아니다. "fair, optionality premium included"가 가장 정확한 표현. 시장은 현대차를 이제 "자동차 회사 + 로봇 옵션"으로 가격화하고 있고, 그 옵션 값은 이미 주가에 상당히 반영됨. SOTP는 가능하나 BD 가정 하나에 30%+가 종속되므로 point estimate가 아닌 시나리오 도구로만 사용.</div>
+</section>
+
+<section class="sv-section">
+  <h2>Scenario Analysis — Bull / Base / Bear</h2>
+  <div class="lead">point forecast가 아니라 시나리오 조건부 산출. "본업 multiple"과 "robot optionality 인정폭"의 조합.</div>
+  <table class="sv-tbl">
+    <thead><tr><th>항목</th><th>Bear</th><th>Base</th><th>Bull</th></tr></thead>
+    <tbody>
+      <tr><td>거시·업황</td><td>관세 재악화, 수요 둔화 심화</td><td>수요 완만, 관세 15% 안착</td><td>수요 회복, 관세 우호적</td></tr>
+      <tr><td>HEV 엔진</td><td>mix 정체, OPM 5%대</td><td>OPM 6~7% 유지</td><td>OPM 7%+, ASP 추가 상승</td></tr>
+      <tr><td>Boston Dynamics</td><td>양산 지연, BD ≈ ₩30조</td><td>Atlas 2028 on track, BD ≈ ₩60~90조</td><td>조기 확산·외부 수주, BD ≈ ₩130~150조</td></tr>
+      <tr><td>본업 적용 PER</td><td>8~9배</td><td>11~12배</td><td>13~14배</td></tr>
+      <tr><td>본업 가치 / 주</td><td>약 ₩340,000~380,000</td><td>약 ₩495,000~540,000</td><td>약 ₩650,000~700,000</td></tr>
+      <tr><td>robot+SDV optionality / 주</td><td>약 ₩20,000~40,000</td><td>약 ₩90,000~140,000</td><td>약 ₩220,000~320,000</td></tr>
+      <tr><td>종합 목표주가 (근사)</td><td>약 ₩360,000~420,000</td><td>약 ₩590,000~680,000</td><td>약 ₩870,000~1,020,000</td></tr>
+      <tr class="row-emph"><td><strong>현재가 대비</strong></td><td><strong>약 -40~-49%</strong></td><td><strong>약 -3~-16%</strong></td><td><strong>약 +24~+46%</strong></td></tr>
+    </tbody>
+  </table>
+  <div class="sv-callout"><strong>현재가 ₩700,000은 Base fair value(₩590,000~680,000)를 소폭 상회</strong>하며 Bull로 가는 길목. 시장은 이미 Base를 넘어 Bull을 일부 가격화했다. Upside(+24~46%)는 robot/SDV가 증명돼야 열리고, downside(-40%대)는 narrative가 꺼지면 본업 multiple로 회귀하며 비대칭적으로 크다. <strong>risk/reward는 대칭적이지 않다 — 하방이 더 깊다.</strong></div>
+</section>
+
+<section class="sv-section">
+  <h2>Anti-thesis — What Could Go Wrong</h2>
+  <div class="sv-grid2">
+    <div class="sv-card">
+      <h4>핵심 반대 논리 <span class="pill r">downside</span></h4>
+      <ul>
+        <li><strong>Tesla premium without Tesla economics</strong> — OPM 5~7% cyclical OEM 위 robotics premium 4~5배. narrative 식으면 본업가치(약 ₩500,000)로 회귀 = 약 -30%</li>
+        <li>로봇 상용화 지연 — 2028 첫 검증, 1~2년 지연 흔함</li>
+        <li>SDV execution risk — fleet 데이터·수익화에서 Tesla와 시간 격차</li>
+        <li>자동차 업황·관세·중국 경쟁 — 본업 cyclical risk 상존</li>
+        <li>valuation 자체 — 10년 내 최고 multiple, sell-side 최공격 기준점도 상회</li>
+      </ul>
+    </div>
+    <div class="sv-card">
+      <h4>시장이 과소평가하는 긍정 <span class="pill g">upside</span></h4>
+      <ul>
+        <li>HEV 엔진의 구조적 성격 — 미국 EV 세액공제 축소는 수년 환경</li>
+        <li>로봇 부품 수직계열화 — actuator 병목 산업에서 현대모비스 공장은 방어적·측정가능 가치</li>
+        <li>captive demand — 자사 공장 배치로 외부 고객 risk 없이 초기 양산 곡선</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="sv-section">
+  <h2>Catalysts — 향후 12~24개월 점검표</h2>
+  <div class="sv-checklist">
+    <div class="sv-check">2H26 신차 cycle — 팰리세이드 HEV 재개, GV90·GV80 HEV, 유럽 아이오닉3, 인도 베뉴</div>
+    <div class="sv-check">42dot SDV Pace Car 2026년 실도로 검증</div>
+    <div class="sv-check">미국 actuator 공장 착공·가동 일정 구체화</div>
+    <div class="sv-check">Boston Dynamics IPO 또는 외부 투자 유치 (내부 도구 → 자본시장 자산 전환 신호)</div>
+    <div class="sv-check">관세율 추가 인하·판매보증충당부채 환입</div>
+    <div class="sv-check">[하방] 관세 재인상·미국 통상정책 악화</div>
+    <div class="sv-check">[하방] Atlas 양산 일정 지연 (2028 → 이후)</div>
+    <div class="sv-check">[하방] 중국 OEM의 EV·신흥시장 점유율 잠식</div>
+  </div>
+</section>
+
+<section class="sv-section">
+  <h2>Final Investment View</h2>
+  <div class="sv-insight"><strong>좋은 회사와 좋은 주가는 다르다.</strong> 현대차는 분명히 좋은 회사다 — HEV 엔진은 진짜, 미국 제조 확장·로봇 부품 수직계열화는 실재 강점. 그러나 ₩700,000은 시장이 현대차를 "제조 현금흐름 위에 Physical AI optionality가 얹힌 회사"로 가격화했고, 그 optionality에 본업 fair value 대비 약 ₩200,000(약 30%)의 premium을 미리 지불했음을 의미한다.</div>
+  <div class="sv-callout"><strong>다음 rerating의 조건</strong>: Physical AI가 narrative에서 numbers로 전환되어야 한다 — (1) Atlas 2028 양산·배치가 일정대로, 측정 가능한 생산성/원가 개선으로 (2) Boston Dynamics가 외부 매출 또는 IPO로 자본시장 자산화 (3) SDV 2028 출시가 데이터·소프트웨어 수익 모델로 가시화. 셋 다 2028년 전엔 P&L로 증명 불가. <strong>지금 ₩700,000에 사는 것은 "싼 자동차 회사"가 아니라 "2028년 첫 검증을 받는 Physical AI optionality에 베팅하면서 HEV 엔진이 본업 가치를 받쳐주길 기대하는 것."</strong> 포지션은 방향성 베팅이 아니라 catalyst 일정에 연동된 optionality 검증 베팅으로 설계해야 한다.</div>
+</section>
+
+<section class="sv-section">
+  <h2>면책</h2>
+  <div class="sv-callout"><strong>데이터·면책</strong>: 1차 자료는 "현대차" 폴더 증권사 리포트 9건(2026-04-24). 시장 데이터는 2026년 5월 웹 검증(현대차 주가·peer PER·BD 기업가치·Atlas 로드맵). forward PER·BD 기업가치 등은 출처 간 편차가 크고(이 편차가 본 노트의 논점) 주가는 일자 변동 큼 — 의사결정 전 재확인 필요. scenario 산출치는 명시 가정의 함수이며 point forecast 아님. 매수·매도 권유 아님.</div>
+</section>
+`,
+    sources: [
+      { title: "현대차 폴더 — 증권사 리포트 9건 (2026-04-24, 키움·유진·한화·교보·하나·대신·DS·iM)", url: "https://dart.fss.or.kr" },
+      { title: "Seoul Economic — 현대차그룹 휴머노이드 양산 로드맵 (주가 급등)", url: "https://en.sedaily.com/finance/2026/05/21/hyundai-motor-group-shares-surge-on-humanoid-robot-roadmap" },
+      { title: "Seoul Economic — 현대차 미국 로봇 밸류체인 구축", url: "https://en.sedaily.com/finance/2026/05/20/hyundai-builds-robot-ecosystem-in-us-from-atlas-components" },
+      { title: "WardsAuto — Hyundai·42dot·NVIDIA Drive Hyperion SDV 파트너십", url: "https://www.wardsauto.com/news/hyundai-kia-expanding-partnership-nvidia-drive-hyperion-sdv-adas/814989/" },
+      { title: "GuruFocus — Toyota Forward PE", url: "https://www.gurufocus.com/term/forward-pe-ratio/TM" },
+      { title: "FinanceCharts — Tesla / BYD Forward PE (2026.5)", url: "https://www.financecharts.com/stocks/TSLA/value/pe-ratio" }
+    ]
+  },
+
   "ai-memory-rerating": {
     id: "ai-memory-rerating",
     title: "삼성전자·SK하이닉스 — AI 메모리 Rerating 검증 (Forward PER 6.8x: 저평가 vs Peak EPS 착시)",
