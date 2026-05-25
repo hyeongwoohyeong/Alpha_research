@@ -3,26 +3,26 @@
 <head>
 <meta charset="UTF-8">
 <title>Alpha Deep-Dive Research Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root {
-    --bg: #f7f8fa;
-    --panel: #ffffff;
-    --panel-2: #f0f2f6;
-    --border: #e2e6ed;
-    --text: #1a1f29;
-    --text-soft: #475065;
-    --muted: #8a93a3;
-    --accent: #1f6feb;
-    --accent-soft: #e8f0ff;
-    --green: #1a7f5a;
-    --green-soft: #e6f4ee;
-    --yellow: #b87900;
-    --yellow-soft: #fff5e0;
-    --red: #c0392b;
-    --red-soft: #fce8e6;
-    --purple: #6d3ec5;
-    --purple-soft: #f0e9ff;
-    --shadow: 0 1px 2px rgba(15,20,30,.06), 0 4px 12px rgba(15,20,30,.04);
+    /* research_dashboard 변수 — 다크 값 */
+    --bg:#05070D; --panel:#111827; --panel-2:#1F2937; --border:#2D3748;
+    --text:#F9FAFB; --text-soft:#9CA3AF; --muted:#6B7280;
+    --accent:#3B82F6; --accent-soft:#1E3A8A;
+    --green:#22C55E; --green-soft:#0c3a25;
+    --yellow:#F59E0B; --yellow-soft:#3B2A06;
+    --red:#EF4444; --red-soft:#3B0A0A;
+    --purple:#8B5CF6; --purple-soft:#2e1065;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+    /* Portfolio_Dashboard 변수 */
+    --surface:#05070D; --surface-alt:#080B12; --card:#111827; --card-alt:#1F2937;
+    --card-hover:#1A2332; --border-soft:#1F2937;
+    --text-1:#F9FAFB; --text-2:#9CA3AF; --text-3:#6B7280;
+    --accent-alt:#06B6D4; --positive:#22C55E; --positive-soft:#0c3a25;
+    --negative:#EF4444; --negative-soft:#3B0A0A;
+    --warning:#F59E0B; --warning-soft:#3B2A06; --neutral:#94A3B8;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
@@ -33,40 +33,75 @@
     font-size: 14.5px;
     line-height: 1.75;
     display: flex;
+    flex-direction: column;
     min-height: 100vh;
     word-break: keep-all;
     letter-spacing: -0.1px;
   }
-  .sidebar {
-    width: 240px; background: var(--panel); border-right: 1px solid var(--border);
-    padding: 18px 14px; position: sticky; top: 0; height: 100vh;
-    overflow-y: auto; flex-shrink: 0;
-  }
-  .sidebar-header { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin: 0 0 14px; padding: 0 6px; font-weight: 600; }
-  .sidebar-section + .sidebar-section { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); }
-  .sidebar-title { font-size: 13px; font-weight: 700; color: var(--text); margin: 0 0 10px; padding: 0 6px; display: flex; align-items: center; gap: 8px; }
-  .sidebar-title::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
-  .sidebar-title.studies::before { background: var(--purple); }
-  .sidebar-empty { padding: 8px 10px; font-size: 11px; color: var(--muted); line-height: 1.5; }
-  .study-nav { display: flex; flex-direction: column; gap: 2px; }
-  .study-item { padding: 8px 10px; border-radius: 6px; cursor: pointer; border: 1px solid transparent; }
-  .study-item:hover { background: var(--panel-2); }
-  .study-item.active { background: var(--purple-soft); border-color: var(--purple); }
-  .study-item .s-title { font-weight: 600; font-size: 12.5px; line-height: 1.35; color: var(--text); }
-  .study-item .s-meta { font-size: 10px; color: var(--muted); margin-top: 3px; }
-  .study-item .s-tags { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 5px; }
-  .study-item .s-tag { font-size: 9.5px; padding: 1px 5px; background: var(--purple-soft); color: var(--purple); border-radius: 3px; font-weight: 600; }
-  .ticker-nav { display: flex; flex-direction: column; gap: 2px; }
-  .ticker-item { padding: 8px 10px; border-radius: 6px; cursor: pointer; transition: background 0.12s; border: 1px solid transparent; }
-  .ticker-item:hover { background: var(--panel-2); }
-  .ticker-item.active { background: var(--accent-soft); border-color: var(--accent); }
-  .ticker-item .t-symbol { font-weight: 700; font-size: 13px; }
-  .ticker-item .t-name { font-size: 11px; color: var(--text-soft); margin-top: 2px; }
-  .ticker-item .t-meta { font-size: 10px; color: var(--muted); margin-top: 3px; }
-  .ticker-item .t-score { display: inline-block; padding: 1px 6px; background: var(--accent); color: white; border-radius: 999px; font-size: 10px; font-weight: 700; margin-top: 4px; }
-  .sidebar-footer { margin-top: 24px; padding: 10px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); line-height: 1.6; }
 
-  .main { flex: 1; padding: 28px 36px 80px; max-width: 1020px; min-width: 0; }
+  /* === Top navigation bar (모바일 우선) === */
+  .topnav {
+    position: sticky; top: 0; z-index: 60;
+    background: var(--panel); border-bottom: 1px solid var(--border);
+    display: flex; align-items: stretch;
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .topnav::-webkit-scrollbar { display: none; }
+  .topnav-brand {
+    display: flex; align-items: center; padding: 0 14px;
+    font-size: 11px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.6px;
+    white-space: nowrap; flex-shrink: 0;
+    border-right: 1px solid var(--border);
+  }
+  .topnav-tabs { display: flex; align-items: stretch; flex: 1; min-width: 0; }
+  .topnav-tab {
+    appearance: none; background: transparent; border: 0;
+    border-bottom: 2.5px solid transparent;
+    color: var(--text-soft); cursor: pointer;
+    font-size: 13px; font-weight: 600; font-family: inherit;
+    padding: 0 16px; min-height: 46px; white-space: nowrap;
+    display: flex; align-items: center; justify-content: center;
+    transition: color 0.12s, background 0.12s, border-color 0.12s;
+  }
+  .topnav-tab:hover { color: var(--text); background: var(--panel-2); }
+  .topnav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  @media (max-width: 540px) {
+    .topnav-brand { display: none; }
+    .topnav-tab { padding: 0 12px; font-size: 12.5px; }
+  }
+
+  /* === Index card grid (스터디·종목 인덱스) === */
+  .index-grid {
+    display: grid; gap: 14px; margin-top: 8px;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  }
+  .index-card {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 18px; cursor: pointer;
+    transition: border-color 0.12s, background 0.12s, transform 0.08s;
+  }
+  .index-card:hover { border-color: var(--accent); background: var(--panel-2); }
+  .index-card:active { transform: scale(0.99); }
+  .index-card.study:hover { border-color: var(--purple); }
+  .index-card .ic-symbol { font-weight: 800; font-size: 15px; color: var(--text); }
+  .index-card .ic-title { font-weight: 700; font-size: 14px; color: var(--text); line-height: 1.4; }
+  .index-card .ic-name { font-size: 12px; color: var(--text-soft); margin-top: 4px; }
+  .index-card .ic-meta { font-size: 11px; color: var(--muted); margin-top: 6px; }
+  .index-card .ic-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+  .index-card .ic-tag { font-size: 10px; padding: 1px 6px; background: var(--purple-soft); color: var(--purple); border-radius: 4px; font-weight: 600; }
+  .index-card .ic-score { display: inline-block; padding: 2px 8px; background: var(--accent); color: #fff; border-radius: 999px; font-size: 11px; font-weight: 700; margin-top: 8px; }
+  .back-link {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: transparent; border: 0; cursor: pointer;
+    color: var(--text-soft); font-size: 12.5px; font-weight: 600;
+    font-family: inherit; padding: 6px 0; margin-bottom: 6px;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  .main { flex: 1; padding: 28px 36px 80px; max-width: 1020px; width: 100%; margin: 0 auto; min-width: 0; }
+  @media (max-width: 640px) { .main { padding: 18px 16px 64px; } }
   .header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 22px; }
   .header-l h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
   .header-l .subtitle { font-size: 13px; color: var(--text-soft); margin-top: 6px; }
@@ -77,7 +112,7 @@
 
   /* Alpha Score */
   .alpha-score {
-    background: linear-gradient(135deg, #f0f4ff 0%, #ffffff 60%);
+    background: linear-gradient(135deg, var(--accent-soft) 0%, var(--panel) 60%);
     border: 1px solid var(--border); border-left: 4px solid var(--accent);
     border-radius: 10px; padding: 22px 24px; margin-bottom: 18px;
     box-shadow: var(--shadow);
@@ -249,7 +284,7 @@
   .sv-stage .stage-body { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
   .sv-stage .lab { color: var(--muted); font-size: 10.5px; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.4px; }
   .sv-stage .stage-body div > div { font-size: 12.5px; line-height: 1.6; color: var(--text); }
-  .sv-hbm-diagram { background: linear-gradient(180deg, #f0f4ff 0%, #ffffff 100%); border: 1px solid var(--border); border-radius: 10px; padding: 24px; text-align: center; }
+  .sv-hbm-diagram { background: linear-gradient(180deg, var(--panel-2) 0%, var(--panel) 100%); border: 1px solid var(--border); border-radius: 10px; padding: 24px; text-align: center; }
   .sv-hbm-stack { display: inline-block; }
   .sv-hbm-die { display: block; width: 220px; height: 22px; margin: 2px auto; background: linear-gradient(90deg, #1f6feb, #6d3ec5); border-radius: 3px; color: white; font-size: 10.5px; line-height: 22px; font-weight: 600; }
   .sv-hbm-die.gpu { background: linear-gradient(90deg, #c0392b, #b87900); height: 60px; line-height: 60px; font-size: 13px; width: 320px; margin-top: 12px; border-radius: 6px; }
@@ -282,22 +317,6 @@
   .sv-insight { background: var(--purple-soft); border-left: 3px solid var(--purple); padding: 12px 14px; border-radius: 4px; font-size: 12.5px; line-height: 1.7; margin: 12px 0; }
   .sv-insight strong { color: var(--purple); }
 
-  /* === Sidebar toggle === */
-  .sidebar-toggle {
-    position: fixed; top: 14px; left: 14px; z-index: 100;
-    width: 38px; height: 38px; background: var(--panel);
-    border: 1px solid var(--border); border-radius: 8px;
-    cursor: pointer; display: flex; align-items: center; justify-content: center;
-    font-size: 16px; box-shadow: var(--shadow); color: var(--text);
-    transition: left 0.25s ease;
-  }
-  .sidebar-toggle:hover { background: var(--panel-2); border-color: var(--accent); }
-  .sidebar { transition: transform 0.25s ease, width 0.25s ease; }
-  body.sidebar-collapsed .sidebar { transform: translateX(-100%); width: 0; padding: 0; border: 0; overflow: hidden; }
-  body.sidebar-collapsed .sidebar-toggle { left: 14px; }
-  body:not(.sidebar-collapsed) .sidebar-toggle { left: 252px; }
-  body.sidebar-collapsed .main { padding-left: 64px; max-width: 100%; }
-
   .print-btn {
     position: fixed; top: 14px; right: 14px; z-index: 100;
     padding: 8px 14px; background: var(--accent); color: white;
@@ -311,7 +330,7 @@
   @media print {
     * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     body { background: white !important; display: block !important; }
-    .sidebar, .sidebar-toggle, .print-btn, .tabs, .sv-anchor-nav { display: none !important; }
+    .topnav, .print-btn, .tabs, .sv-anchor-nav, .back-link { display: none !important; }
     .main { max-width: 100% !important; padding: 0 !important; }
     .section { display: block !important; }
     .header { padding-bottom: 8px; margin-bottom: 12px; page-break-after: avoid; }
@@ -353,28 +372,301 @@
     /* 헤더 옆 메타 */
     .header-r { font-size: 10px; }
   }
+
+  /* ===== 자산관리(Portfolio) 대시보드 — #pf-view 스코핑 ===== */
+#pf-view .app { max-width: 1320px; margin: 0 auto; padding: 24px 28px 64px; }
+#pf-view .topbar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 0 24px; margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+#pf-view .brand-eyebrow {
+  font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--accent); font-weight: 600;
+}
+#pf-view .brand-title {
+  font-size: 1.4rem; font-weight: 700; letter-spacing: -0.01em;
+  margin-top: 2px; color: var(--text-1);
+}
+#pf-view .controls { display: flex; align-items: center; gap: 16px; }
+#pf-view .meta { font-size: 0.82rem; color: var(--text-2); }
+#pf-view .btn {
+  background: var(--card-alt); color: var(--text-1);
+  border: 1px solid var(--border); padding: 8px 16px;
+  border-radius: 8px; font-size: 0.85rem; font-weight: 500;
+  cursor: pointer; transition: all 0.15s;
+  font-family: inherit;
+}
+#pf-view .btn:hover { border-color: var(--accent); color: var(--accent); }
+#pf-view .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+#pf-view .btn-primary:hover { background: var(--accent-alt); border-color: var(--accent-alt); color: #fff; }
+#pf-view .eyebrow {
+  font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text-2); font-weight: 600; margin-bottom: 6px;
+}
+#pf-view .hero {
+  background: linear-gradient(180deg, var(--card) 0%, var(--surface) 100%);
+  border: 1px solid var(--border); border-radius: 16px;
+  padding: 28px 32px; margin: 24px 0;
+}
+#pf-view .hero-title {
+  font-size: 1.4rem; font-weight: 700; line-height: 1.55;
+  color: var(--text-1); margin-top: 4px;
+}
+#pf-view .hero-sub {
+  margin-top: 14px; color: var(--text-2);
+  font-size: 0.95rem; line-height: 1.7;
+}
+#pf-view .card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 20px 22px;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.02), 0 8px 24px rgba(0,0,0,0.35);
+}
+#pf-view .card-tight { padding: 14px 16px; border-radius: 12px; }
+#pf-view .card h3 { font-size: 1.05rem; margin-bottom: 12px; color: var(--text-1); }
+#pf-view .card-title-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px; }
+#pf-view .card-title-row h3 { margin-bottom: 0; }
+#pf-view .card-sub { color: var(--text-2); font-size: 0.82rem; }
+#pf-view .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 14px; }
+#pf-view .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+#pf-view .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+#pf-view .kpi {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 16px 18px;
+}
+#pf-view .kpi-primary { background: linear-gradient(165deg, var(--card) 0%, var(--card-alt) 100%); }
+#pf-view .kpi-label {
+  font-size: 0.7rem; letter-spacing: 0.07em; text-transform: uppercase;
+  color: var(--text-2); font-weight: 600;
+}
+#pf-view .kpi-value {
+  font-size: 1.55rem; font-weight: 700; color: var(--text-1);
+  line-height: 1.1; margin-top: 6px; font-variant-numeric: tabular-nums;
+}
+#pf-view .kpi-value-sm { font-size: 1.25rem; }
+#pf-view .kpi-sub { font-size: 0.72rem; color: var(--text-3); margin-top: 4px; letter-spacing: 0.04em; }
+#pf-view .pill {
+  display: inline-block; padding: 3px 10px; border-radius: 999px;
+  font-size: 0.72rem; font-weight: 600; letter-spacing: 0.02em;
+  background: var(--accent-soft); color: var(--accent);
+  border: 1px solid var(--accent-soft);
+}
+#pf-view .pill.warn { background: var(--warning-soft); color: var(--warning); border-color: var(--warning-soft); }
+#pf-view .pill.danger { background: var(--negative-soft); color: var(--negative); border-color: var(--negative-soft); }
+#pf-view .pill.good { background: var(--positive-soft); color: var(--positive); border-color: var(--positive-soft); }
+#pf-view .pill.muted { background: var(--card-alt); color: var(--text-2); border-color: var(--border); }
+#pf-view .pill.high { background: var(--negative-soft); color: var(--negative); border-color: var(--negative-soft); }
+#pf-view .risk-strip {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;
+  margin: 24px 0;
+}
+#pf-view .risk-tile {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px 16px;
+}
+#pf-view .risk-tile-label { font-size: 0.74rem; color: var(--text-2); margin-bottom: 6px; }
+#pf-view .risk-tile-value {
+  font-size: 1.5rem; font-weight: 700; line-height: 1;
+  font-variant-numeric: tabular-nums; margin-bottom: 4px;
+}
+#pf-view .risk-tile-status { display: flex; align-items: center; gap: 6px; font-size: 0.72rem; color: var(--text-3); margin-top: 2px; }
+#pf-view .tbl { width: 100%; border-collapse: collapse; }
+#pf-view .tbl th {
+  text-align: center; font-size: 0.7rem; text-transform: uppercase;
+  letter-spacing: 0.07em; color: var(--text-2); font-weight: 600;
+  background: var(--card-alt); padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+#pf-view .tbl td {
+  padding: 11px 12px; border-bottom: 1px solid var(--border);
+  font-size: 0.88rem; color: var(--text-1); font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+#pf-view .tbl tr:hover td { background: rgba(255,255,255,0.015); }
+#pf-view .tbl tr:last-child td { border-bottom: none; }
+#pf-view .tbl td.num,#pf-view .tbl th.num { text-align: right; }
+#pf-view .tbl td.center { text-align: center; }
+#pf-view .tbl td.muted { color: var(--text-2); }
+#pf-view .tbl td.wrap,#pf-view .tbl th.wrap { white-space: normal; min-width: 220px; }
+#pf-view .tbl-card { overflow-x: auto; }
+#pf-view .flags-cell { display: inline-flex; flex-wrap: nowrap; gap: 4px; align-items: center; }
+#pf-view .positive { color: var(--positive); }
+#pf-view .negative { color: var(--negative); }
+#pf-view .evo-section { margin: 8px 0 28px; }
+#pf-view .evo-page-title {
+  font-size: 1.4rem; font-weight: 700; color: var(--text-1);
+  letter-spacing: -0.01em; margin-bottom: 4px;
+}
+#pf-view .evo-page-sub {
+  font-size: 0.84rem; color: var(--text-2); margin-bottom: 16px;
+}
+#pf-view .evo-hero {
+  background: linear-gradient(135deg, var(--card) 0%, var(--card-alt) 100%);
+  border: 1px solid var(--accent);
+  border-radius: 18px;
+  padding: 28px 32px;
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 32px;
+  align-items: center;
+  margin-bottom: 18px;
+  box-shadow: 0 0 0 1px rgba(59,130,246,0.18), 0 12px 36px rgba(59,130,246,0.12);
+}
+#pf-view .evo-character-block {
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+}
+#pf-view .evo-img-wrap {
+  width: 220px; height: 220px;
+  display: flex; align-items: center; justify-content: center;
+  background: transparent;
+  position: relative;
+}
+#pf-view .evo-img-wrap img {
+  max-width: 100%; max-height: 100%;
+  object-fit: contain;
+  background: transparent;
+}
+#pf-view .evo-img-ph {
+  position: absolute; inset: 0;
+  display: none;
+  flex-direction: column; gap: 8px;
+  align-items: center; justify-content: center;
+  background: var(--surface-alt); border: 1px dashed var(--border);
+  border-radius: 12px; color: var(--text-3);
+}
+#pf-view .evo-img-ph .ph-name { font-size: 1.2rem; font-weight: 700; color: var(--text-1); }
+#pf-view .evo-img-ph .ph-note { font-size: 0.76rem; }
+#pf-view .evo-character-name {
+  font-size: 1.5rem; font-weight: 700; color: var(--text-1);
+  letter-spacing: -0.01em;
+}
+#pf-view .evo-info-block { display: flex; flex-direction: column; gap: 14px; }
+#pf-view .evo-stage-pill {
+  display: inline-block;
+  padding: 4px 12px; border-radius: 999px;
+  background: var(--accent-soft); color: var(--accent);
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em;
+  align-self: flex-start;
+}
+#pf-view .evo-prog-row { display: flex; flex-direction: column; gap: 6px; }
+#pf-view .evo-prog-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-size: 0.85rem; color: var(--text-1);
+}
+#pf-view .evo-prog-head .label { color: var(--text-2); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; }
+#pf-view .evo-prog-head .pct { font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+#pf-view .evo-bar-track {
+  height: 12px; background: var(--surface-alt);
+  border: 1px solid var(--border); border-radius: 999px;
+  overflow: hidden; position: relative;
+}
+#pf-view .evo-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent-alt) 100%);
+  transition: width 0.6s ease-out;
+  border-radius: 999px;
+}
+#pf-view .evo-bar-fill.alt {
+  background: linear-gradient(90deg, var(--positive) 0%, #34D399 100%);
+}
+#pf-view .evo-prog-meta {
+  display: flex; justify-content: space-between;
+  font-size: 0.74rem; color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+#pf-view .evo-targets {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 12px; margin-top: 4px;
+}
+#pf-view .evo-target-card {
+  background: var(--surface-alt); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px 14px;
+}
+#pf-view .evo-target-card .label {
+  font-size: 0.68rem; color: var(--text-2);
+  text-transform: uppercase; letter-spacing: 0.07em; font-weight: 600;
+  margin-bottom: 4px;
+}
+#pf-view .evo-target-card .name {
+  font-size: 1rem; font-weight: 700; color: var(--text-1);
+  margin-bottom: 2px;
+}
+#pf-view .evo-target-card .meta {
+  font-size: 0.78rem; color: var(--text-2); font-variant-numeric: tabular-nums;
+}
+@media (max-width: 980px) {
+#pf-view .evo-hero { grid-template-columns: 1fr; gap: 20px; padding: 22px; }
+#pf-view .evo-img-wrap { width: 180px; height: 180px; }
+#pf-view .evo-targets { grid-template-columns: 1fr; }
+}
+#pf-view .list-item {
+  padding: 12px 0; border-bottom: 1px dashed var(--border);
+  display: flex; gap: 12px; align-items: flex-start;
+}
+#pf-view .list-item:last-child { border-bottom: none; }
+#pf-view .list-num {
+  flex-shrink: 0; width: 22px; height: 22px; border-radius: 6px;
+  background: var(--accent-soft); color: var(--accent);
+  font-size: 0.78rem; font-weight: 700; display: flex; align-items: center; justify-content: center;
+}
+#pf-view .list-num.warn { background: var(--warning-soft); color: var(--warning); }
+#pf-view .list-num.danger { background: var(--negative-soft); color: var(--negative); }
+#pf-view .list-text { flex: 1; line-height: 1.55; font-size: 0.92rem; color: var(--text-1); }
+#pf-view .chart-wrap { position: relative; height: 280px; }
+#pf-view .chart-wrap.tall { height: 380px; }
+#pf-view .chart-wrap.wide { height: 240px; }
+#pf-view .section-h {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin: 36px 0 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border-soft);
+}
+#pf-view .section-h h2 {
+  font-size: 1.05rem; font-weight: 600; color: var(--text-1);
+  letter-spacing: -0.005em;
+}
+#pf-view .section-h .meta { font-size: 0.8rem; color: var(--text-3); }
+#pf-view .dropzone {
+  margin: 16px 0 24px;
+  padding: 16px 20px;
+  background: var(--card); border: 1px dashed var(--border);
+  border-radius: 12px; text-align: center; color: var(--text-2); font-size: 0.85rem;
+  transition: all 0.15s; cursor: pointer;
+}
+#pf-view .dropzone.dragover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+#pf-view .dropzone strong { color: var(--text-1); }
+#pf-view .footer {
+  margin-top: 48px; padding-top: 20px;
+  border-top: 1px solid var(--border-soft);
+  color: var(--text-3); font-size: 0.78rem;
+  display: flex; justify-content: space-between;
+}
+@media (max-width: 980px) {
+#pf-view .grid-5,#pf-view .risk-strip { grid-template-columns: repeat(2, 1fr); }
+#pf-view .grid-2,#pf-view .grid-3 { grid-template-columns: 1fr; }
+#pf-view .topbar { flex-direction: column; align-items: flex-start; gap: 12px; }
+}
+@media (max-width: 600px) {
+#pf-view .app { padding: 16px 14px 40px; }
+#pf-view .grid-5,#pf-view .risk-strip { grid-template-columns: 1fr; }
+#pf-view .hero { padding: 20px; }
+#pf-view .hero-title { font-size: 1.15rem; }
+#pf-view .kpi-value { font-size: 1.3rem; }
+}
 </style>
 </head>
 <body>
 
-<button class="sidebar-toggle" id="sidebar-toggle" title="사이드바 열기/닫기" aria-label="Toggle sidebar">◀</button>
 <button class="print-btn" onclick="window.print()" title="현재 페이지를 A4로 인쇄">🖨 인쇄</button>
 
-<aside class="sidebar">
-  <div class="sidebar-header">Alpha Deep-Dive</div>
-
-  <div class="sidebar-section">
-    <div class="sidebar-title studies">스터디 노트</div>
-    <nav class="study-nav" id="study-nav"></nav>
+<nav class="topnav" id="topnav">
+  <div class="topnav-brand">Alpha Deep-Dive</div>
+  <div class="topnav-tabs">
+    <button class="topnav-tab" data-tab="portfolio">내 포트폴리오</button>
+    <button class="topnav-tab" data-tab="alphaengine">Alpha 엔진</button>
+    <button class="topnav-tab" data-tab="studies-index">스터디 노트</button>
+    <button class="topnav-tab" data-tab="stocks-index">리서치 종목</button>
   </div>
-
-  <div class="sidebar-section">
-    <div class="sidebar-title">관심 종목</div>
-    <nav class="ticker-nav" id="ticker-nav"></nav>
-  </div>
-
-  <div class="sidebar-footer">스터디 또는 종목명을 클릭하면 본문이 전환됩니다.<br>스터디는 대화창에 본인 필기·리서치를 보내면 누적됩니다.</div>
-</aside>
+</nav>
 
 <main class="main" id="main-content"></main>
 
@@ -1414,422 +1706,6 @@ const STOCKS = {
       { title: "SK하이닉스 사업보고서 (제78기, 2026.03.17 공시)", url: "https://dart.fss.or.kr" }
     ]
   },
-
-  "083650": {
-    ticker: "083650",
-    nameEn: "BHI Co., Ltd.",
-    nameKr: "비에이치아이",
-    exchange: "KOSDAQ",
-    asOfDate: "2026-05-07",
-    industry: "발전용 기자재 (HRSG·보일러·원자력 BOP)",
-
-    market: { note: "참고용. valuation 의견 X." },
-
-    alphaScore: {
-      composite: 7.2,
-      signal: "monitor",
-      signalLabel: "MONITOR · 사업 모멘텀 강세 + 지배구조 전환 진행",
-      rationale: "FY2025 사업보고서 fact 확정 — 매출 7,741억원(+91% YoY)·영업이익 754.97억원(+244% YoY)·EBITDA 826억원(EBITDA 마진 10.7%)·당기순이익 651.96억원(+233% YoY). EPS 633원→2,107원으로 3.3배 점프. EPC 회사 KAM은 (1) 추정총계약원가 불확실성, (2) 산정된 공사진행률 적절성 2건 — 진행률 회계 risk가 손익 직결. <strong>지배구조 전환이 진행 중인 가장 중요한 신호</strong>: 우종인 사내이사가 2025.12.08 자진 사임 → FY25말 지분 16.42% → 1Q2026말 8.47%로 절반 감소 + BHI건설 지분이 0.03%까지 청산 → 이근흥 가문(박은미 16.80%·이근흥 1.00%·이가현 2.35%·이명환 0.20% 합산 20.36%)이 새 최대주주 그룹으로 전환. 향후 2~3년 매출 가시성(수주잔고 2.4조)·1Q26 매출 2,808억(이미 연간의 36%)이 강력한 driver. Alpha 점수 7.0→7.2로 상향 — 사업 momentum과 transparent governance 전환 시그널.",
-      components: [
-        { key: "value", label: "Value", score: 6, weight: 15,
-          rationale: "1Q2026 EPS는 약 165원 (지배 5,101백만원÷30,944천주). 연간화 시 660원, 컨센서스 EPS 약 2,500~3,000원 가정 시 12M Fwd PER 추정 30~40배 범위. 매각자문 관점에서 deal multiple은 EBITDA 826억 기준 trading EV/EBITDA 15~20배 범위(산업 통념).", direction: "neutral" },
-        { key: "quality", label: "Quality (Moat)", score: 7, weight: 20,
-          rationale: "HRSG·PC보일러 원천기술 보유, Amec Foster Wheeler 기술 협력. 한전·주요 건설사 long-term 관계. 6개 종속기업(인도네시아·미국·태국·이스라엘 제조 + 한국 발전사업 자회사 2개 + 부동산투자신탁) 보유. 단 HRSG 매출 의존 78%로 cycle 변동성 큼.", direction: "positive" },
-        { key: "momentum", label: "Growth Momentum", score: 10, weight: 20,
-          rationale: "FY25 매출 7,741억(+91%)·영업이익 755억(+244%)·EBITDA 826억(+195%). 1Q2026 매출 2,808억(분기 사상 최대)·영업이익 353억·EBITDA 약 371억(분기 마진 13.2%). 누적 수주잔고 2.4조원 → 향후 2~3년 매출 가시성. 1Q26 매출이 이미 연간 컨센서스(1.10조)의 25.5% 수준.", direction: "positive" },
-        { key: "profitability", label: "Profitability", score: 7, weight: 15,
-          rationale: "FY25 영업이익률 9.75%·EBITDA 마진 10.7%·순이익률 8.42%. 매출 +91% 대비 영업이익 +244%로 operating leverage 강함. 1Q26은 OPM 12.58%로 가속. 단 1Q 순이익률 1.82%(영업외 환차손·금융원가 영향) — 환위험 hedge 검증 필요.", direction: "positive" },
-        { key: "balance", label: "Financial Health", score: 6, weight: 10,
-          rationale: "FY25 자산 8,308억(+58% YoY)·자본 1,776억(+53%)·부채 6,531억. 미청구공사(AR-like) 2,168억·초과청구공사(선수금-like) 2,655억으로 EPC 운전자본 사이클이 BS에 크게 반영. 차입금 1,445억(유동)으로 변동성 잠재. 2026.5 KOSDAQ 우량기업부 승격.", direction: "neutral" },
-        { key: "governance", label: "Governance Transition", score: 6, weight: 20,
-          rationale: "<strong>지배구조 대전환 진행 중</strong>: 우종인 사내이사 2025.12.08 사임 → 지분 16.42%(FY25말)→8.47%(1Q26말)로 절반 감소 + BHI건설 보유분 9,037주(0.03%)로 청산. 이근흥 가문(박은미 16.80% + 이근흥 1.00% + 이가현 2.35% + 이명환 0.20% = 20.36%)이 새 최대주주 그룹. 잔존 매각·외부 인수자 영입·이근흥 가문 지배강화 등 3개 시나리오 모두 잠재. 매각자문 angle: 핵심 deal opportunity.", direction: "neutral-flagged" }
-      ]
-    },
-
-    tldr: {
-      whatItDoes: "비에이치아이는 1998년 우종인·이근흥 두 사람이 일본 Denso 그룹 회사에서 만나 '범우엔지니어링'으로 공동 창업한 발전용 기자재 전문 회사다. 2007년 BHI로 사명을 변경했다. HRSG(배열회수보일러)를 중심으로 발전 보일러·원자력 BOP(보조기기)·EPC를 담당하며, 주요 고객은 한전(KEPCO)과 국내외 주요 건설사다. AI 데이터센터 전력 수요·LNG 복합화력 신규 건설·미국 원전 시장 재개라는 3개 driver가 동시 작동하면서 2025년 매출 7,741억원(+91% YoY)·영업이익 755억원(+234% YoY)을 기록했다. 2026.5 KOSDAQ '우량기업부'로 승격.",
-      keyMetrics: [
-        { label: "FY2025 매출", value: "7,741억원 (+91% YoY)" },
-        { label: "FY2025 영업이익", value: "755억원 (+234% YoY)" },
-        { label: "FY2025 순이익", value: "652억원 (+233% YoY)" },
-        { label: "영업이익률", value: "9.75%" },
-        { label: "누적 수주잔고", value: "2.4조원" },
-        { label: "HRSG 매출 비중", value: "78.3% (6,059억원)" }
-      ],
-      moatSummary: "HRSG·PC보일러 원천기술, Amec Foster Wheeler 기술 협력, 한전·건설사 long-term 관계, AI 전력·LNG·원전 3개 driver 동시 노출.",
-      keyConcerns: [
-        "HRSG 단일 사업 의존도 78.3%",
-        "EPC 프로젝트 lumpy — 분기 매출 변동성",
-        "우종인·이근흥 dual-family 57.5% 지배",
-        "KOSDAQ 중형주 — 변동성·유동성 risk",
-        "발전 cycle 정점 시점 불확실성",
-        "분기 BS·실적 정밀 데이터 미수집 (사업보고서 별도 read 필요)"
-      ]
-    },
-
-    risks: [
-      { severity: "high", title: "HRSG 단일 사업 의존",
-        detail: "2025년 매출 7,741억원 중 HRSG가 6,059억원으로 78.3% 비중. 가스터빈 발주 cycle이 둔화되면 매출 절반 이상이 한 번에 타격. 원자력 BOP·EPC가 보조 layer로 있으나 비중 제한적.",
-        source: "이베스트투자증권 2025.10 Company Brief" },
-      { severity: "med", title: "Dual-family 거버넌스 구조",
-        detail: "우종인 회장 + 특수관계인 40.72% (BHI건설 통해), 이근흥 부회장 배우자 박은미 16.80%. 두 창업자가 1998년 공동 창업한 안정적 파트너십이지만 합산 57.5%로 외부 견제가 약하다. 향후 두 가문 간 의사결정·지분 분쟁 가능성은 잠재 risk.",
-        source: "BusinessPost · Wisereport 지분 현황" },
-      { severity: "med", title: "EPC 프로젝트 lumpy 매출",
-        detail: "발전 EPC 산업 특성상 프로젝트 mileage에 따라 분기 매출이 큰 폭으로 swing한다. 수주잔고 2.4조원의 인식 시점이 손익에 직접 영향. 2026 매출 컨센서스 1.10조원도 EPC 진척률 가정에 따라 분기별 편차 큼.",
-        source: "산업 통념" },
-      { severity: "med", title: "발전 cycle 정점 시점",
-        detail: "AI 데이터센터·LNG·원전 3개 driver가 동시 작동 중이라 cycle 정점 시점이 멀어 보이지만, 발전 capex는 정책·금리·전력 수요 둔화에 민감. 미국 원전 시장 재개도 정책 변화에 따라 일정 변동 가능.",
-        source: "산업 통념" },
-      { severity: "low", title: "수출 위험",
-        detail: "해외 매출 비중 일부 있으며 환위험·지정학 risk 존재. 미국 reciprocal tariff 등 정책 변화 영향 잠재.",
-        source: "기업개요" }
-    ],
-
-    revenueMix: [
-      { name: "HRSG (배열회수보일러)", value: 78.3, color: "#1f6feb" },
-      { name: "발전 보일러·원자력 BOP·EPC", value: 21.7, color: "#1a7f5a" }
-    ],
-
-    quarterlyPL: [
-      { period: "23년", revenue: 3674, opIncome: 151, ebitda: 208, ni: 75, opMargin: 4.11, npMargin: 2.03 },
-      { period: "24년", revenue: 4047, opIncome: 219, ebitda: 280, ni: 196, opMargin: 5.42, npMargin: 4.84 },
-      { period: "25년", revenue: 7741, opIncome: 755, ebitda: 826, ni: 652, opMargin: 9.75, npMargin: 8.42 },
-      { period: "26Q1", revenue: 2808, opIncome: 353, ebitda: 371, ni: 51, opMargin: 12.58, npMargin: 1.82 }
-    ],
-
-    quarterlyBS: [
-      { period: "23년말", assets: 4254, ca: 1881, cash: 139, ar: 407, inv: 55, prepaid: 121, ppe: 1921, gw: 0, intangible: 170, otherNCA: 174, liab: 3517, cl: 3211, ltd: 306, deferredTax: 106, otherL: 0, equity: 737 },
-      { period: "24년말", assets: 5248, ca: 2473, cash: 176, ar: 349, inv: 108, prepaid: 259, ppe: 2223, gw: 0, intangible: 165, otherNCA: 357, liab: 4083, cl: 3799, ltd: 284, deferredTax: 7, otherL: 0, equity: 1164 },
-      { period: "25년말", assets: 8308, ca: 5337, cash: 600, ar: 1102, inv: 90, prepaid: 803, ppe: 2332, gw: 0, intangible: 139, otherNCA: 500, liab: 6531, cl: 6153, ltd: 378, deferredTax: 65, otherL: 0, equity: 1776 }
-    ],
-
-    note_ebitda: "EBITDA = 영업이익 + 감가상각비 + 무형자산상각비. FY25: 영업이익 755 + 감가상각 51 + 무형상각 20 = 826억원.",
-    note_lumpyPL: "단기미청구공사 2,168억(매출채권 성격), 초과청구공사 2,655억(선수금 성격) — EPC 회사 특성상 BS 변동성 매우 큼.",
-
-    part1: [
-      { no: "1.1", title: "산업 정의 — 발전용 기자재 (Power Equipment)",
-        body: `<p>비에이치아이가 속한 산업은 <strong>발전용 기자재(Power Generation Equipment)</strong>로, 가스·석탄·원자력 발전소와 제철소·열병합 시설의 핵심 장비를 설계·제작·설치하는 산업이다. 발전 EPC(Engineering·Procurement·Construction) 가치사슬의 <strong>중간 부품·기자재 layer</strong>에 위치하며, 가스터빈을 만드는 GE·Siemens·MHI와 토목·설치를 담당하는 EPC 컨트랙터 사이에 자리한다.</p>
-        <table class="tbl"><thead><tr><th>제품</th><th>역할·기능</th><th>주요 수요</th></tr></thead><tbody>
-        <tr><td><strong>HRSG (배열회수보일러)</strong></td><td>가스터빈 배기열(500~600℃)을 회수해 스팀 생산. 가스터빈+증기터빈 결합 시 발전 효율 60%+로 단순 가스터빈(35~40%) 대비 1.5배. <strong>복합화력 발전의 효율을 결정하는 핵심 기자재</strong></td><td>LNG 복합화력 발전소</td></tr>
-        <tr><td>발전 보일러 (PC·CFB)</td><td>석탄(PC)·순환유동층(CFB) 화력 보일러. 바이오매스 혼소 가능</td><td>화력 발전소·열병합·산업 보일러</td></tr>
-        <tr><td>원자력 BOP</td><td>Balance of Plant — 원전 본체 외 보조기기. 복수기·열교환기·탱크·펌프류</td><td>원자력 발전소 (신규 건설·재가동·SMR)</td></tr>
-        <tr><td>복수기·열교환기</td><td>스팀 → 물 복원, 열 회수</td><td>발전·정유·석유화학·제철</td></tr>
-        <tr><td>EPC</td><td>설계·조달·시공 통합 발주 (소형 발전소·열병합)</td><td>국내 산업단지·해외 LNG IPP</td></tr>
-        </tbody></table>
-        <p>산업의 본질적 특성: <strong>(1) 수주산업</strong> — 발주처 입찰·계약·진행률 인식, <strong>(2) 자본재 산업</strong> — 한 프로젝트당 수십억~수백억 원 규모, <strong>(3) Cycle 산업</strong> — 발전 capex가 7~12년 주기로 반복, <strong>(4) 정책 의존 산업</strong> — 에너지 정책·환경 규제·전력 수요 예측이 발주를 결정.</p>` },
-      { no: "1.2", title: "발전 capex의 super-cycle 구조",
-        body: `<p>전 세계 발전 capex는 <strong>30~40년 단위의 메가 cycle</strong>과 <strong>7~12년 단위의 중기 cycle</strong>이 중첩된 구조다. 1960~80년대 산업화에 따른 발전소 1차 build-out → 1990~2000년대 자유화·민영화 → 2010년대 신재생 전환 → <strong>2024~30년대 AI·전력화 super-cycle</strong>이라는 거대한 곡선의 변곡점에 현재 진입했다.</p>
-        <p>현 cycle의 driver는 3개가 동시 작동한다:</p>
-        <table class="tbl"><thead><tr><th>Driver</th><th>메커니즘</th><th>전력 수요 증가 폭</th></tr></thead><tbody>
-        <tr><td>AI 데이터센터</td><td>NVIDIA 가속기 1대당 700W~1.2kW. 대형 AI 데이터센터 1개 100MW~1GW급</td><td>2024~30년 미국 전력 수요 +15~25% (Goldman Sachs·McKinsey 추정)</td></tr>
-        <tr><td>전력화(Electrification)</td><td>EV·히트펌프·산업 공정 전기화</td><td>2030년까지 글로벌 +20% 추정</td></tr>
-        <tr><td>신재생 보완</td><td>풍력·태양광 변동성 보완용 가스화력·ESS</td><td>매년 100GW+ 신규 가스 capacity</td></tr>
-        </tbody></table>
-        <p>이 3개 driver가 동시 작동하는 시기는 1970년대 산업화 이래 없었다. 비에이치아이가 30년 가까운 회사 역사에서 FY2025 매출 +91% 폭증을 본 배경.</p>` },
-      { no: "1.3", title: "HRSG 기술 메커니즘",
-        body: `<p>HRSG(Heat Recovery Steam Generator)는 가스터빈 배기열을 활용해 스팀을 만드는 열교환기다. 기본 구조는 가스터빈에서 나오는 500~600℃ 배기가스가 HRSG의 다단 열교환기를 통과하면서 물·스팀에 열을 전달한다. 핵심 기술 요소:</p>
-        <ul>
-          <li><strong>다단 열교환 설계</strong>: HP(High Pressure)·IP(Intermediate)·LP(Low) 3단 스팀 회수. 단별 압력·온도 최적화</li>
-          <li><strong>핀튜브(Fin tube) 기술</strong>: 표면적 확대로 열전달 효율 극대화</li>
-          <li><strong>덕트 화염기(Duct burner)</strong>: 추가 연료 분사로 스팀 출력 증가 (peaking 운전)</li>
-          <li><strong>SCR(선택적 촉매 환원)</strong>: NOx 저감 환경 설비 통합</li>
-          <li><strong>응력 해석·내압 설계</strong>: 600℃·100bar 환경에서 30년 운전 보장</li>
-        </ul>
-        <p>비에이치아이는 영국 Amec Foster Wheeler(현 Wood Group)와의 기술 제휴를 통해 PC보일러·HRSG 원천기술을 확보했다. 이는 단순 부품 공급이 아니라 라이센스 기반의 자체 설계·제작 역량을 의미하며, 글로벌 OEM(GE Vernova·Siemens Energy·MHI) 대비 진입장벽으로 작용한다.</p>` },
-      { no: "1.4", title: "복합화력 vs 다른 발전원",
-        body: `<table class="tbl"><thead><tr><th>발전원</th><th>효율</th><th>건설 비용 (per MW)</th><th>건설 기간</th><th>탄소 배출</th><th>현 cycle 위상</th></tr></thead><tbody>
-        <tr><td>LNG 복합화력 (가스터빈+HRSG)</td><td>60%+</td><td>$800~1,200/kW</td><td>2~3년</td><td>중간 (석탄 절반)</td><td><strong>현 cycle 메인</strong></td></tr>
-        <tr><td>석탄화력</td><td>40~45%</td><td>$1,500~2,500/kW</td><td>4~5년</td><td>높음</td><td>축소 (선진국)</td></tr>
-        <tr><td>원자력 (대형)</td><td>33%</td><td>$6,000~10,000/kW</td><td>8~12년</td><td>거의 없음</td><td>재개·SMR 부상</td></tr>
-        <tr><td>SMR (소형 원전)</td><td>33%</td><td>$5,000~8,000/kW</td><td>3~5년 (목표)</td><td>거의 없음</td><td>2028~30 상용화</td></tr>
-        <tr><td>태양광</td><td>capacity factor 20~25%</td><td>$700~1,200/kW</td><td>1~2년</td><td>없음</td><td>주력 신재생</td></tr>
-        <tr><td>풍력 (해상)</td><td>capacity factor 40~50%</td><td>$2,500~4,000/kW</td><td>3~5년</td><td>없음</td><td>해상풍력 확대</td></tr>
-        </tbody></table>
-        <p>LNG 복합화력의 압도적 매력: 건설 기간 2~3년으로 가장 빠름 + 효율 60%+로 가스 단순화력 대비 1.5배 + 비교적 낮은 탄소 + AI 데이터센터 수요 폭증 timing과 일치. 비에이치아이의 HRSG가 이 발전원 핵심 부품인 이유.</p>` },
-      { no: "1.5", title: "AI 데이터센터 전력 수요 — 정량 분석",
-        body: `<p>AI 데이터센터 전력 수요는 학습(Training)과 추론(Inference) 두 layer에서 동시에 증가한다.</p>
-        <p><strong>학습용 데이터센터</strong>: NVIDIA H100/H200/B100/B200 등 가속기 수천~수만 대 클러스터. 대표적인 학습 데이터센터(예: xAI Colossus, Meta Llama 학습) 1개가 100~300MW급. OpenAI·Anthropic·Google·Meta·xAI가 각각 GW급 데이터센터 캠퍼스를 2025~28년에 건설 중.</p>
-        <p><strong>추론용 데이터센터</strong>: ChatGPT·Claude·Gemini 등 서비스 가동. 사용자 수 증가에 따라 추론 데이터센터가 더 많이 필요. 추론은 GPU + CPU + 메모리 + 네트워크 종합이라 학습보다 전력 효율 미세 변화에 민감.</p>
-        <p>2024~30년 미국 전력 수요 증가 추정 (Goldman Sachs 2024.4 발표):</p>
-        <ul>
-          <li>현재 미국 데이터센터 전력 수요: 약 2.5% of 미국 전력</li>
-          <li>2030년 추정: <strong>8% of 미국 전력</strong> (+5~6%p 절대치)</li>
-          <li>이를 위해 신규 47GW 발전 capacity 필요</li>
-          <li>이 중 60%가 가스 복합화력, 40%가 신재생+ESS로 추정</li>
-        </ul>
-        <p>한국도 비슷한 패턴. 한국전력공사 2024 장기전력수급계획에서 AI 데이터센터·반도체 클러스터(용인 622조원)·수도권 데이터센터 신증설로 신규 발전소 발주가 가속화되고 있다.</p>` },
-      { no: "1.6", title: "LNG 복합화력 — 글로벌 발주 cycle",
-        body: `<p>가스 복합화력 발주는 2024년부터 폭증하기 시작했다. 글로벌 가스터빈 발주량(MW 기준):</p>
-        <table class="tbl"><thead><tr><th>년도</th><th>글로벌 발주 (GW)</th><th>비고</th></tr></thead><tbody>
-        <tr><td>2020~22</td><td>연 30~40 GW</td><td>코로나·신재생 우선기</td></tr>
-        <tr><td>2023</td><td>약 50 GW</td><td>회복 시작</td></tr>
-        <tr><td>2024</td><td><strong>약 80 GW</strong></td><td>AI cycle 시작</td></tr>
-        <tr><td>2025</td><td>약 100~120 GW (추정)</td><td>본격 가속</td></tr>
-        <tr><td>2026~28</td><td>연 100~140 GW (추정)</td><td>수퍼사이클 정점 추적</td></tr>
-        </tbody></table>
-        <p>출처: Wood Mackenzie, Bloomberg NEF, GE Vernova IR. 가스터빈 1 GW 발주 시 HRSG도 1 GW 동반 발주되는 구조이므로, HRSG 시장도 동일 cycle.</p>
-        <p>지역별 driver:</p>
-        <ul>
-          <li><strong>미국</strong>: AI 데이터센터·셰일가스 저렴화. PJM·ERCOT 등 지역 그리드 발주 폭증</li>
-          <li><strong>중동</strong>: 사우디 비전 2030, UAE·카타르 산업화. 가스 매장량 + 가스화력 우선</li>
-          <li><strong>동남아</strong>: 베트남·인도네시아·필리핀 산업화. LNG 수입 발전소 다수</li>
-          <li><strong>한국</strong>: 노후 석탄화력 LNG 전환 + 신규 LNG 발전</li>
-          <li><strong>유럽</strong>: 러시아 가스 의존 탈피 + 신재생 보완용 가스화력</li>
-        </ul>` },
-      { no: "1.7", title: "원자력 르네상스 + SMR",
-        body: `<p>2024~25년부터 글로벌 원자력 시장이 재가속되고 있다. 핵심 driver:</p>
-        <ol>
-          <li><strong>미국 기존 원전 재가동·수명 연장</strong>: Three Mile Island·Palisades 등 폐쇄 원전 재가동 선언. MS·AWS·Google 등 하이퍼스케일러가 원전 전력 직접 구매 PPA 체결</li>
-          <li><strong>SMR(소형 모듈 원전) 상용화</strong>: NuScale·X-energy·TerraPower·Holtec 등. 2028~30년 첫 상용화. 한국 SMART·i-SMR도 개발 중</li>
-          <li><strong>대형 원전 신규 건설</strong>: 폴란드·체코·이집트·UAE·튀르키예·이집트 신규 발주. 한국이 체코·UAE에서 수주</li>
-          <li><strong>중국·러시아·인도</strong>: 자체 표준 원전 대규모 건설 중</li>
-        </ol>
-        <p>비에이치아이 노출: 원자력 BOP(Balance of Plant)는 원전 본체 외 보조기기로, 복수기·열교환기·탱크·펌프 등을 공급한다. 한국 원전 수출(체코·UAE) 시 BOP 부품 일부 참여 가능성, 미국 SMR 시장에서 BOP 진입 가능성 등이 향후 옵션.</p>` },
-      { no: "1.8", title: "지역별 시장 동학",
-        body: `<table class="tbl"><thead><tr><th>지역</th><th>발전 capex 동학</th><th>비에이치아이 노출</th></tr></thead><tbody>
-        <tr><td><strong>미국</strong></td><td>AI 데이터센터·셰일가스·CHIPS Act 산업 단지 전력. PJM·ERCOT 등 지역 그리드 capacity market 발주 가속</td><td>BHI-FW(미국 자회사) 통해 직접 영업. GE Vernova·Siemens 협력 OEM</td></tr>
-        <tr><td><strong>중동·사하라</strong></td><td>사우디·UAE·이집트·알제리 등 가스화력 신증설. 사막 환경 특수 사양 HRSG 필요</td><td>BHI Algeria 관계기업. 중동 HRSG 수주 history 다수</td></tr>
-        <tr><td><strong>동남아</strong></td><td>베트남·인도네시아·태국·필리핀 LNG 발전 본격화</td><td>BHI(THAI)·PT Bum Woo INDONESIA — 현지 생산법인. 가격 경쟁력 강화</td></tr>
-        <tr><td><strong>한국</strong></td><td>한전·중부발전·서부발전 등 6개 발전 자회사. LNG 전환·수도권 분산 발전</td><td>한전 long-term 협력. 본사 함안 + 사천 생산</td></tr>
-        <tr><td><strong>이스라엘</strong></td><td>가스 매장량 발견 후 가스화력 build-out</td><td>BHI E&C ISRAEL 현지 법인</td></tr>
-        </tbody></table>
-        <p>이 지역 분포는 단순 영업이 아니라 <strong>현지 생산 거점</strong>을 통한 정책·관세·로컬 콘텐츠 요구 대응이라는 점이 중요. 미국 CHIPS Act·BBB·중동 in-country 정책에 대비한 다국적 생산 체계.</p>` },
-      { no: "1.9", title: "정책·regulation 환경",
-        body: `<ul>
-          <li><strong>미국 IRA·CHIPS Act</strong>: 신규 발전 인프라·반도체 단지 전력 인프라 보조금. 가스화력은 직접 보조금은 적으나 산업 단지 자체가 발주처</li>
-          <li><strong>EU EPS·EU ETS</strong>: 탄소 배출 제한 강화. 신규 석탄화력 사실상 불가능, 가스화력은 한시적 허용</li>
-          <li><strong>한국 에너지기본계획·전력수급기본계획</strong>: 2024 개정으로 원전 + 가스 비중 확대. 신재생 목표 일부 하향</li>
-          <li><strong>중국·러시아·이란 제재</strong>: 가스터빈·원전 기자재 수출 통제. 한국·일본·서구 회사에 반사 수혜</li>
-          <li><strong>탄소세·국경탄소조정(CBAM)</strong>: EU 수출 시 탄소 비용 반영. 가스 발전은 석탄 대비 유리</li>
-        </ul>` },
-      { no: "1.10", title: "글로벌 경쟁 구도",
-        body: `<table class="tbl"><thead><tr><th>player</th><th>위상</th><th>특징</th></tr></thead><tbody>
-        <tr><td><strong>가스터빈 OEM</strong></td><td>GE Vernova·Siemens Energy·MHI(Mitsubishi)·Ansaldo</td><td>가스터빈+HRSG 패키지 공급. 비에이치아이의 OEM 고객이자 경쟁자</td></tr>
-        <tr><td><strong>HRSG 전문</strong></td><td>NEM Energy·CMI Energy·Doosan Babcock·비에이치아이·Vogt Power</td><td>OEM에 HRSG OEM 공급 + 직접 EPC 발주처에 공급</td></tr>
-        <tr><td><strong>국내 발전 기자재</strong></td><td>두산에너빌리티(대형, 가스터빈 자체 개발 중), 비에이치아이(중형), HSG성동, 일진디스플레이</td><td>한국 발전 기자재 cluster</td></tr>
-        <tr><td><strong>중국 기자재</strong></td><td>Harbin Electric·Dongfang Electric·Shanghai Electric</td><td>중국 내수 + 일대일로 신흥국 수출. 가격 경쟁력 강함</td></tr>
-        </tbody></table>
-        <p>비에이치아이의 경쟁 포지션: <strong>중형 글로벌 HRSG 전문</strong>. 두산에너빌리티보다 작고 가스터빈을 만들지 않으나, HRSG 전문성과 한국·중동·동남아·미국 다국적 생산 거점이 강점. 글로벌 OEM(GE·Siemens·MHI)과는 협력+경쟁의 이중 관계.</p>` }
-    ],
-
-    part2: [
-      { no: "2.1", title: "회사 개요와 연혁",
-        body: `<p>비에이치아이는 1998년 6월 12일 우종인·이근흥 두 창업자가 '<strong>범우엔지니어링</strong>'으로 공동 설립한 발전용 기자재 전문 회사다. 두 사람은 일본 Denso 그룹 회사에서 함께 근무하며 알게 된 사이로, 한국 발전 기자재 국산화·기술 자립을 사업 명분으로 삼아 창업했다. 2005년 12월 KOSDAQ 상장(083650), 2009년 3월 '비에이치아이(BHI)'로 사명 변경, 2026년 5월 KOSDAQ '우량기업부'로 승격되었다.</p>
-        <table class="tbl"><thead><tr><th>시기</th><th>이벤트</th></tr></thead><tbody>
-        <tr><td>1998.06</td><td>우종인·이근흥 공동 창업 — 범우엔지니어링</td></tr>
-        <tr><td>2005.12</td><td>KOSDAQ 상장 (083650)</td></tr>
-        <tr><td>2009.03</td><td>사명 변경 — 비에이치아이(BHI)</td></tr>
-        <tr><td>2010년대</td><td>영국 Amec Foster Wheeler(현 Wood Group)와 기술 제휴 — PC보일러·HRSG 원천기술 확보</td></tr>
-        <tr><td>2010년대</td><td>해외 거점 확대 — 인도네시아·미국·태국·이스라엘 법인 설립</td></tr>
-        <tr><td>2023~24</td><td>AI 전력 슈퍼사이클 진입 — 매출 +91% 폭증</td></tr>
-        <tr><td>2025.12.08</td><td><strong>우종인 사내이사 자진 사임</strong> — 지배구조 전환 시작</td></tr>
-        <tr><td>2026.03.28</td><td>이근흥·조원래 공동대표 체제 확정 (정기주총)</td></tr>
-        <tr><td>2026.05</td><td>KOSDAQ 우량기업부 승격</td></tr>
-        </tbody></table>
-        <p>본사 소재지: <strong>경상남도 함안군 군북면</strong> (장지리·모로리 2곳) + <strong>경상남도 사천시 사남면 유천리</strong> (제3공장). 3개 제조 시설에서 HRSG·발전 보일러·원자력 BOP를 직접 생산하며, 해외 4개국에 생산법인을 두고 있다.</p>` },
-      { no: "2.2", title: "두 가문의 구조 — 우종인 vs 이근흥 (Deep Dive)",
-        body: `<p>비에이치아이의 가장 큰 구조적 특징은 <strong>두 창업 가문이 27년간 공동 경영해 왔다는 점</strong>이며, 2025년 말부터 그 구조가 명백히 전환되고 있다. 두 가문의 역사·역할·지분·현재 위치를 정밀하게 풀어본다.</p>
-
-        <h4 style="margin-top:18px;font-size:14px;color:var(--text);font-weight:700">우종인 가문</h4>
-        <ul>
-          <li><strong>우종인</strong> (대표이사 사장, ~2025.12 사임) — 1998년 공동 창업자. 일본 Denso 그룹 출신. 대외 영업·전략·해외 사업 총괄을 맡아온 것으로 알려짐. 회사 외부에서 "BHI 회장"으로 통칭되는 인물</li>
-          <li><strong>비에이치아이건설(BHI건설)</strong> — 우종인 개인이 통제하는 가족 회사. 회사와 부동산 매매·용역·자금 거래의 특수관계자. FY2024까지는 별도 의미 있는 BHI 지분 보유 (보고서상 정확치는 사업보고서 footnote 별도 확인)</li>
-          <li>본인 명의 직접 지분만 보면 — FY2025말 5,082,000주(16.42%) → <strong>1Q2026말 2,622,000주(8.47%)</strong>로 절반 감소</li>
-          <li>BHI건설 보유 BHI 지분도 1Q2026말 <strong>9,037주(0.03%)로 사실상 청산</strong> 완료</li>
-          <li>차미림(1,007천주·3.26%)이 우종인 측 인물인지는 공시상 확인되지 않음 — <em>추가 확인 필요</em></li>
-        </ul>
-
-        <h4 style="margin-top:18px;font-size:14px;color:var(--text);font-weight:700">이근흥 가문</h4>
-        <ul>
-          <li><strong>이근흥</strong> (부회장, 1Q26부터 대표이사) — 1998년 공동 창업자. 일본 Denso 그룹 출신. 기술·생산·내부 운영을 맡아온 것으로 알려짐. 본인 명의 BHI 지분은 FY24까지 공시 X — 대신 배우자 박은미 명의로 보유 (한국 family-owned company 전형 패턴)</li>
-          <li><strong>박은미</strong> (이근흥 부회장 배우자) — 지속적으로 5,200,000주(16.80%) 보유. 사실상 이근흥 가문의 대표 보유 명의</li>
-          <li><strong>이근흥</strong> 본인 — 1Q2026 분기보고서에 처음 명시 308,000주(1.00%) 신규 공시</li>
-          <li><strong>이가현</strong> — 1Q26 730,000주(2.35%) 신규 공시. 성씨로 보아 이근흥 가족(자녀·친인척) 추정</li>
-          <li><strong>이명환</strong> — 1Q26 62,000주(0.20%) 신규 공시. 동일 패턴</li>
-          <li>이근흥 가문 합산 <strong>20.36%</strong> (박은미 16.80% + 이근흥 1.00% + 이가현 2.35% + 이명환 0.20%)</li>
-        </ul>
-
-        <h4 style="margin-top:18px;font-size:14px;color:var(--text);font-weight:700">전환 신호 — 2025년 후반의 변곡점</h4>
-        <table class="tbl"><thead><tr><th>시점</th><th>이벤트</th><th>의미</th></tr></thead><tbody>
-        <tr><td>2025.12.08</td><td>우종인 사내이사 자진 사임 (일신상 사유)</td><td>가문 exit의 첫 공식 시그널</td></tr>
-        <tr><td>1Q2026 중</td><td>우종인 직접 지분 -7.95%p (2,460천주 매각·이전)</td><td>지분 자체의 50% 감소</td></tr>
-        <tr><td>1Q2026 중</td><td>BHI건설 보유분 사실상 청산 (9,037주만 잔존)</td><td>가족 회사 통한 보유 구조 정리</td></tr>
-        <tr><td>1Q2026 중</td><td>이근흥 가족 명의(이근흥·이가현·이명환) 신규 공시</td><td>이근흥 가문이 보유 구조 가시화·차세대 가족 등재</td></tr>
-        <tr><td>2026.03.28</td><td>이근흥·조원래 공동대표 체제 정기주총 의결</td><td>이근흥 가문 대표권 단독 장악</td></tr>
-        <tr><td>2026.03.28</td><td>김학도 사외이사 신규 선임</td><td>이사회 재편</td></tr>
-        </tbody></table>
-
-        <h4 style="margin-top:18px;font-size:14px;color:var(--text);font-weight:700">두 사람의 역할 분담 (창업 이후 27년)</h4>
-        <table class="tbl"><thead><tr><th>축</th><th>우종인</th><th>이근흥</th></tr></thead><tbody>
-        <tr><td>책임 영역</td><td>대외 영업·전략·해외 사업·정책 대응</td><td>기술·생산·내부 운영·R&D</td></tr>
-        <tr><td>현장 위치</td><td>서울·해외</td><td>경남 함안·사천 제조 현장</td></tr>
-        <tr><td>가족 회사</td><td>BHI건설 — 부동산·건설</td><td>(공식 가족 회사 X)</td></tr>
-        <tr><td>지분 보유 방식</td><td>본인 직접 + BHI건설(가족 회사) 간접</td><td>배우자 명의 + 자녀·친인척 분산</td></tr>
-        </tbody></table>
-        <p><em>이 역할 분담은 공식 공시 사항이 아닌 산업·언론 통념의 정리이며, 실제 의사결정 권한은 두 사람 합의 기반.</em></p>
-
-        <div class="sv-callout" style="margin-top:14px"><strong>지분·임원직 동시 exit:</strong> 우종인이 본인 직접 지분만 절반 매각한 것이 아니라 (a) 사내이사 사임, (b) BHI건설 보유분 청산, (c) 본인 직접 지분 -50% 세 가지가 1년 안에 동시 진행된 점이 핵심. 이는 단순 일부 매각이 아니라 <strong>가문 차원의 단계적 exit 전략</strong>으로 읽힌다.</div>
-
-        <div class="sv-insight" style="margin-top:10px"><strong>잔존 가문 — 이근흥 가문 강화 패턴:</strong> 같은 기간 이근흥 가문이 (a) 가족 구성원 명의 BHI 지분을 처음으로 공시 가시화하고, (b) 이근흥 본인이 단독 대표이사 권한을 가지면서, (c) 외부 사외이사(김학도) 신규 선임으로 이사회를 재구성한 점은, <strong>잔존 가문이 경영권을 단단히 다지는 동시에 새 거버넌스 구조를 설계하고 있다</strong>는 신호다.</div>` },
-      { no: "2.3", title: "사업 부문·제품 라인업",
-        body: `<table class="tbl"><thead><tr><th>제품</th><th>주요 사양</th><th>주요 고객</th></tr></thead><tbody>
-        <tr><td><strong>HRSG</strong> (배열회수보일러)</td><td>200~600 MW급. 수평·수직 다양한 형태. 다단 압력 (HP·IP·LP) 설계. SCR 통합</td><td>GE Vernova·Siemens·MHI(OEM), 한전·민자발전, 중동·동남아·미국 IPP</td></tr>
-        <tr><td>발전 보일러 (PC)</td><td>석탄·바이오매스 혼소. 500~1,000 MW급</td><td>한전 발전 자회사 (서부발전·중부발전·남부발전 등)</td></tr>
-        <tr><td>CFB 보일러</td><td>순환유동층 — 저급 연료·바이오매스</td><td>열병합·산업용 보일러</td></tr>
-        <tr><td>원자력 BOP</td><td>복수기·열교환기·탱크·펌프 등 BOP 일체</td><td>한수원, 한국 원전 수출(체코·UAE) 일부 참여</td></tr>
-        <tr><td>EPC (소형)</td><td>중소형 열병합·자가발전·산업 보일러 plant EPC</td><td>국내 산업단지·해외 IPP</td></tr>
-        <tr><td>자회사 발전사업</td><td>아레테자원환경(폐기물 발전)·아라퓨처파워(태양광·신재생)</td><td>자체 발전 IPP</td></tr>
-        </tbody></table>
-        <p>FY2025 매출 7,741억원의 78.3%인 6,059억원이 HRSG에서 발생. 나머지 21.7%가 발전 보일러·원자력 BOP·EPC·자회사 발전 사업으로 구성. 자회사 발전사업(아레테·아라퓨처파워)은 사업주(IPP)로서 직접 운영하며, 모회사의 제품 판매와는 다른 수익 구조.</p>` },
-      { no: "2.4", title: "매출 mix · 지역별 매출 (FY2025)",
-        body: `<p>제품별 매출 비중을 시각화한다.</p>
-        <div id="revenueMixChart"></div>
-        <p style="margin-top:14px">지역별 매출은 사업보고서 footnote에 상세 공시되어 있으며, <em>지역별 매출 정확치는 사업보고서 직접 확인 필요</em>. 산업 통념상 한국(40~50%)·중동(15~25%)·미국(10~20%)·동남아(10~15%)·기타 정도의 분포로 추정.</p>` },
-      { no: "2.5", title: "종속기업 — 해외 거점 네트워크",
-        body: `<p>비에이치아이는 한국 본사 외에 6개 종속기업을 보유한다. 모두 발전 기자재 사업의 글로벌 거점 또는 발전 사업 자체.</p>
-        <table class="tbl"><thead><tr><th>종속기업</th><th>국가</th><th>지분</th><th>역할</th></tr></thead><tbody>
-        <tr><td>PT Bum Woo Heavy Industry INDONESIA</td><td>인도네시아</td><td>95%</td><td>현지 제조법인 — 동남아 LNG 발전 수주 거점</td></tr>
-        <tr><td>BHI-FW</td><td>미국</td><td>100%</td><td>미국 시장 영업·제조 — Foster Wheeler 기술 제휴 기반</td></tr>
-        <tr><td>BHI (THAI)</td><td>태국</td><td>100%</td><td>현지 제조법인 — 동남아 거점</td></tr>
-        <tr><td>BHI E&C ISRAEL</td><td>이스라엘</td><td>100%</td><td>이스라엘 가스화력 build-out 대응</td></tr>
-        <tr><td>아레테자원환경(주)</td><td>한국</td><td>100%</td><td>자체 IPP — 폐기물 발전사업</td></tr>
-        <tr><td>아라퓨처파워(주)</td><td>한국</td><td>100%</td><td>자체 IPP — 신재생 발전사업</td></tr>
-        <tr><td>이화일반사모부동산투자신탁57호</td><td>한국</td><td>98% (신규 2025)</td><td>부동산 투자신탁 — 자산 다각화 시작</td></tr>
-        </tbody></table>
-        <p>관계기업: BHI Algeria(알제리 가스화력 영업 거점), 코리아에너지솔루션㈜, 이엠아이㈜.</p>
-        <p>이 네트워크는 단순 영업 거점이 아니라 (a) 현지 제조를 통한 관세·로컬 콘텐츠 요구 대응, (b) 시간대·언어 차이를 활용한 영업 효율, (c) 자체 발전 사업 진입으로 매출 다각화 시도라는 세 가지 의미를 갖는다.</p>` },
-      { no: "2.6", title: "고객 관계와 수주 cycle",
-        body: `<p>비에이치아이의 고객은 크게 4개 그룹으로 나뉜다.</p>
-        <ol>
-          <li><strong>가스터빈 OEM</strong> — GE Vernova·Siemens Energy·Mitsubishi Heavy. HRSG를 OEM 공급. 가스터빈 1대 발주 시 HRSG도 묶여서 발주되는 패키지 구조</li>
-          <li><strong>한전·발전 자회사</strong> — 한국 5개 발전 자회사(남동·중부·서부·남부·동서). 노후 석탄화력 LNG 전환 + 신규 LNG 발전소 발주</li>
-          <li><strong>민자 IPP</strong> — 포스코에너지·SK E&S·GS EPS·SK가스 등 민간 발전. AI 데이터센터 자가발전 IPP 신규 수요</li>
-          <li><strong>해외 EPC·발전사업자</strong> — 중동(사우디·UAE·이집트·알제리), 미국(NRG·Vistra 등), 동남아·이스라엘. 현지 EPC와 협력</li>
-        </ol>
-        <p>수주 cycle 특성:</p>
-        <ul>
-          <li>발주 → 계약 → 제조 → 출하 → 설치 → 시운전까지 18~36개월 lead time</li>
-          <li>대형 1건당 100~500억 원 규모</li>
-          <li>매출 인식은 진행률(percent-of-completion)로 인식 — 분기 매출은 제조 mileage에 따라 lumpy</li>
-          <li>수주잔고(backlog)가 향후 2~3년 매출 가시성 결정 — 현재 2.4조원</li>
-        </ul>` },
-      { no: "2.7", title: "경쟁 위치 — 국내·해외",
-        body: `<p><strong>국내</strong>: 두산에너빌리티(대형, 가스터빈 자체 개발 추진)와 비에이치아이(중형, HRSG 전문)가 양대 player. HSG성동중공업·일진디스플레이·기타 mid-cap이 부속 부품 layer. 두산은 발전 plant 전반 EPC + 가스터빈·증기터빈 자체 개발을 추진하므로 비에이치아이와 협력 + 경쟁 이중 관계.</p>
-        <p><strong>글로벌</strong>: HRSG 전문 player 중 비에이치아이의 강점은 (a) 한국 발전 시장 점유율, (b) 중동·동남아·미국 다국적 생산 거점, (c) 영국 Wood Group 기술 라이센스 기반의 자체 설계 역량, (d) 가스터빈 OEM과의 다년 협력 관계. 약점은 (a) 단일 기업 규모 면에서 글로벌 OEM 대비 작음, (b) 단일 사업(HRSG) 의존도 78%.</p>
-        <p><strong>중국 player</strong>(Harbin Electric·Dongfang Electric·Shanghai Electric)는 가격 경쟁력이 강하나 미국·EU·중동 일부 시장에서 진입 제한 또는 보안 이슈로 제외되는 경우가 많아, 비에이치아이 같은 한국 회사가 반사 수혜를 받는 구조.</p>` },
-      { no: "2.8", title: "경영진·이사회 (1Q2026 기준)",
-        body: `<table class="tbl"><thead><tr><th>직위</th><th>인물</th><th>비고</th></tr></thead><tbody>
-        <tr><td>대표이사 (공동)</td><td><strong>이근흥</strong></td><td>공동 창업자. 부회장 직위 유지 + 단독 대표권 강화</td></tr>
-        <tr><td>대표이사 (공동)</td><td>조원래</td><td>전문 경영인. 실무 운영 담당</td></tr>
-        <tr><td>사내이사</td><td>이근흥, 조원래, 류흥문</td><td>2026.3.28 정기주총에서 재선임</td></tr>
-        <tr><td>사외이사</td><td>노종문 (재선임), <strong>김학도 (신규)</strong></td><td>김학도 신규 선임으로 이사회 재편</td></tr>
-        <tr><td>전 사내이사</td><td><em>우종인 (2025.12.08 사임)</em></td><td>일신상 사유. exit 신호의 첫 단추</td></tr>
-        </tbody></table>
-        <p>이사회 구성 변화의 함의: 우종인이 빠지고 이근흥 단독 대표 + 조원래 공동대표(전문 경영인) + 신규 사외이사 1명이 추가됨. 이는 family-controlled company에서 전문 경영인+사외이사 비중을 확대해 외부 자본·시장 신뢰를 확보하려는 거버넌스 진화 패턴.</p>` },
-      { no: "2.9", title: "자본구조와 재무 현황",
-        body: `<p>FY2025 사업보고서 기준 연결 재무상태표. 자산이 1년 만에 +58%, 자본 +53% 증가하며 BS가 빠르게 강해졌다.</p>
-        <table class="tbl"><thead><tr><th>항목 (억원)</th><th>2023년말</th><th>2024년말</th><th>2025년말</th><th>증감</th></tr></thead><tbody>
-        <tr><td><strong>자산총계</strong></td><td>4,254</td><td>5,248</td><td><strong>8,308</strong></td><td>+58%</td></tr>
-        <tr><td>현금성 자산</td><td>139</td><td>176</td><td>600</td><td>+241%</td></tr>
-        <tr><td>매출채권 + 미청구공사</td><td>약 1,439</td><td>약 1,891</td><td>약 3,269</td><td>+73%</td></tr>
-        <tr><td>유형자산</td><td>1,921</td><td>2,223</td><td>2,332</td><td>+5%</td></tr>
-        <tr><td><strong>부채총계</strong></td><td>3,517</td><td>4,083</td><td><strong>6,531</strong></td><td>+60%</td></tr>
-        <tr><td>유동부채</td><td>3,211</td><td>3,799</td><td>6,153</td><td>+62%</td></tr>
-        <tr><td>차입금 (유동)</td><td>1,138</td><td>1,246</td><td>1,445</td><td>+16%</td></tr>
-        <tr><td><strong>자본총계</strong></td><td>737</td><td>1,164</td><td><strong>1,776</strong></td><td>+53%</td></tr>
-        </tbody></table>
-        <p>유형자산은 +5%만 증가했지만 매출은 +91% 증가했다는 점은 <strong>capacity 가동률 상승이 매출 성장을 견인</strong>한 신호. 별도 대규모 설비 증설 없이 기존 capacity 풀가동으로 매출이 늘었다는 것은 향후 추가 capex 시 매출 추가 성장 여지가 있음을 시사.</p>` },
-      { no: "2.10", title: "최근 실적 추이 (FY23~1Q26)",
-        body: `<p>3년 매출 3.6배 증가, 영업이익 5배 증가, EBITDA 4배 증가. EBITDA 마진은 5.7% → 6.9% → 10.7%로 가파르게 개선됐다. 1Q2026 매출 2,808억은 분기 사상 최대.</p>
-        <div id="quarterlyTrendChartSummary"></div>
-        <p>이 가속의 원천은 (1) 가스터빈 OEM의 폭증한 신규 발주, (2) AI 데이터센터·LNG cycle 진입, (3) 한전 LNG 전환·신규 IPP 발주, (4) 누적 수주잔고 2.4조원의 매출 인식, (5) capacity 가동률 상승에 따른 operating leverage. 1Q26 영업이익률은 12.58%로 전년 동기 대비 추가 개선됐다.</p>` },
-      { no: "2.11", title: "회사 전략·미래 방향",
-        body: `<ul>
-          <li><strong>HRSG 글로벌 확장</strong>: 미국·중동·동남아 현지 생산법인 활용 + 가스터빈 OEM(GE·Siemens·MHI)과의 협력 심화. 2026 신규 수주 가이던스 2조원+</li>
-          <li><strong>원자력 BOP 확대</strong>: 한국 원전 수출(체코·UAE) + 미국 SMR 시장 진입 모색</li>
-          <li><strong>자체 발전 사업</strong>: 아레테(폐기물)·아라퓨처파워(신재생) 자회사를 통한 IPP 진입 — 매출 다각화 + 안정적 cashflow</li>
-          <li><strong>부동산 투자</strong>: 이화 사모부동산투자신탁57호 출자 — 자산 다각화 시작</li>
-          <li><strong>이사회 거버넌스 진화</strong>: 전문 경영인(조원래) + 사외이사 강화로 family-controlled 구조를 시장 친화적으로 전환</li>
-        </ul>` },
-      { no: "2.12", title: "회사 차원의 구조적 위험",
-        body: `<table class="tbl"><thead><tr><th>위험</th><th>메커니즘</th></tr></thead><tbody>
-        <tr><td><strong>HRSG 단일 사업 의존 78%</strong></td><td>가스터빈 발주 cycle 둔화 시 매출 절반 이상 동시 타격</td></tr>
-        <tr><td>가문 전환 진행 중</td><td>우종인 가문 잔존 8.47% 지분 매각·이전 시 단기 수급 변동, 영업 인적 네트워크 재편 risk</td></tr>
-        <tr><td>EPC lumpy 매출</td><td>프로젝트 진행률 인식 timing에 따라 분기별 매출 swing</td></tr>
-        <tr><td>중국 player 추격</td><td>Harbin·Dongfang·Shanghai Electric 가격 경쟁</td></tr>
-        <tr><td>발전 cycle 정점 시점 불확실</td><td>AI·LNG·원전 3개 driver의 지속성, 정책·금리 변동에 민감</td></tr>
-        <tr><td>핵심 인력 risk</td><td>우종인 측 영업 네트워크 wind-down 시 진행 프로젝트의 영업 cliff 가능성</td></tr>
-        </tbody></table>` }
-    ],
-
-    part3: [
-      { no: "3.0", title: "본 종목 — FDD 섹션 생략",
-        body: `<p>본 종목 deep dive는 <strong>산업·회사 본질 이해</strong>를 중심으로 구성된다. 회계·재무·법률 검증(KAM·운전자본·현금흐름 quality·관계사 거래·hidden liability 등)은 별도의 매각자문 또는 internal DD layer로 분리되며, 본 dashboard에서는 산업·기술·시장·지배구조 layer에 집중한다.</p>
-        <p>회사·산업에 대한 정밀 이해는 Part 1 (산업 Deep Dive 10개 sub-section)과 Part 2 (회사 Deep Dive 12개 sub-section, 특히 2.2 두 가문 구조)에서 확인할 수 있다.</p>` }
-    ],
-
-    part4: [
-      { no: "4.1", title: "핵심 사실 정리",
-        body: `<ul>
-          <li>1998년 우종인·이근흥 공동 창업, 2007년 BHI 사명 변경, 2012년 KOSDAQ 상장.</li>
-          <li>발전 기자재 전문 — HRSG(78.3%) + 발전 보일러·원자력 BOP·EPC.</li>
-          <li>2025년 매출 7,741억원(+91%)·영업이익 755억원(+234%)·순이익 652억원(+233%).</li>
-          <li>누적 수주잔고 2.4조원, 2026 신규 수주 가이던스 2조원+.</li>
-          <li>2026 컨센서스: 매출 1.10조원, 영업이익 1,068억원.</li>
-          <li>지배구조: 우종인 40.72% + 이근흥 배우자 16.80% = dual-family 57.5%.</li>
-          <li>2026.5 KOSDAQ 우량기업부 승격.</li>
-          <li>증권사 view: 유안타 TP 12만원, SK증권 등 강세론 우세.</li>
-          <li>Alpha 종합 7.0 — momentum·profitability 강하나 단일 사업·dual-family·중형주 변동성이 score 누름.</li>
-        </ul>` },
-      { no: "4.2", title: "AI 슈퍼사이클의 두 layer — 반도체와 전력",
-        body: `<p>본 dashboard의 다른 종목(삼성전자·SK하이닉스)이 AI 슈퍼사이클의 <strong>메모리</strong> layer라면, 비에이치아이는 같은 cycle의 <strong>전력 기자재</strong> layer다. 두 layer 모두 동일한 driver(NVIDIA 가속기 출하·하이퍼스케일러 capex)에 의해 움직이지만 시간차가 있다.</p>
-        <p>일반적으로 메모리·HBM이 먼저 수요 폭증 → 데이터센터 build-out → 전력 인프라 → 발전소 신규 건설 → HRSG 발주 순으로 cycle이 전파된다. 따라서 비에이치아이의 cycle 정점은 메모리 cycle보다 1~2년 후행할 가능성. 반대로 cycle 둔화 시점도 후행.</p>` },
-      { no: "4.3", title: "후속 작업이 필요한 항목",
-        body: `<ol>
-          <li>2025 사업보고서 직접 read — KAM, 관계사 거래(BHI건설), 공사진행률·미청구공사, 충당부채</li>
-          <li>분기 BS·CF — 운전자본·EPC 진행 패턴</li>
-          <li>2026 신규 수주 1.8조원의 segment별 분해 (LNG·원전·해외)</li>
-          <li>우종인 회장·이근흥 부회장의 후계 구도</li>
-          <li>BHI건설과 비에이치아이 간 related-party 거래 규모·arm's length 검증</li>
-          <li>HRSG capacity 가동률·증설 계획</li>
-          <li>미국 SMR·기존 원전 재가동 정책 진척</li>
-        </ol>` },
-      { no: "4.4", title: "출처", body: `<p>아래 출처 섹션 참조.</p>` }
-    ],
-
-    mgmtQ: [
-      "2026년 신규 수주 2조원+ 가이던스의 segment별 (LNG·원전·해외) 분해는?",
-      "HRSG 매출 비중 78.3% — 원자력 BOP·EPC 비중을 늘려갈 전략은?",
-      "BHI건설과의 거래 규모·가격 산정 방식·arm's length 검증은?",
-      "우종인 회장·이근흥 부회장의 후계 구도와 차세대 경영진은?",
-      "AI 데이터센터 직접 발주 비중 vs 하이퍼스케일러 간접 수주 비중은?",
-      "HRSG 라인 capacity 가동률·증설 계획·인력 확보 계획은?",
-      "미국 원전 BOP 시장 진입 진척과 잠재 수주 규모는?",
-      "2025년 영업이익률 +5.7%p 개선의 driver (가격·믹스·가동률·일회성) 분해는?",
-      "수주잔고 2.4조원의 평균 인식 기간과 분기 매출 변동성 관리 방안은?"
-    ],
-
-    itemsToVerify: [
-      "2025 사업보고서 — KAM, 관계사 거래, 공사진행률·미청구공사, 충당부채, 분기 BS",
-      "BHI건설 관련 거래 규모·조건",
-      "HRSG 가동률·증설 계획",
-      "FY2026 분기별 매출·영업이익 컨센서스 정확치",
-      "미국 SMR·원전 재가동 정책 일정"
-    ],
-
-    sources: [
-      { title: "비에이치아이 공식 사이트", url: "https://www.bhi.co.kr/" },
-      { title: "BusinessPost — Who Is 우종인 대표이사", url: "https://www.businesspost.co.kr/BP?command=article_view&num=402566" },
-      { title: "Wikipedia — BHI(기업)", url: "https://ko.wikipedia.org/wiki/BHI_(%EA%B8%B0%EC%97%85)" },
-      { title: "이베스트투자증권 Company Brief (2025.10.27)", url: "https://www.imfnsec.com/upload/R_E08/2025/10/%5B27073206%5D_083650.pdf" },
-      { title: "유안타증권 TP 12만원 — Hellot", url: "https://www.hellot.net/news/article.html?no=111804" },
-      { title: "헤럴드경제 — 미국 원전 시장 재평가", url: "https://blog.ai-fortunate.com/2026/05/blog-post_9.html" },
-      { title: "한국경제 — LNG 복합화력 566억 공급계약", url: "https://www.hankyung.com/article/2026031136156" },
-      { title: "Newspim — KOSDAQ 우량기업부 승격", url: "https://www.newspim.com/news/view/20260504000462" },
-      { title: "FnGuide 컨센서스 — 083650", url: "https://comp.fnguide.com/SVO2/ASP/SVD_Main.asp?gicode=A083650" },
-      { title: "Wisereport 지분 현황", url: "https://comp.wisereport.co.kr/company/c1070001.aspx?cmp_cd=083650" }
-    ]
-  }
 };
 
 // ============================================================
@@ -3174,17 +3050,17 @@ function quarterlyTrendChartSVG(data, opts) {
   for (let i = 0; i <= gridSteps; i++) {
     const v = (revMax * i) / gridSteps;
     const y = yL(v);
-    gridLines.push(`<line x1="${padL}" y1="${y}" x2="${w-padR}" y2="${y}" stroke="#e2e6ed" stroke-width="1"/>`);
-    gridLines.push(`<text x="${padL-8}" y="${y+4}" text-anchor="end" font-size="10" fill="#8a93a3">${fmtNum(v)}</text>`);
+    gridLines.push(`<line x1="${padL}" y1="${y}" x2="${w-padR}" y2="${y}" stroke="#2D3748" stroke-width="1"/>`);
+    gridLines.push(`<text x="${padL-8}" y="${y+4}" text-anchor="end" font-size="10" fill="#9CA3AF">${fmtNum(v)}</text>`);
   }
   for (let i = 0; i <= gridSteps; i++) {
     const v = (profitMax * i) / gridSteps;
     const y = yR(v);
-    gridLines.push(`<text x="${w-padR+8}" y="${y+4}" text-anchor="start" font-size="10" fill="#8a93a3">${fmtNum(v)}</text>`);
+    gridLines.push(`<text x="${w-padR+8}" y="${y+4}" text-anchor="start" font-size="10" fill="#9CA3AF">${fmtNum(v)}</text>`);
   }
   // x labels
   const xLabels = periods.map((p, i) =>
-    `<text x="${x(i)}" y="${h-padB+18}" text-anchor="middle" font-size="11" fill="#475065">${p}</text>`
+    `<text x="${x(i)}" y="${h-padB+18}" text-anchor="middle" font-size="11" fill="#9CA3AF">${p}</text>`
   ).join('');
 
   // revenue bars
@@ -3204,8 +3080,8 @@ function quarterlyTrendChartSVG(data, opts) {
   const niPoints = data.map((d, i) => `<circle cx="${x(i)}" cy="${yR(d.ni)}" r="3.5" fill="#6d3ec5"/>`).join('');
 
   // axis labels
-  const yLabelL = `<text x="${padL-36}" y="${padT-6}" font-size="10" fill="#8a93a3" font-weight="600">매출 ($M)</text>`;
-  const yLabelR = `<text x="${w-padR+8}" y="${padT-6}" font-size="10" fill="#8a93a3" font-weight="600">손익 ($M)</text>`;
+  const yLabelL = `<text x="${padL-36}" y="${padT-6}" font-size="10" fill="#9CA3AF" font-weight="600">매출 ($M)</text>`;
+  const yLabelR = `<text x="${w-padR+8}" y="${padT-6}" font-size="10" fill="#9CA3AF" font-weight="600">손익 ($M)</text>`;
 
   return `
     <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">
@@ -3249,10 +3125,10 @@ function marginTrendChartSVG(data, opts) {
 
   let grid = '';
   for (let v = min; v <= max; v += step) {
-    grid += `<line x1="${padL}" y1="${y(v)}" x2="${w-padR}" y2="${y(v)}" stroke="#e2e6ed"/>`;
-    grid += `<text x="${padL-8}" y="${y(v)+4}" text-anchor="end" font-size="10" fill="#8a93a3">${v}%</text>`;
+    grid += `<line x1="${padL}" y1="${y(v)}" x2="${w-padR}" y2="${y(v)}" stroke="#2D3748"/>`;
+    grid += `<text x="${padL-8}" y="${y(v)+4}" text-anchor="end" font-size="10" fill="#9CA3AF">${v}%</text>`;
   }
-  const xLabels = periods.map((p, i) => `<text x="${x(i)}" y="${h-padB+18}" text-anchor="middle" font-size="11" fill="#475065">${p}</text>`).join('');
+  const xLabels = periods.map((p, i) => `<text x="${x(i)}" y="${h-padB+18}" text-anchor="middle" font-size="11" fill="#9CA3AF">${p}</text>`).join('');
   const opPath = data.map((d, i) => `${i===0?'M':'L'}${x(i)},${y(d.opMargin)}`).join('');
   const npPath = data.map((d, i) => `${i===0?'M':'L'}${x(i)},${y(d.npMargin)}`).join('');
   const opPoints = data.map((d, i) => `<circle cx="${x(i)}" cy="${y(d.opMargin)}" r="3.5" fill="#1a7f5a"/><text x="${x(i)}" y="${y(d.opMargin)-8}" text-anchor="middle" font-size="9" fill="#1a7f5a" font-weight="600">${d.opMargin.toFixed(1)}</text>`).join('');
@@ -3275,8 +3151,8 @@ function marginTrendChartSVG(data, opts) {
 // ============================================================
 //  RENDER
 // ============================================================
-let activeType = 'stock';   // 'stock' | 'study'
-let activeId = null;         // ticker or study id
+let activeType = 'portfolio';   // 'portfolio' | 'alphaengine' | 'studies-index' | 'study' | 'stocks-index' | 'stock'
+let activeId = null;             // ticker or study id
 let activeTab = 'part1';
 
 function scoreClass(s) {
@@ -3286,43 +3162,93 @@ function scoreClass(s) {
   return 's-bad';
 }
 
-function renderSidebar() {
-  // Studies (위)
-  const studyNav = document.getElementById('study-nav');
+// 상단 탭 active 상태를 activeType에서 파생
+function topnavGroup() {
+  if (activeType === 'portfolio') return 'portfolio';
+  if (activeType === 'alphaengine') return 'alphaengine';
+  if (activeType === 'study' || activeType === 'studies-index') return 'studies-index';
+  return 'stocks-index'; // 'stock' | 'stocks-index'
+}
+
+function renderTopnav() {
+  const nav = document.getElementById('topnav');
+  if (!nav) return;
+  const group = topnavGroup();
+  nav.querySelectorAll('.topnav-tab').forEach(tab => {
+    tab.classList.toggle('active', tab.dataset.tab === group);
+  });
+  if (!nav._bound) {
+    nav._bound = true;
+    nav.querySelectorAll('.topnav-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        activeType = tab.dataset.tab; // portfolio | alphaengine | studies-index | stocks-index
+        activeId = null;
+        renderTopnav(); renderMain();
+        window.scrollTo(0, 0);
+      });
+    });
+  }
+}
+
+// 스터디 인덱스 — STUDIES 카드 그리드
+function renderStudiesIndex() {
+  const main = document.getElementById('main-content');
   const studies = Object.values(STUDIES);
-  studyNav.innerHTML = studies.length
+  const cards = studies.length
     ? studies.map(st => `
-      <div class="study-item ${activeType === 'study' && activeId === st.id ? 'active' : ''}" data-id="${st.id}">
-        <div class="s-title">${st.title}</div>
-        <div class="s-meta">${st.category} · ${st.asOfDate}</div>
-        <div class="s-tags">${(st.tags || []).slice(0, 4).map(t => `<span class="s-tag">#${t}</span>`).join('')}</div>
+      <div class="index-card study" data-id="${st.id}">
+        <div class="ic-title">${st.title}</div>
+        <div class="ic-meta">${st.category} · 기준일 ${st.asOfDate}</div>
+        <div class="ic-tags">${(st.tags || []).slice(0, 5).map(t => `<span class="ic-tag">#${t}</span>`).join('')}</div>
       </div>`).join('')
-    : '<div class="sidebar-empty">저장된 노트가 없습니다.<br>대화창에 필기·리서치를 보내주세요.</div>';
-  studyNav.querySelectorAll('.study-item').forEach(el => {
+    : '<div class="empty-state">저장된 노트가 없습니다.<br>대화창에 필기·리서치를 보내주세요.</div>';
+  main.innerHTML = `
+    <header class="header">
+      <div class="header-l">
+        <h1>스터디 노트</h1>
+        <div class="subtitle">카드를 선택하면 노트 본문이 열립니다.</div>
+      </div>
+      <div class="header-r">Alpha Deep-Dive</div>
+    </header>
+    <div class="index-grid">${cards}</div>`;
+  main.querySelectorAll('.index-card').forEach(el => {
     el.addEventListener('click', () => {
       activeType = 'study';
       activeId = el.dataset.id;
-      renderSidebar(); renderMain();
+      renderTopnav(); renderMain();
       window.scrollTo(0, 0);
     });
   });
+}
 
-  // Tickers (아래)
-  const nav = document.getElementById('ticker-nav');
-  const tickers = Object.values(STOCKS);
-  nav.innerHTML = tickers.map(s => `
-    <div class="ticker-item ${activeType === 'stock' && s.ticker === activeId ? 'active' : ''}" data-ticker="${s.ticker}">
-      <div class="t-symbol">${s.ticker} · ${s.nameKr}</div>
-      <div class="t-name">${s.nameEn}</div>
-      <div class="t-meta">${s.exchange} · 기준일 ${s.asOfDate}</div>
-      ${s.alphaScore ? `<div class="t-score">α ${s.alphaScore.composite.toFixed(1)}</div>` : ''}
-    </div>`).join('');
-  nav.querySelectorAll('.ticker-item').forEach(el => {
+// 종목 인덱스 — STOCKS 카드 그리드
+function renderStocksIndex() {
+  const main = document.getElementById('main-content');
+  const stocks = Object.values(STOCKS);
+  const cards = stocks.length
+    ? stocks.map(s => `
+      <div class="index-card" data-ticker="${s.ticker}">
+        <div class="ic-symbol">${s.ticker} · ${s.nameKr}</div>
+        <div class="ic-name">${s.nameEn}</div>
+        <div class="ic-meta">${s.exchange} · 기준일 ${s.asOfDate}</div>
+        ${s.alphaScore ? `<div class="ic-score">α ${s.alphaScore.composite.toFixed(1)}</div>` : ''}
+      </div>`).join('')
+    : '<div class="empty-state">등록된 종목이 없습니다.</div>';
+  main.innerHTML = `
+    <header class="header">
+      <div class="header-l">
+        <h1>리서치 종목</h1>
+        <div class="subtitle">카드를 선택하면 deep-dive 본문이 열립니다.</div>
+      </div>
+      <div class="header-r">Alpha Deep-Dive</div>
+    </header>
+    <div class="index-grid">${cards}</div>`;
+  main.querySelectorAll('.index-card').forEach(el => {
     el.addEventListener('click', () => {
       activeType = 'stock';
       activeId = el.dataset.ticker;
       activeTab = 'part1';
-      renderSidebar(); renderMain();
+      renderTopnav(); renderMain();
       window.scrollTo(0, 0);
     });
   });
@@ -3338,6 +3264,7 @@ function renderStudy(st) {
         <div class="sources-list">${st.sources.map(src => `<a href="${src.url}" target="_blank" rel="noopener">${src.title}</a>`).join('')}</div>
       </section>` : '';
   main.innerHTML = `
+    <button class="back-link" id="back-to-studies">← 스터디 목록</button>
     <header class="header">
       <div class="header-l">
         <h1>${st.title} <span class="badge industry">${st.category}</span></h1>
@@ -3347,6 +3274,11 @@ function renderStudy(st) {
     </header>
     <article class="section-card"><div class="body">${st.body}</div></article>
     ${sourcesHTML}`;
+  const backStudies = document.getElementById('back-to-studies');
+  if (backStudies) backStudies.addEventListener('click', () => {
+    activeType = 'studies-index'; activeId = null;
+    renderTopnav(); renderMain(); window.scrollTo(0, 0);
+  });
 }
 
 function renderAlphaScore(s) {
@@ -3431,8 +3363,35 @@ function renderQuarterlyBSTable(data) {
 
 function renderMain() {
   const main = document.getElementById('main-content');
+  const pfView = document.getElementById('pf-view');
+  const aeView = document.getElementById('ae-view');
+
+  if (activeType === 'portfolio') {
+    main.style.display = 'none';
+    if (aeView) aeView.style.display = 'none';
+    if (pfView) { pfView.style.display = 'block'; }
+    if (typeof PF !== 'undefined') PF.renderPortfolioView();
+    return;
+  }
+  if (activeType === 'alphaengine') {
+    main.style.display = 'none';
+    if (pfView) pfView.style.display = 'none';
+    if (aeView) {
+      aeView.style.display = 'block';
+      const fr = document.getElementById('ae-frame');
+      if (fr && !fr.src && fr.dataset.src) fr.src = fr.dataset.src;
+    }
+    return;
+  }
+  // 인덱스 / stock / study → 인라인 뷰 숨기고 본문 표시
+  if (pfView) pfView.style.display = 'none';
+  if (aeView) aeView.style.display = 'none';
+  main.style.display = '';
+
+  if (activeType === 'studies-index') return renderStudiesIndex();
+  if (activeType === 'stocks-index') return renderStocksIndex();
   if (activeType === 'study') return renderStudy(STUDIES[activeId]);
-  if (!activeId) { main.innerHTML = '<div class="empty-state">왼쪽에서 스터디 또는 종목을 선택하세요.</div>'; return; }
+  if (!activeId) { main.innerHTML = '<div class="empty-state">상단 탭에서 스터디 또는 종목을 선택하세요.</div>'; return; }
   const s = STOCKS[activeId];
   if (!s) { main.innerHTML = '<div class="empty-state">선택한 항목을 찾을 수 없습니다.</div>'; return; }
 
@@ -3527,6 +3486,7 @@ function renderMain() {
     </section>`;
 
   main.innerHTML = `
+    <button class="back-link" id="back-to-stocks">← 종목 목록</button>
     <header class="header">
       <div class="header-l">
         <h1>${s.ticker} · ${s.nameKr} <span class="badge exchange">${s.exchange}</span></h1>
@@ -3549,33 +3509,1137 @@ function renderMain() {
   if (trendHost && s.quarterlyPL) trendHost.innerHTML = `<div class="chart-block">${quarterlyTrendChartSVG(s.quarterlyPL)}</div>`;
 
   main.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => { activeTab = t.dataset.tab; renderMain(); }));
+  const backStocks = document.getElementById('back-to-stocks');
+  if (backStocks) backStocks.addEventListener('click', () => {
+    activeType = 'stocks-index'; activeId = null;
+    renderTopnav(); renderMain(); window.scrollTo(0, 0);
+  });
 }
 
-// init — 종목이 있으면 첫 종목, 없으면 첫 스터디
-const tickerKeys = Object.keys(STOCKS);
-const studyKeys = Object.keys(STUDIES);
-if (tickerKeys.length) {
-  activeType = 'stock';
-  activeId = tickerKeys[0];
-} else if (studyKeys.length) {
-  activeType = 'study';
-  activeId = studyKeys[0];
-}
-renderSidebar();
+// init — 기본 뷰: 내 포트폴리오
+activeType = 'portfolio';
+activeId = null;
+renderTopnav();
 renderMain();
 
-// Sidebar toggle (사이드바 열기/닫기) — localStorage로 상태 기억
-const toggleBtn = document.getElementById('sidebar-toggle');
-const savedCollapsed = localStorage.getItem('alpha-sidebar-collapsed') === '1';
-if (savedCollapsed) { document.body.classList.add('sidebar-collapsed'); toggleBtn.textContent = '☰'; }
-toggleBtn.addEventListener('click', () => {
-  const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
-  toggleBtn.textContent = isCollapsed ? '☰' : '◀';
-  localStorage.setItem('alpha-sidebar-collapsed', isCollapsed ? '1' : '0');
-});
-
 // 인쇄 단축키 Cmd/Ctrl + P 가 동작하도록 (기본 동작) — 별도 처리 X. 버튼은 화면 우상단.
+
+/* ===== 자산관리(Portfolio) 모듈 ===== */
+const PF = (function(){
+// ───── 임베드 데이터 (빌드 시점 스냅샷) ─────
+const SNAPSHOT = {"asof": "2026-05-25", "kpi": {"총자산": 241692913, "순자산": 155716485, "총부채": 85976428, "투자자산": 117702596, "부채비율": 0.355725895860256}, "subKpi": {"현금성 자산": 611151, "부동산+보증금": 117600000, "비트코인": 0, "주식/ETF (통합)": 117702596, "퇴직연금/예금": 5779166}, "riskRatios": {"부채/순자산": 0.552134399899921, "위험자산/순자산": 0.755877555289024, "레버리지/순자산": 0.0310691639359828, "CRDU/순자산": 0, "비트코인/순자산": 0}, "assetGroup": [{"name": "현금", "value": 611151, "pct": 0.00252862606691327}, {"name": "부동산", "value": 97600000, "pct": 0.403818212079723}, {"name": "보증금", "value": 20000000, "pct": 0.082749633622894}, {"name": "주식/ETF", "value": 117702596, "pct": 0.486992334773176}, {"name": "암호자산", "value": 0, "pct": 0}, {"name": "퇴직연금/예금", "value": 5779166, "pct": 0.0239111934572943}], "invGroup": [{"name": "국내 S&P500 ETF (TIGER)", "value": 30713300, "pct": 0.260939869159725}, {"name": "반도체 ETF (TIGER 2X + SOL AI + 유사)", "value": 63093510, "pct": 0.536041787897355}, {"name": "NASDAQ 계열 (QQQ/KODEX100 + QLD/TQQQ + 유사)", "value": 6819651, "pct": 0.0579396821460081}, {"name": "단일종목 레버리지 ETF (TSLL/NFXL 등)", "value": 4644526, "pct": 0.0394598433495893}, {"name": "개별주 (해외 — 모든 단일종목)", "value": 5726878, "pct": 0.0486554943953828}, {"name": "비트코인", "value": 0, "pct": 0}, {"name": "기타 (인컴/배당/원자재/액티브)", "value": 6704731, "pct": 0.0569633230519402}], "consolidated": [{"name": "TIGER 반도체TOP10 레버리지", "ticker": "TIGER_SEMI_2X", "assetClass": "주식/ETF", "subClass": "레버리지 ETF (반도체 2X)", "accountCount": 1, "value": 63053550, "cost": 60654960, "pnl": 2398590, "ret": 0.0395448286504517, "totalAssetPct": 0.260882908056141, "netWorthPct": 0.404925335939865, "investmentPct": 0.535702288163636, "highVol": "Y", "leverage": "Y", "concentration": "Y", "memo": "777주 (대량 매수)"}, {"name": "TIGER 미국S&P500", "ticker": "360750", "assetClass": "주식/ETF", "subClass": "S&P500 ETF (국내상장)", "accountCount": 2, "value": 30713300, "cost": 24140460, "pnl": 6572840, "ret": 0.272274844804117, "totalAssetPct": 0.127075716117502, "netWorthPct": 0.197238590377891, "investmentPct": 0.260939869159725, "highVol": "N", "leverage": "N", "concentration": "Y", "memo": "토스 + 미래에셋 합산"}, {"name": "TIGER 미국나스닥100", "ticker": "133690", "assetClass": "주식/ETF", "subClass": "NASDAQ100 ETF (국내상장)", "accountCount": 2, "value": 6533670, "cost": 5375530, "pnl": 1158140, "ret": 0.215446662933701, "totalAssetPct": 0.0270329399356447, "netWorthPct": 0.0419587560045425, "investmentPct": 0.0555099906207676, "highVol": "N", "leverage": "N", "concentration": "N", "memo": "토스 + 미래에셋 합산"}, {"name": "RISE 현대차고정피지컬AI", "ticker": "RISE_HD_PHYSAI", "assetClass": "주식/ETF", "subClass": "테마 ETF (피지컬 AI)", "accountCount": 1, "value": 1226140, "cost": 1208300, "pnl": 17840, "ret": 0.0147645452288339, "totalAssetPct": 0.00507313178851876, "netWorthPct": 0.00787418236418578, "investmentPct": 0.0104172723599061, "highVol": "N", "leverage": "N", "concentration": "N", "memo": "신규 매수"}, {"name": "SOL AI반도체TOP2 플러스", "ticker": "SOL_AI_SEMI", "assetClass": "주식/ETF", "subClass": "액티브 ETF (AI 반도체)", "accountCount": 1, "value": 39960, "cost": 33681, "pnl": 6279, "ret": 0.186425581188207, "totalAssetPct": 0.000165333767978542, "netWorthPct": 0.000256620228744567, "investmentPct": 0.000339499733718702, "highVol": "N", "leverage": "N", "concentration": "N", "memo": "거의 전량 매도"}, {"name": "TSLL (TSLA 2X)", "ticker": "TSLL", "assetClass": "주식/ETF", "subClass": "레버리지 ETF (TSLA 2X)", "accountCount": 1, "value": 4607431, "cost": 4326302, "pnl": 281129, "ret": 0.064981362835974, "totalAssetPct": 0.0190631613596382, "netWorthPct": 0.0295885885171374, "investmentPct": 0.0391446846253077, "highVol": "Y", "leverage": "Y", "concentration": "N", "memo": "추가 매수"}, {"name": "샤크닌자", "ticker": "SN", "assetClass": "주식/ETF", "subClass": "개별주 — 가전/리테일", "accountCount": 1, "value": 4385186, "cost": 4505615, "pnl": -120429, "ret": -0.026728648586264, "totalAssetPct": 0.0181436267434122, "netWorthPct": 0.0281613472073943, "investmentPct": 0.0372564934761507, "highVol": "N", "leverage": "N", "concentration": "N", "memo": null}, {"name": "JEPQ", "ticker": "JEPQ", "assetClass": "주식/ETF", "subClass": "인컴/배당 ETF", "accountCount": 1, "value": 2836830, "cost": 2744652, "pnl": 92178, "ret": 0.0335845855868066, "totalAssetPct": 0.0117373321575217, "netWorthPct": 0.018217917004741, "investmentPct": 0.0241016774175482, "highVol": "N", "leverage": "N", "concentration": "N", "memo": "추가 매수"}, {"name": "SCHD", "ticker": "SCHD", "assetClass": "주식/ETF", "subClass": "배당주 ETF", "accountCount": 1, "value": 2430956, "cost": 2309108, "pnl": 121848, "ret": 0.0527684283281683, "totalAssetPct": 0.0100580359176688, "netWorthPct": 0.0156114235432427, "investmentPct": 0.0206533762432903, "highVol": "N", "leverage": "N", "concentration": "N", "memo": "추가 매수"}, {"name": "랄프 로렌", "ticker": "RL", "assetClass": "주식/ETF", "subClass": "개별주 — 패션/리테일", "accountCount": 1, "value": 568747, "cost": 534665, "pnl": 34082, "ret": 0.0637445877325054, "totalAssetPct": 0.00235318029370601, "netWorthPct": 0.00365245208302769, "investmentPct": 0.00483206844477755, "highVol": "N", "leverage": "N", "concentration": "N", "memo": "잔여 1주"}, {"name": "맥도날드", "ticker": "MCD", "assetClass": "주식/ETF", "subClass": "개별주 — 음식/리테일", "accountCount": 1, "value": 439906, "cost": 435099, "pnl": 4807, "ret": 0.0110480603265004, "totalAssetPct": 0.00182010301642564, "netWorthPct": 0.00282504450315585, "investmentPct": 0.0037374366832147, "highVol": "N", "leverage": "N", "concentration": "N", "memo": "대량 매도"}, {"name": "트랜스다임 그룹", "ticker": "TDG", "assetClass": "주식/ETF", "subClass": "개별주 — 항공/방산", "accountCount": 1, "value": 311356, "cost": 305263, "pnl": 6093, "ret": 0.019959837910261, "totalAssetPct": 0.00128822974631449, "netWorthPct": 0.00199950570422907, "investmentPct": 0.00264527725454755, "highVol": "N", "leverage": "N", "concentration": "N", "memo": "잔여"}, {"name": "ProShares Ultra QQQ (QLD)", "ticker": "QLD", "assetClass": "주식/ETF", "subClass": "레버리지 ETF (NASDAQ 2X)", "accountCount": 1, "value": 122371, "cost": 90658, "pnl": 31713, "ret": 0.349809172935648, "totalAssetPct": 0.000506307770803358, "netWorthPct": 0.000785857708000537, "investmentPct": 0.00103966271058287, "highVol": "Y", "leverage": "Y", "concentration": "N", "memo": "대량 매도"}, {"name": "ProShares UltraPro (TQQQ)", "ticker": "TQQQ", "assetClass": "주식/ETF", "subClass": "레버리지 ETF (NASDAQ 3X)", "accountCount": 1, "value": 108179, "cost": 63198, "pnl": 44981, "ret": 0.711747207190101, "totalAssetPct": 0.000447588630784553, "netWorthPct": 0.000694717710844809, "investmentPct": 0.000919087629978866, "highVol": "Y", "leverage": "Y", "concentration": "N", "memo": "대량 매도"}, {"name": "iShares Silver Trust (SLV)", "ticker": "SLV", "assetClass": "주식/ETF", "subClass": "원자재 ETF (은)", "accountCount": 1, "value": 102915, "cost": 100019, "pnl": 2896, "ret": 0.0289544986452574, "totalAssetPct": 0.000425808927215007, "netWorthPct": 0.000660912683714894, "investmentPct": 0.00087436474213364, "highVol": "N", "leverage": "N", "concentration": "N", "memo": null}, {"name": "NASA ETF", "ticker": "NASA", "assetClass": "주식/ETF", "subClass": "액티브 ETF", "accountCount": 1, "value": 80818, "cost": 67994, "pnl": 12824, "ret": 0.188604876900903, "totalAssetPct": 0.000334382994506752, "netWorthPct": 0.000519007348515477, "investmentPct": 0.00068662886585781, "highVol": "N", "leverage": "N", "concentration": "N", "memo": "추가 매수"}, {"name": "Invesco QQQ", "ticker": "QQQ", "assetClass": "주식/ETF", "subClass": "NASDAQ100 ETF (해외)", "accountCount": 1, "value": 55431, "cost": 45893, "pnl": 9538, "ret": 0.207831259669231, "totalAssetPct": 0.000229344747067532, "netWorthPct": 0.000355973871359863, "investmentPct": 0.000470941184678713, "highVol": "N", "leverage": "N", "concentration": "N", "memo": null}, {"name": "NFXL (Direxion NFLX 2X)", "ticker": "NFXL", "assetClass": "주식/ETF", "subClass": "레버리지 ETF (NFLX 2X)", "accountCount": 1, "value": 37095, "cost": 36308, "pnl": 787, "ret": 0.0216756637655613, "totalAssetPct": 0.000153479882962063, "netWorthPct": 0.000238221406038031, "investmentPct": 0.000315158724281663, "highVol": "Y", "leverage": "Y", "concentration": "N", "memo": "대량 매도"}, {"name": "SPDR Gold Shares (GLD)", "ticker": "GLD", "assetClass": "주식/ETF", "subClass": "원자재 ETF (금)", "accountCount": 1, "value": 27072, "cost": 29058, "pnl": -1986, "ret": -0.0683460664877142, "totalAssetPct": 0.000112009904071949, "netWorthPct": 0.000173854425239563, "investmentPct": 0.000230003423204022, "highVol": "N", "leverage": "N", "concentration": "N", "memo": null}, {"name": "Netflix", "ticker": "NFLX", "assetClass": "주식/ETF", "subClass": "개별주 — 미디어", "accountCount": 1, "value": 21683, "cost": 19560, "pnl": 2123, "ret": 0.108537832310838, "totalAssetPct": 8.97130152922606e-05, "netWorthPct": 0.000139246657153865, "investmentPct": 0.000184218536692258, "highVol": "N", "leverage": "N", "concentration": "N", "memo": "잔여"}, {"name": "비트코인 (전량 매도)", "ticker": "BTC", "assetClass": "암호자산", "subClass": "비트코인", "accountCount": 1, "value": 0, "cost": 0, "pnl": 0, "ret": 0, "totalAssetPct": 0, "netWorthPct": 0, "investmentPct": 0, "highVol": "N", "leverage": "N", "concentration": "N", "memo": "2026-05-09 매도, 보유 0"}], "top5Concentration": [{"name": "TIGER 반도체TOP10 레버리지", "ticker": "TIGER_SEMI_2X", "value": 63053550, "pct": 0.404925335939865, "status": "과도"}, {"name": "TIGER 미국S&P500", "ticker": "360750", "value": 30713300, "pct": 0.197238590377891, "status": "주의"}, {"name": "TIGER 미국나스닥100", "ticker": "133690", "value": 6533670, "pct": 0.0419587560045425, "status": "정상"}, {"name": "TSLL (TSLA 2X)", "ticker": "TSLL", "value": 4607431, "pct": 0.0295885885171374, "status": "정상"}, {"name": "샤크닌자", "ticker": "SN", "value": 4385186, "pct": 0.0281613472073943, "status": "정상"}], "riskMonitor": [{"category": "부채", "item": "마이너스통장 / 순자산", "current": 0.552134399899921, "threshold": 0.5, "status": "주의", "interpretation": "순자산 대비 60%대 — 자산성장률보다 부채 부담이 더 큰 구간", "action": "추가 차입 자제 / 일부 상환 (예금→마통)"}, {"category": "부채", "item": "마이너스통장 / 총자산", "current": 0.355725895860256, "threshold": 0.4, "status": "정상", "interpretation": "총자산 대비 약 38% — 안정 라인 인접", "action": "자산 매각 없이도 부채비율 관리 가능"}, {"category": "유동성", "item": "현금성 자산 / 월 생활비(추정 ₩3M)", "current": 0.203717, "threshold": 1, "status": "위험", "interpretation": "현금이 약 ₩43만원 — 1주일 생활비도 안 됨", "action": "비상자금 우선 ₩5M (1.5~2개월) 라인 마련"}, {"category": "유동성", "item": "현금성 자산 / 투자자산", "current": 0.00519233237642439, "threshold": 0.05, "status": "위험", "interpretation": "약 0.4% — 시장 급락 시 추가매수 여력 없음", "action": "분할매도 / 신규 입금으로 5% 라인 회복"}, {"category": "암호자산", "item": "비트코인 / 순자산", "current": 0, "threshold": 0.2, "status": "정상", "interpretation": "약 30% — 단일자산 1위, 사이클 변동성 큼", "action": "30% 초과분 분할 차익실현 룰 정의"}, {"category": "단일종목", "item": "CRDU / 순자산", "current": 0, "threshold": 0.15, "status": "정상", "interpretation": "약 17% — 주식 내 1위, 한 종목 이벤트로 순자산 5%+ 변동 가능", "action": "분할매도 임계 정의 (예: +15% 추가 시 1/3 매도)"}, {"category": "레버리지", "item": "레버리지 ETF / 순자산", "current": 0.0310691639359828, "threshold": 0.1, "status": "정상", "interpretation": "약 2% — 임계 미만, 안전권", "action": "추가 매수 시 10% 라인 넘기지 말 것"}, {"category": "위험자산", "item": "고위험자산 / 순자산", "current": 0.436232721281886, "threshold": 0.5, "status": "정상", "interpretation": "고위험 = BTC + CRDU + 레버리지 — 순자산 대비 50%대", "action": "분할매도로 순자산 30% 라인 목표"}, {"category": "위험자산", "item": "주식+비트코인 / 순자산", "current": 0.755877555289024, "threshold": 0.7, "status": "주의", "interpretation": "위험자산 비중 — 순자산 대비 75%대 (높음)", "action": "현금/예금 비중 회복으로 60% 이하 권장"}, {"category": "집중도", "item": "단일 종목 Top 1 / 순자산", "current": 0.404925335939865, "threshold": 0.15, "status": "위험", "interpretation": "Top 1 (BTC) 약 30% — 단일 종목 위험 최대", "action": "통합기준으로 Top 1 비중 모니터링"}, {"category": "환노출", "item": "USD 자산 / 총자산", "current": 0.0667623051073906, "threshold": 0.3, "status": "정상", "interpretation": "USD 자산 약 13% — 환율 -10% 시 순자산 약 -2~3%", "action": "원화 강세 위험 모니터링"}, {"category": "해외자산", "item": "해외 자산(USD+BTC) / 총자산", "current": 0.0667623051073906, "threshold": 0.3, "status": "정상", "interpretation": "해외 익스포저 약 32% — 글로벌 매크로 영향 큼", "action": "글로벌 매크로 헤지 도구(원화 자산) 검토"}], "pnl": [{"name": "TIGER 미국S&P500", "ticker": "360750", "assetClass": "주식/ETF", "subClass": "S&P500 ETF (국내상장)", "accountCount": 2, "value": 30713300, "cost": 24140460, "pnl": 6572840, "ret": 0.272274844804117, "totalAssetPct": 0.127075716117502, "netWorthPct": 0.197238590377891, "investmentPct": 0.260939869159725, "highVol": "N", "leverage": "N", "concentration": "Y", "memo": "토스 + 미래에셋 합산"}, {"name": "TIGER 반도체TOP10 레버리지", "ticker": "TIGER_SEMI_2X", "assetClass": "주식/ETF", "subClass": "레버리지 ETF (반도체 2X)", "accountCount": 1, "value": 63053550, "cost": 60654960, "pnl": 2398590, "ret": 0.0395448286504517, "totalAssetPct": 0.260882908056141, "netWorthPct": 0.404925335939865, "investmentPct": 0.535702288163636, "highVol": "Y", "leverage": "Y", "concentration": "Y", "memo": "777주 (대량 매수)"}, {"name": "TIGER 미국나스닥100", "ticker": "133690", "assetClass": "주식/ETF", "subClass": "NASDAQ100 ETF (국내상장)", "accountCount": 2, "value": 6533670, "cost": 5375530, "pnl": 1158140, "ret": 0.215446662933701, "totalAssetPct": 0.0270329399356447, "netWorthPct": 0.0419587560045425, "investmentPct": 0.0555099906207676, "highVol": "N", "leverage": "N", "concentration": "N", "memo": "토스 + 미래에셋 합산"}, {"name": "TSLL (TSLA 2X)", "ticker": "TSLL", "assetClass": "주식/ETF", "subClass": "레버리지 ETF (TSLA 2X)", "accountCount": 1, "value": 4607431, "cost": 4326302, "pnl": 281129, "ret": 0.064981362835974, "totalAssetPct": 0.0190631613596382, "netWorthPct": 0.0295885885171374, "investmentPct": 0.0391446846253077, "highVol": "Y", "leverage": "Y", "concentration": "N", "memo": "추가 매수"}, {"name": "SCHD", "ticker": "SCHD", "assetClass": "주식/ETF", "subClass": "배당주 ETF", "accountCount": 1, "value": 2430956, "cost": 2309108, "pnl": 121848, "ret": 0.0527684283281683, "totalAssetPct": 0.0100580359176688, "netWorthPct": 0.0156114235432427, "investmentPct": 0.0206533762432903, "highVol": "N", "leverage": "N", "concentration": "N", "memo": "추가 매수"}, {"name": "샤크닌자", "ticker": "SN", "assetClass": "주식/ETF", "subClass": "개별주 — 가전/리테일", "accountCount": 1, "value": 4385186, "cost": 4505615, "pnl": -120429, "ret": -0.026728648586264, "totalAssetPct": 0.0181436267434122, "netWorthPct": 0.0281613472073943, "investmentPct": 0.0372564934761507, "highVol": "N", "leverage": "N", "concentration": "N", "memo": null}, {"name": "SPDR Gold Shares (GLD)", "ticker": "GLD", "assetClass": "주식/ETF", "subClass": "원자재 ETF (금)", "accountCount": 1, "value": 27072, "cost": 29058, "pnl": -1986, "ret": -0.0683460664877142, "totalAssetPct": 0.000112009904071949, "netWorthPct": 0.000173854425239563, "investmentPct": 0.000230003423204022, "highVol": "N", "leverage": "N", "concentration": "N", "memo": null}, {"name": "비트코인 (전량 매도)", "ticker": "BTC", "assetClass": "암호자산", "subClass": "비트코인", "accountCount": 1, "value": 0, "cost": 0, "pnl": 0, "ret": 0, "totalAssetPct": 0, "netWorthPct": 0, "investmentPct": 0, "highVol": "N", "leverage": "N", "concentration": "N", "memo": "2026-05-09 매도, 보유 0"}, {"name": "NFXL (Direxion NFLX 2X)", "ticker": "NFXL", "assetClass": "주식/ETF", "subClass": "레버리지 ETF (NFLX 2X)", "accountCount": 1, "value": 37095, "cost": 36308, "pnl": 787, "ret": 0.0216756637655613, "totalAssetPct": 0.000153479882962063, "netWorthPct": 0.000238221406038031, "investmentPct": 0.000315158724281663, "highVol": "Y", "leverage": "Y", "concentration": "N", "memo": "대량 매도"}, {"name": "Netflix", "ticker": "NFLX", "assetClass": "주식/ETF", "subClass": "개별주 — 미디어", "accountCount": 1, "value": 21683, "cost": 19560, "pnl": 2123, "ret": 0.108537832310838, "totalAssetPct": 8.97130152922606e-05, "netWorthPct": 0.000139246657153865, "investmentPct": 0.000184218536692258, "highVol": "N", "leverage": "N", "concentration": "N", "memo": "잔여"}], "monthlySnap": [{"month": "2026-05", "totalAsset": 241692913, "netWorth": 155716485}], "realizedKpi": {"ytdNet": 25764260, "ytdGain": 25742779, "ytdInc": 25190, "mtd": 23228605, "estTax": 4033103.58}, "realizedMonthly": [{"month": "2026-01", "gain": 2428026, "income": 0, "cost": 0, "net": 2428026, "cumulative": 2428026}, {"month": "2026-02", "gain": -6691, "income": 493, "cost": 76, "net": -6274, "cumulative": 2421752}, {"month": "2026-03", "gain": 97650, "income": 7691, "cost": 1184, "net": 104157, "cumulative": 2525909}, {"month": "2026-04", "gain": 0, "income": 10226, "cost": 1574, "net": 8652, "cumulative": 2534561}, {"month": "2026-05", "gain": 23223794, "income": 5686, "cost": 875, "net": 23228605, "cumulative": 25763166}, {"month": "2026-06", "gain": 0, "income": 0, "cost": 0, "net": 0, "cumulative": 25763166}, {"month": "2026-07", "gain": 0, "income": 0, "cost": 0, "net": 0, "cumulative": 25763166}, {"month": "2026-08", "gain": 0, "income": 0, "cost": 0, "net": 0, "cumulative": 25763166}, {"month": "2026-09", "gain": 0, "income": 0, "cost": 0, "net": 0, "cumulative": 25763166}, {"month": "2026-10", "gain": 0, "income": 0, "cost": 0, "net": 0, "cumulative": 25763166}, {"month": "2026-11", "gain": 0, "income": 0, "cost": 0, "net": 0, "cumulative": 25763166}, {"month": "2026-12", "gain": 0, "income": 1094, "cost": 0, "net": 1094, "cumulative": 25764260}], "realizedRecent": [{"date": "2026-12-31 00:00:00", "type": "이자", "name": "토스증권 계좌이자", "ticker": "TOSS_INT", "qty": null, "krwPnL": 1094, "fee": 0, "tax": 0, "netPnL": 1094, "category": "원천징수 완료", "memo": "26년 연간 누적"}, {"date": "2026-05-22 00:00:00", "type": "매매차익", "name": "ProShares Ultra QQQ (QLD)", "ticker": "QLD", "qty": null, "krwPnL": 493881, "fee": 0, "tax": 0, "netPnL": 493881, "category": "해외주식 양도세", "memo": "5/22 매도 +41.6% (대량 매도)"}, {"date": "2026-05-22 00:00:00", "type": "매매차익", "name": "ProShares UltraPro (TQQQ)", "ticker": "TQQQ", "qty": null, "krwPnL": 48625, "fee": 0, "tax": 0, "netPnL": 48625, "category": "해외주식 양도세", "memo": "5/22 매도 +71.0% (대량 매도)"}, {"date": "2026-05-19 00:00:00", "type": "매매차익", "name": "NFXL (Direxion NFLX 2X)", "ticker": "NFXL", "qty": null, "krwPnL": 216426, "fee": 0, "tax": 0, "netPnL": 216426, "category": "해외주식 양도세", "memo": "5/19 매도 +4.4% (대량 매도)"}, {"date": "2026-05-19 00:00:00", "type": "매매차익", "name": "맥도날드", "ticker": "MCD", "qty": null, "krwPnL": 43371, "fee": 0, "tax": 0, "netPnL": 43371, "category": "해외주식 양도세", "memo": "5/19 매도 +1.0% (대량 매도)"}], "cashflowKpi": {"deltaNW": 0, "deltaPct": 0, "income": 0, "capGain": 0, "other": 0, "debtChg": 0, "asofMonth": "2026-06"}, "bridge": [{"name": "기초 순자산", "value": 155716485}, {"name": "월 소득", "value": 0}, {"name": "보너스/기타수입", "value": 0}, {"name": "투자 평가손익", "value": 0}, {"name": "배당/이자수익", "value": 0}, {"name": "부동산/보증금 변동", "value": 0}, {"name": "부채 증감 효과", "value": 0}, {"name": "기타 순유출입", "value": 0}, {"name": "기말 순자산", "value": 0}], "monthlyAll": [{"month": "2026-05", "totalAsset": 241692913, "totalDebt": 85976428, "netWorth": 155716485, "income": 0, "capGain": 0, "other": 0, "deltaNW": 0}]};
+
+// ───── 포맷터 ─────
+const fmt = {
+  krw: v => v == null ? '—' : (v < 0 ? '-' : '') + '₩' + Math.abs(Math.round(v)).toLocaleString('ko-KR'),
+  krwM: v => v == null ? '—' : (v / 1e6).toFixed(1) + 'M',
+  pct: v => v == null ? '—' : (v * 100).toFixed(2) + '%',
+  pct1: v => v == null ? '—' : (v * 100).toFixed(1) + '%',
+  signed: v => v == null ? '—' : (v >= 0 ? '+' : '') + '₩' + (v < 0 ? '-' + Math.abs(Math.round(v)).toLocaleString('ko-KR') : Math.round(v).toLocaleString('ko-KR')),
+};
+
+// ───── Wealth Evolution ─────
+const FINAL_GOAL_WON = 20 * 100_000_000;  // 20억
+const EVO_CHARS = [
+  { stage: 1, name: '치코몬',                file: '치코몬.png',
+    min: 0,  max: 1,  meaning: '자본 형성 시작 단계' },
+  { stage: 2, name: '꼬마몬',                file: '꼬마몬.png',
+    min: 1,  max: 2,  meaning: '1억 돌파 후 기초 체력 확보 단계' },
+  { stage: 3, name: '브이몬',                file: '브이몬.png',
+    min: 2,  max: 3,  meaning: '본격적인 포트폴리오 성장 구간' },
+  { stage: 4, name: '엑스브이몬',            file: '엑스브이몬.png',
+    min: 3,  max: 5,  meaning: '자산 증가 속도 체감 구간' },
+  { stage: 5, name: '파일드라몬',            file: '파일드라몬.png',
+    min: 5,  max: 8,  meaning: '1차 자산 목표 달성 후 복리 가속 구간' },
+  { stage: 6, name: '황제드라몬 드래곤모드', file: '황제드라몬 드래곤모드.png',
+    min: 8,  max: 12, meaning: '금융자산 10억 가시권 진입 구간' },
+  { stage: 7, name: '황제드라몬 파이터모드', file: '황제드라몬 파이터모드.png',
+    min: 12, max: 20, meaning: '서울 자가 선택권 확대 및 최종 목표 직전 구간' },
+  { stage: 8, name: '황제드라몬 팔라딘모드', file: '황제드라몬 팔라딘모드.png',
+    min: 20, max: 20, meaning: '서울 자가 + 금융자산 10억원 최종 목표 달성' },
+];
+
+function fmtEok(won) {
+  return (won / 100_000_000).toFixed(1) + '억';
+}
+function fmtRange(c) {
+  if (c.stage === 8) return `${c.min}억원 이상`;
+  return `${c.min}억원 이상 ~ ${c.max}억원 미만`;
+}
+function fmtCondition(c) {
+  if (c.stage === 1) return '시작 단계';
+  return `순자산 ${c.min}억원 달성`;
+}
+
+function imagePath(filename) {
+  return 'digimon%20image/' + encodeURIComponent(filename.normalize('NFD'));
+}
+
+function renderEvolution(D) {
+  const nw = D.kpi['순자산'] || 0;
+  const nwEok = nw / 100_000_000;
+
+  let curIdx = EVO_CHARS.findIndex(c => nwEok >= c.min && nwEok < c.max);
+  if (curIdx === -1) curIdx = nwEok >= EVO_CHARS[EVO_CHARS.length - 1].min
+    ? EVO_CHARS.length - 1 : 0;
+  const cur = EVO_CHARS[curIdx];
+  const next = EVO_CHARS[curIdx + 1] || null;
+
+  const stageStart = cur.min * 100_000_000;
+  const stageEnd   = cur.max * 100_000_000;
+  const stagePct = cur.stage === 8
+    ? 1
+    : Math.min(1, Math.max(0, (nw - stageStart) / (stageEnd - stageStart)));
+  const overallPct = Math.min(1, nw / FINAL_GOAL_WON);
+  const nextNeed = next ? Math.max(0, next.min * 100_000_000 - nw) : 0;
+  const finalRemaining = Math.max(0, FINAL_GOAL_WON - nw);
+
+  const imgEl = document.getElementById('evo-img');
+  imgEl.src = imagePath(cur.file);
+  imgEl.alt = cur.name;
+  imgEl.style.display = '';
+  document.getElementById('evo-img-ph-name').textContent = cur.name;
+  document.querySelector('#pf-view .evo-img-ph').style.display = 'none';
+  document.getElementById('evo-char-name').textContent = cur.name;
+  document.getElementById('evo-stage-pill').textContent = `Stage ${cur.stage} / 8`;
+  document.getElementById('evo-range').textContent = fmtRange(cur);
+  document.getElementById('evo-meaning').textContent = cur.meaning;
+
+  document.getElementById('evo-stage-pct').textContent = (stagePct * 100).toFixed(1) + '%';
+  document.getElementById('evo-stage-bar').style.width = (stagePct * 100).toFixed(1) + '%';
+  document.getElementById('evo-stage-from').textContent = cur.stage === 8
+    ? `최종 단계 달성 (현재 ${fmtEok(nw)})`
+    : `${cur.min}억원 (현재 ${fmtEok(nw)})`;
+  document.getElementById('evo-stage-to').textContent = cur.stage === 8
+    ? `최종 목표 도달 ✓`
+    : `${cur.max}억원 = 다음 진화`;
+
+  document.getElementById('evo-overall-pct').textContent = (overallPct * 100).toFixed(1) + '%';
+  document.getElementById('evo-overall-bar').style.width = (overallPct * 100).toFixed(1) + '%';
+  document.getElementById('evo-overall-meta').textContent = `현재 ${fmtEok(nw)}`;
+
+  document.getElementById('evo-next-name').textContent = next ? next.name : '최종 진화 완료';
+  document.getElementById('evo-next-meta').textContent = next
+    ? `남은 금액 약 ${fmtEok(nextNeed)} (순자산 ${next.min}억원 도달 시)`
+    : '✓ 모든 단계 달성';
+
+  document.getElementById('evo-final-meta').textContent = finalRemaining > 0
+    ? `남은 금액 약 ${fmtEok(finalRemaining)}`
+    : '✓ 목표 달성';
+
+  const tbody = EVO_CHARS.map((c, idx) => {
+    const isCur = idx === curIdx;
+    const trClass = isCur ? 'style="background:rgba(59,130,246,0.08);"' : '';
+    return `<tr ${trClass}>
+      <td class="center"><strong>Stage ${c.stage} / 8</strong></td>
+      <td class="center"><strong>${c.name}</strong></td>
+      <td class="center">${fmtRange(c)}</td>
+      <td class="center muted">${fmtCondition(c)}</td>
+      <td class="wrap muted">${c.meaning}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('evo-table-body').innerHTML = tbody;
+}
+
+function pillClass(status) {
+  if (!status) return 'muted';
+  const s = String(status);
+  if (s === '위험' || s === '과도' || s === '고집중' || s === '고위험') return 'danger';
+  if (s === '주의') return 'warn';
+  if (s === '정상') return 'good';
+  return 'muted';
+}
+
+function renderKPIs(D) {
+  document.getElementById('kpi-total').textContent = fmt.krw(D.kpi['총자산']);
+  document.getElementById('kpi-net').textContent   = fmt.krw(D.kpi['순자산']);
+  document.getElementById('kpi-debt').textContent  = fmt.krw(D.kpi['총부채']);
+  document.getElementById('kpi-inv').textContent   = fmt.krw(D.kpi['투자자산']);
+  document.getElementById('kpi-ratio').textContent = fmt.pct(D.kpi['부채비율']);
+
+  document.getElementById('sub-cash').textContent  = fmt.krw(D.subKpi['현금성 자산']);
+  document.getElementById('sub-re').textContent    = fmt.krw(D.subKpi['부동산+보증금']);
+  document.getElementById('sub-btc').textContent   = fmt.krw(D.subKpi['비트코인']);
+  document.getElementById('sub-stock').textContent = fmt.krw(D.subKpi['주식/ETF (통합)']);
+  document.getElementById('sub-ret').textContent   = fmt.krw(D.subKpi['퇴직연금/예금']);
+
+  document.getElementById('meta-asof').textContent = D.asof;
+  document.getElementById('footer-asof').textContent = D.asof + ' (xlsx 빌드 시점)';
+}
+
+function renderRiskStrip(D) {
+  const items = [
+    {label: '부채 / 순자산',   val: D.riskRatios['부채/순자산'],     thr: 0.50, gauge: '50%↑ 주의 / 70%↑ 위험'},
+    {label: '위험자산 / 순자산', val: D.riskRatios['위험자산/순자산'], thr: 0.70, gauge: '70%↑ 주의 (주식+BTC)'},
+    {label: '레버리지 / 순자산', val: D.riskRatios['레버리지/순자산'], thr: 0.10, gauge: '10%↑ 주의 / 20%↑ 위험'},
+    {label: 'CRDU / 순자산',    val: D.riskRatios['CRDU/순자산'],     thr: 0.15, gauge: '15%↑ 주의 / 25%↑ 고집중'},
+    {label: '비트코인 / 순자산', val: D.riskRatios['비트코인/순자산'], thr: 0.20, gauge: '20%↑ 주의 / 30%↑ 고집중'},
+  ];
+  const html = items.map(i => {
+    const status = i.val >= i.thr * 1.5 ? '위험' : i.val >= i.thr ? '주의' : '정상';
+    const pcls = pillClass(status);
+    return `<div class="risk-tile">
+      <div class="risk-tile-label">${i.label}</div>
+      <div class="risk-tile-value">${fmt.pct1(i.val)}</div>
+      <div class="risk-tile-status"><span class="pill ${pcls}">${status}</span> <span>${i.gauge}</span></div>
+    </div>`;
+  }).join('');
+  document.getElementById('risk-strip').innerHTML = html;
+}
+
+function renderTopRisksAndActions(D) {
+  const ranked = [...D.riskMonitor].sort((a, b) => {
+    const w = s => s === '위험' ? 0 : s === '주의' ? 1 : 2;
+    return w(a.status) - w(b.status);
+  });
+  const top3 = ranked.slice(0, 3);
+  const html = top3.map((r, i) => {
+    const cls = r.status === '위험' ? 'danger' : r.status === '주의' ? 'warn' : '';
+    return `<div class="list-item">
+      <div class="list-num ${cls}">${i + 1}</div>
+      <div class="list-text"><strong>${r.item}</strong> — 현재 ${fmt.pct1(r.current)} / 임계 ${fmt.pct1(r.threshold)}<br>
+      <span style="color:var(--text-2);font-size:0.86rem">${r.interpretation}</span></div>
+    </div>`;
+  }).join('');
+  document.getElementById('top-risks').innerHTML = html;
+
+  const actions = top3.map((r, i) => {
+    const cls = r.status === '위험' ? 'danger' : r.status === '주의' ? 'warn' : '';
+    return `<div class="list-item">
+      <div class="list-num ${cls}">${i + 1}</div>
+      <div class="list-text"><strong>${r.action}</strong><br>
+      <span style="color:var(--text-2);font-size:0.86rem">관련: ${r.item}</span></div>
+    </div>`;
+  }).join('');
+  document.getElementById('next-actions').innerHTML = actions;
+}
+
+// ───── Chart.js 글로벌 설정 ─────
+Chart.defaults.color = '#9CA3AF';
+Chart.defaults.font.family = "'Inter', -apple-system, sans-serif";
+Chart.defaults.borderColor = '#1F2937';
+
+const chartColors = [
+  '#3B82F6', '#06B6D4', '#8B5CF6', '#EC4899', '#F59E0B',
+  '#22C55E', '#94A3B8', '#64748B', '#475569', '#334155'
+];
+
+let chartInstances = {};
+
+function destroyChart(id) {
+  if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; }
+}
+
+function renderDonutAssetGroup(D) {
+  destroyChart('asset');
+  const ctx = document.getElementById('chart-asset-group').getContext('2d');
+  chartInstances['asset'] = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: D.assetGroup.map(a => a.name),
+      datasets: [{
+        data: D.assetGroup.map(a => a.value),
+        backgroundColor: chartColors.slice(0, D.assetGroup.length),
+        borderColor: '#111827', borderWidth: 2,
+      }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '62%',
+      plugins: {
+        legend: { position: 'right', labels: { boxWidth: 10, padding: 12, font: { size: 12 } } },
+        tooltip: {
+          backgroundColor: '#1F2937', borderColor: '#2D3748', borderWidth: 1, padding: 12,
+          callbacks: {
+            label: ctx => `${ctx.label}: ${fmt.krwM(ctx.raw)} (${fmt.pct1(ctx.raw / ctx.dataset.data.reduce((a,b)=>a+b,0))})`
+          }
+        }
+      }
+    }
+  });
+}
+
+function renderDonutInvGroup(D) {
+  destroyChart('inv');
+  const ctx = document.getElementById('chart-inv-group').getContext('2d');
+  chartInstances['inv'] = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: D.invGroup.map(a => a.name),
+      datasets: [{
+        data: D.invGroup.map(a => a.value),
+        backgroundColor: chartColors.slice(0, D.invGroup.length),
+        borderColor: '#111827', borderWidth: 2,
+      }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '62%',
+      plugins: {
+        legend: { position: 'right', labels: { boxWidth: 10, padding: 12, font: { size: 12 } } },
+        tooltip: {
+          backgroundColor: '#1F2937', borderColor: '#2D3748', borderWidth: 1, padding: 12,
+          callbacks: {
+            label: ctx => `${ctx.label}: ${fmt.krwM(ctx.raw)} (${fmt.pct1(ctx.raw / ctx.dataset.data.reduce((a,b)=>a+b,0))})`
+          }
+        }
+      }
+    }
+  });
+}
+
+function renderBarTop10(D) {
+  destroyChart('top10');
+  const top = [...D.consolidated].sort((a, b) => (b.value || 0) - (a.value || 0)).slice(0, 10);
+  const ctx = document.getElementById('chart-top10').getContext('2d');
+  chartInstances['top10'] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: top.map(t => t.name),
+      datasets: [{
+        label: '순자산 비중',
+        data: top.map(t => (t.netWorthPct || 0) * 100),
+        backgroundColor: top.map((t, i) => i < 3 ? '#3B82F6' : i < 6 ? '#2C5282' : '#5A7A9F'),
+        borderRadius: 4,
+      }],
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1F2937', borderColor: '#2D3748', borderWidth: 1, padding: 12,
+          callbacks: {
+            label: ctx => {
+              const item = top[ctx.dataIndex];
+              return `${fmt.krw(item.value)} / 순자산 ${ctx.raw.toFixed(2)}%`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { grid: { color: '#1F2937' }, ticks: { callback: v => v + '%' } },
+        y: { grid: { display: false } }
+      }
+    }
+  });
+}
+
+function renderBarPnL(D) {
+  destroyChart('pnl');
+  const sorted = [...D.consolidated]
+    .filter(h => h.pnl != null)
+    .sort((a, b) => b.pnl - a.pnl);
+  const wins = sorted.slice(0, 5);
+  const losses = sorted.slice(-5).reverse();
+  const items = [...wins, ...losses];
+  const ctx = document.getElementById('chart-pnl').getContext('2d');
+  chartInstances['pnl'] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: items.map(i => i.name),
+      datasets: [{
+        label: '평가손익 (KRW)',
+        data: items.map(i => i.pnl),
+        backgroundColor: items.map(i => i.pnl >= 0 ? '#22C55E' : '#EF4444'),
+        borderRadius: 4,
+      }],
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1F2937', borderColor: '#2D3748', borderWidth: 1, padding: 12,
+          callbacks: { label: ctx => fmt.signed(ctx.raw) }
+        }
+      },
+      scales: {
+        x: {
+          min: -50_000_000, max: 50_000_000,
+          grid: { color: ctx => ctx.tick.value === 0 ? '#475569' : '#1F2937' },
+          ticks: { callback: v => '₩' + (v / 1e6).toFixed(0) + 'M' }
+        },
+        y: { grid: { display: false } }
+      }
+    }
+  });
+}
+
+function renderTableConcentration(D) {
+  const rows = D.top5Concentration.map((c, i) => `
+    <tr>
+      <td class="muted">${i + 1}</td>
+      <td><strong>${c.name}</strong></td>
+      <td class="muted">${c.ticker || '-'}</td>
+      <td class="num">${fmt.krw(c.value)}</td>
+      <td class="num"><strong>${fmt.pct1(c.pct)}</strong></td>
+      <td><span class="pill ${pillClass(c.status)}">${c.status}</span></td>
+    </tr>`).join('');
+  document.getElementById('tbl-conc').innerHTML =
+    `<thead><tr><th>#</th><th>종목</th><th>티커</th><th class="num">평가금액</th><th class="num">순자산 비중</th><th>상태</th></tr></thead>
+     <tbody>${rows}</tbody>`;
+}
+
+function renderTableRisk(D) {
+  const rows = D.riskMonitor.map(r => `
+    <tr>
+      <td><span class="pill muted">${r.category}</span></td>
+      <td><strong>${r.item}</strong></td>
+      <td class="num">${fmt.pct1(r.current)}</td>
+      <td class="num muted">${fmt.pct1(r.threshold)}</td>
+      <td><span class="pill ${pillClass(r.status)}">${r.status}</span></td>
+      <td class="muted">${r.interpretation || ''}</td>
+    </tr>`).join('');
+  document.getElementById('tbl-risk').innerHTML =
+    `<thead><tr><th>분류</th><th>항목</th><th class="num">현재</th><th class="num">임계</th><th>상태</th><th>해석</th></tr></thead>
+     <tbody>${rows}</tbody>`;
+}
+
+function renderTableConsolidated(D) {
+  const rows = D.consolidated.map(c => {
+    const pnlClass = c.pnl > 0 ? 'positive' : c.pnl < 0 ? 'negative' : '';
+    const flags = [];
+    if (c.highVol === 'Y') flags.push('<span class="pill warn">고변동</span>');
+    if (c.leverage === 'Y') flags.push('<span class="pill danger">레버리지</span>');
+    if (c.concentration === 'Y') flags.push('<span class="pill danger">고집중</span>');
+    const flagsHtml = flags.length
+      ? `<span class="flags-cell">${flags.join('')}</span>`
+      : '<span class="muted">—</span>';
+    return `<tr>
+      <td><strong>${c.name}</strong></td>
+      <td class="muted">${c.ticker}</td>
+      <td class="muted">${c.subClass || ''}</td>
+      <td class="num">${c.accountCount}</td>
+      <td class="num">${fmt.krw(c.value)}</td>
+      <td class="num">${fmt.krw(c.cost)}</td>
+      <td class="num ${pnlClass}">${fmt.signed(c.pnl)}</td>
+      <td class="num ${pnlClass}">${fmt.pct1(c.ret)}</td>
+      <td class="num">${fmt.pct1(c.netWorthPct)}</td>
+      <td>${flagsHtml}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('tbl-cons').innerHTML =
+    `<thead><tr>
+       <th>종목</th><th>티커</th><th>세부 분류</th><th class="num">계좌수</th>
+       <th class="num">평가금액</th><th class="num">매입원가</th>
+       <th class="num">손익</th><th class="num">수익률</th>
+       <th class="num">순자산 비중</th><th>플래그</th>
+     </tr></thead><tbody>${rows}</tbody>`;
+}
+
+function renderRealizedPnL(D) {
+  const rp = D.realizedKpi || {};
+  const setColor = (id, v) => {
+    const el = document.getElementById(id);
+    el.textContent = fmt.signed(v);
+    el.className = 'kpi-value kpi-value-sm ' + (v > 0 ? 'positive' : v < 0 ? 'negative' : '');
+  };
+  setColor('rp-net',  rp.ytdNet);
+  setColor('rp-gain', rp.ytdGain);
+  setColor('rp-inc',  rp.ytdInc);
+  setColor('rp-mtd',  rp.mtd);
+  document.getElementById('rp-tax').textContent = fmt.krw(rp.estTax);
+
+  destroyChart('realized-monthly');
+  const months = (D.realizedMonthly || []).map(m => m.month.slice(5));
+  const nets = (D.realizedMonthly || []).map(m => m.net);
+  const ctx = document.getElementById('chart-realized-monthly').getContext('2d');
+  chartInstances['realized-monthly'] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: months,
+      datasets: [{
+        label: '순 실현손익',
+        data: nets,
+        backgroundColor: nets.map(v => v >= 0 ? '#22C55E' : '#EF4444'),
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1F2937', borderColor: '#2D3748', borderWidth: 1,
+          callbacks: { label: ctx => fmt.signed(ctx.raw) }
+        }
+      },
+      scales: {
+        x: { grid: { display: false } },
+        y: {
+          grid: { color: ctx => ctx.tick.value === 0 ? '#475569' : '#1F2937' },
+          ticks: { callback: v => v === 0 ? '0' : (v / 1e6).toFixed(0) + 'M' }
+        }
+      }
+    }
+  });
+
+  const recent = D.realizedRecent || [];
+  if (recent.length === 0) {
+    document.getElementById('rp-recent').innerHTML =
+      '<div style="color:var(--text-3);padding:32px 0;text-align:center;font-size:0.88rem;">'
+      + '아직 입력된 거래가 없습니다.<br>Realized_PnL 시트의 행 31부터 추가하세요.</div>';
+    return;
+  }
+  const rows = recent.map(t => {
+    const cls = (t.netPnL || 0) > 0 ? 'positive' : (t.netPnL || 0) < 0 ? 'negative' : '';
+    const typePill = t.type === '매매차익' ? 'pill' : t.type === '배당' ? 'pill good' : 'pill muted';
+    return `<div class="list-item" style="padding:10px 0;">
+      <div style="flex:1;">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:3px;">
+          <span class="${typePill}">${t.type}</span>
+          <strong>${t.name}</strong>
+          <span style="color:var(--text-3);font-size:0.78rem;">${t.date.slice(0,10)}</span>
+        </div>
+        <div style="color:var(--text-2);font-size:0.82rem;">${t.category || ''} ${t.memo ? '· ' + t.memo : ''}</div>
+      </div>
+      <div class="${cls}" style="font-weight:600;font-variant-numeric:tabular-nums;">${fmt.signed(t.netPnL)}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('rp-recent').innerHTML = rows;
+}
+
+function renderCashFlow(D) {
+  const cf = D.cashflowKpi || {};
+  const setColor = (id, v, fmtFn) => {
+    const el = document.getElementById(id);
+    el.textContent = (fmtFn || fmt.signed)(v);
+    el.className = 'kpi-value kpi-value-sm ' + (v > 0 ? 'positive' : v < 0 ? 'negative' : '');
+  };
+  setColor('cf-delta',   cf.deltaNW);
+  setColor('cf-income',  cf.income);
+  setColor('cf-capgain', cf.capGain);
+  setColor('cf-other',   cf.other);
+  setColor('cf-debt',    cf.debtChg);
+
+  document.getElementById('cf-delta-pct').textContent = 'ΔNW · ' + fmt.pct1(cf.deltaPct);
+  document.getElementById('cf-asof').textContent = '기준월: ' + (cf.asofMonth || '—');
+
+  let summary = '데이터 부족';
+  if (cf.income != null && cf.capGain != null) {
+    if (cf.capGain > cf.income && cf.income > 0) {
+      summary = '자본 > 노동';
+    } else if (cf.income > 0 && cf.capGain >= 0) {
+      summary = '소득 우위';
+    } else if (cf.capGain < 0) {
+      summary = '평가손실 진입';
+    } else if (cf.income === 0 && cf.capGain === 0) {
+      summary = '데이터 입력 대기';
+    }
+  }
+  const summEl = document.getElementById('cf-summary');
+  summEl.textContent = summary;
+  summEl.className = 'kpi-value kpi-value-sm';
+
+  destroyChart('bridge');
+  const bridgeItems = (D.bridge || []).slice(1, 8);
+  const bridgeLabels = bridgeItems.map(b => b.name);
+  const bridgeVals = bridgeItems.map(b => b.value);
+  const ctxB = document.getElementById('chart-bridge').getContext('2d');
+  chartInstances['bridge'] = new Chart(ctxB, {
+    type: 'bar',
+    data: {
+      labels: bridgeLabels,
+      datasets: [{
+        label: '변동 (KRW)',
+        data: bridgeVals,
+        backgroundColor: bridgeVals.map(v => v >= 0 ? '#22C55E' : '#EF4444'),
+        borderRadius: 4,
+      }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1F2937', borderColor: '#2D3748', borderWidth: 1,
+          callbacks: { label: ctx => fmt.signed(ctx.raw) }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+        y: {
+          grid: { color: ctx => ctx.tick.value === 0 ? '#475569' : '#1F2937' },
+          ticks: { callback: v => v === 0 ? '0' : (v / 1e6).toFixed(0) + 'M' }
+        }
+      }
+    }
+  });
+
+  destroyChart('nw-trend');
+  const months = (D.monthlyAll || []).map(m => m.month);
+  const ta = (D.monthlyAll || []).map(m => m.totalAsset);
+  const td = (D.monthlyAll || []).map(m => m.totalDebt);
+  const nw = (D.monthlyAll || []).map(m => m.netWorth);
+  const ctxT = document.getElementById('chart-nw-trend').getContext('2d');
+  chartInstances['nw-trend'] = new Chart(ctxT, {
+    type: 'line',
+    data: {
+      labels: months,
+      datasets: [
+        { label: '총자산', data: ta, borderColor: '#3B82F6', backgroundColor: 'rgba(59,130,246,0.1)', tension: 0.35, fill: false },
+        { label: '총부채', data: td, borderColor: '#EF4444', backgroundColor: 'rgba(239,68,68,0.1)', tension: 0.35, fill: false },
+        { label: '순자산', data: nw, borderColor: '#22C55E', backgroundColor: 'rgba(34,197,94,0.1)', tension: 0.35, fill: false },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top', labels: { boxWidth: 12, padding: 12, font: { size: 12 } } },
+        tooltip: {
+          backgroundColor: '#1F2937', borderColor: '#2D3748', borderWidth: 1,
+          callbacks: { label: ctx => `${ctx.dataset.label}: ${fmt.krw(ctx.raw)}` }
+        }
+      },
+      scales: {
+        x: { grid: { display: false } },
+        y: {
+          grid: { color: '#1F2937' },
+          ticks: { callback: v => '₩' + (v / 1e6).toFixed(0) + 'M' }
+        }
+      }
+    }
+  });
+}
+
+function renderAll(D) {
+  renderEvolution(D);
+  renderKPIs(D);
+  renderRiskStrip(D);
+  renderTopRisksAndActions(D);
+  renderDonutAssetGroup(D);
+  renderDonutInvGroup(D);
+  renderBarTop10(D);
+  renderBarPnL(D);
+  renderRealizedPnL(D);
+  renderCashFlow(D);
+  renderTableConcentration(D);
+  renderTableRisk(D);
+  renderTableConsolidated(D);
+}
+
+// ───── XLSX 재업로드 ─────
+async function handleFile(file) {
+  const buf = await file.arrayBuffer();
+  const wb = XLSX.read(buf, { type: 'array' });
+  const D = parseWorkbook(wb);
+  renderAll(D);
+  document.getElementById('meta-asof').textContent = D.asof + ' (방금 갱신됨)';
+  document.getElementById('footer-asof').textContent = new Date().toLocaleString('ko-KR') + ' · 사용자 업로드';
+}
+
+function getCell(ws, addr) {
+  const c = ws[addr];
+  return c ? c.v : null;
+}
+
+function parseWorkbook(wb) {
+  const D = {
+    asof: '갱신', kpi: {}, subKpi: {}, riskRatios: {},
+    assetGroup: [], invGroup: [], consolidated: [], top5Concentration: [],
+    riskMonitor: [], pnl: [], monthlySnap: []
+  };
+  const dash = wb.Sheets['Dashboard'];
+  if (dash) {
+    D.kpi = {
+      '총자산': getCell(dash, 'A6'), '순자산': getCell(dash, 'C6'),
+      '총부채': getCell(dash, 'E6'), '투자자산': getCell(dash, 'G6'),
+      '부채비율': getCell(dash, 'I6')
+    };
+    D.subKpi = {
+      '현금성 자산': getCell(dash, 'A10'), '부동산+보증금': getCell(dash, 'C10'),
+      '비트코인': getCell(dash, 'E10'), '주식/ETF (통합)': getCell(dash, 'G10'),
+      '퇴직연금/예금': getCell(dash, 'I10')
+    };
+    D.riskRatios = {
+      '부채/순자산': getCell(dash, 'A14'), '위험자산/순자산': getCell(dash, 'C14'),
+      '레버리지/순자산': getCell(dash, 'E14'), 'CRDU/순자산': getCell(dash, 'G14'),
+      '비트코인/순자산': getCell(dash, 'I14')
+    };
+    for (let r = 27; r <= 32; r++) {
+      const n = getCell(dash, `A${r}`);
+      if (n) D.assetGroup.push({ name: n, value: getCell(dash, `B${r}`), pct: getCell(dash, `C${r}`) });
+    }
+    for (let r = 27; r <= 31; r++) {
+      const n = getCell(dash, `H${r}`);
+      if (n) D.top5Concentration.push({
+        name: n, ticker: getCell(dash, `I${r}`), value: getCell(dash, `J${r}`),
+        pct: getCell(dash, `K${r}`), status: getCell(dash, `L${r}`)
+      });
+    }
+  }
+  const ch = wb.Sheets['Consolidated_Holdings'];
+  if (ch) for (let r = 5; r <= 30; r++) {
+    const n = getCell(ch, `A${r}`);
+    const tk = getCell(ch, `B${r}`);
+    if (!n || !tk || n === '합계') continue;
+    D.consolidated.push({
+      name: n, ticker: getCell(ch, `B${r}`),
+      assetClass: getCell(ch, `C${r}`), subClass: getCell(ch, `D${r}`),
+      accountCount: getCell(ch, `E${r}`), value: getCell(ch, `F${r}`),
+      cost: getCell(ch, `G${r}`), pnl: getCell(ch, `H${r}`),
+      ret: getCell(ch, `I${r}`),
+      totalAssetPct: getCell(ch, `J${r}`), netWorthPct: getCell(ch, `K${r}`),
+      investmentPct: getCell(ch, `L${r}`),
+      highVol: getCell(ch, `M${r}`), leverage: getCell(ch, `N${r}`),
+      concentration: getCell(ch, `O${r}`), memo: getCell(ch, `P${r}`)
+    });
+  }
+  const rm = wb.Sheets['Risk_Monitor'];
+  if (rm) for (let r = 5; r <= 20; r++) {
+    const n = getCell(rm, `B${r}`);
+    if (!n) break;
+    D.riskMonitor.push({
+      category: getCell(rm, `A${r}`), item: n,
+      current: getCell(rm, `C${r}`), threshold: getCell(rm, `D${r}`),
+      status: getCell(rm, `E${r}`),
+      interpretation: getCell(rm, `F${r}`), action: getCell(rm, `G${r}`)
+    });
+  }
+  const pc = wb.Sheets['Portfolio_Charts'];
+  if (pc) for (let r = 42; r <= 48; r++) {
+    const n = getCell(pc, `A${r}`);
+    if (n) D.invGroup.push({ name: n, value: getCell(pc, `B${r}`), pct: getCell(pc, `C${r}`) });
+  }
+  const rp = wb.Sheets['Realized_PnL'];
+  D.realizedKpi = {}; D.realizedMonthly = []; D.realizedRecent = [];
+  if (rp) {
+    D.realizedKpi = {
+      ytdNet: getCell(rp, 'A6'), ytdGain: getCell(rp, 'C6'),
+      ytdInc: getCell(rp, 'E6'), mtd: getCell(rp, 'G6'), estTax: getCell(rp, 'I6')
+    };
+    for (let r = 11; r <= 22; r++) {
+      const m = getCell(rp, `A${r}`);
+      if (!m) continue;
+      D.realizedMonthly.push({
+        month: String(m), gain: getCell(rp, `B${r}`) || 0,
+        income: getCell(rp, `C${r}`) || 0, cost: getCell(rp, `D${r}`) || 0,
+        net: getCell(rp, `E${r}`) || 0, cumulative: getCell(rp, `F${r}`) || 0,
+      });
+    }
+    const ledger = [];
+    for (let r = 31; r <= 80; r++) {
+      const d = getCell(rp, `A${r}`); const t = getCell(rp, `B${r}`);
+      if (!d || !t) continue;
+      let dateStr;
+      if (typeof d === 'number') {
+        const ms = (d - 25569) * 86400 * 1000;
+        dateStr = new Date(ms).toISOString().slice(0, 10);
+      } else dateStr = String(d);
+      ledger.push({
+        date: dateStr, type: t, name: getCell(rp, `C${r}`),
+        ticker: getCell(rp, `D${r}`), qty: getCell(rp, `G${r}`),
+        krwPnL: getCell(rp, `N${r}`), fee: getCell(rp, `O${r}`) || 0,
+        tax: getCell(rp, `P${r}`) || 0, netPnL: getCell(rp, `Q${r}`),
+        category: getCell(rp, `S${r}`), memo: getCell(rp, `T${r}`),
+      });
+    }
+    ledger.sort((a, b) => a.date < b.date ? 1 : -1);
+    D.realizedRecent = ledger.slice(0, 5);
+  }
+  if (dash) {
+    D.cashflowKpi = {
+      deltaNW:   getCell(dash, 'A43'),
+      deltaPct:  getCell(dash, 'C43'),
+      income:    getCell(dash, 'E43'),
+      capGain:   getCell(dash, 'G43'),
+      other:     getCell(dash, 'I43'),
+      debtChg:   getCell(dash, 'K43'),
+    };
+  }
+  const nb = wb.Sheets['Net_Worth_Bridge'];
+  D.bridge = []; D.monthlyAll = [];
+  if (nb) {
+    D.cashflowKpi.asofMonth = getCell(nb, 'B4');
+    for (let r = 8; r <= 16; r++) {
+      const name = getCell(nb, `B${r}`); const val = getCell(nb, `C${r}`);
+      if (name) D.bridge.push({ name: name, value: val || 0 });
+    }
+  }
+  const ms2 = wb.Sheets['Monthly_Snapshot'];
+  if (ms2) for (let r = 5; r <= 41; r++) {
+    const m = getCell(ms2, `A${r}`);
+    if (!m) continue;
+    D.monthlyAll.push({
+      month: String(m),
+      totalAsset: getCell(ms2, `B${r}`) || 0,
+      totalDebt:  getCell(ms2, `C${r}`) || 0,
+      netWorth:   getCell(ms2, `D${r}`) || 0,
+      income:     getCell(ms2, `L${r}`) || 0,
+      capGain:    getCell(ms2, `N${r}`) || 0,
+      other:      getCell(ms2, `R${r}`) || 0,
+      deltaNW:    getCell(ms2, `S${r}`) || 0,
+    });
+  }
+  D.asof = new Date().toISOString().slice(0,10);
+  return D;
+}
+
+// ───── 이벤트 (상단 '데이터 갱신' 버튼) — pf-view DOM 파싱 후 바인딩 ─────
+function bindPortfolioEvents(){
+  const fileInput = document.getElementById('file-input');
+  const btnReload = document.getElementById('btn-reload');
+  if (!fileInput || !btnReload || btnReload._bound) return;
+  btnReload._bound = true;
+  btnReload.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', e => {
+    if (e.target.files[0]) handleFile(e.target.files[0]);
+  });
+}
+
+let _pfRendered = false;
+function renderPortfolioView(){
+  bindPortfolioEvents();
+  if(_pfRendered) return;
+  renderAll(SNAPSHOT);
+  _pfRendered = true;
+}
+return { renderPortfolioView };
+})();
 </script>
+
+<div id="ae-view" style="display:none; flex:1; min-width:0;">
+  <iframe id="ae-frame" title="Alpha 검색 엔진"
+    data-src="https://xneavyytr3uh5wmahbquph.streamlit.app/?embed=true"
+    style="width:100%; height:100vh; border:0; display:block;"
+    allow="clipboard-read; clipboard-write"></iframe>
+</div>
+
+<div id="pf-view" style="display:none; flex:1; min-width:0;">
+  <div class="app">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div>
+      <div class="brand-eyebrow">PERSONAL WEALTH · ALPHA</div>
+      <div class="brand-title">Asset Dashboard</div>
+    </div>
+    <div class="controls">
+      <span class="meta">기준일 <strong id="meta-asof">2026-05-25</strong></span>
+      <input type="file" id="file-input" accept=".xlsx" style="display:none" />
+      <button class="btn btn-primary" id="btn-reload">데이터 갱신</button>
+    </div>
+  </header>
+
+  <!-- ★ WEALTH EVOLUTION (TOP) ★ -->
+  <section class="evo-section">
+    <div class="evo-page-title">Wealth Evolution</div>
+    <div class="evo-page-sub">순자산 성장에 따라 캐릭터가 진화합니다 · 최종 목표 순자산 20억원</div>
+
+    <div class="evo-hero">
+      <!-- 캐릭터 이미지 + 이름 -->
+      <div class="evo-character-block">
+        <div class="evo-img-wrap">
+          <img id="evo-img" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="evo-img-ph">
+            <span class="ph-name" id="evo-img-ph-name">—</span>
+            <span class="ph-note">이미지 미등록</span>
+          </div>
+        </div>
+        <div class="evo-character-name" id="evo-char-name">—</div>
+      </div>
+
+      <!-- 우측 정보 + EXP 바 -->
+      <div class="evo-info-block">
+        <div>
+          <span class="evo-stage-pill" id="evo-stage-pill">Stage —</span>
+          <div style="font-size:0.84rem;color:var(--text-2);margin-top:8px;" id="evo-range">—</div>
+          <div style="font-size:0.86rem;color:var(--text-2);margin-top:4px;font-style:italic;" id="evo-meaning">—</div>
+        </div>
+
+        <!-- 현재 구간 EXP 바 -->
+        <div class="evo-prog-row">
+          <div class="evo-prog-head">
+            <span class="label">현재 구간 EXP</span>
+            <span class="pct" id="evo-stage-pct">—</span>
+          </div>
+          <div class="evo-bar-track">
+            <div class="evo-bar-fill" id="evo-stage-bar" style="width:0%"></div>
+          </div>
+          <div class="evo-prog-meta">
+            <span id="evo-stage-from">—</span>
+            <span id="evo-stage-to">—</span>
+          </div>
+        </div>
+
+        <!-- 전체 목표 진행률 -->
+        <div class="evo-prog-row">
+          <div class="evo-prog-head">
+            <span class="label">최종 목표 진행률 (20억원)</span>
+            <span class="pct" id="evo-overall-pct">—</span>
+          </div>
+          <div class="evo-bar-track">
+            <div class="evo-bar-fill alt" id="evo-overall-bar" style="width:0%"></div>
+          </div>
+          <div class="evo-prog-meta">
+            <span id="evo-overall-meta">—</span>
+            <span>최종 목표 ₩20.0억</span>
+          </div>
+        </div>
+
+        <!-- 다음 진화 / 최종 목표 카드 -->
+        <div class="evo-targets">
+          <div class="evo-target-card">
+            <div class="label">다음 진화</div>
+            <div class="name" id="evo-next-name">—</div>
+            <div class="meta" id="evo-next-meta">—</div>
+          </div>
+          <div class="evo-target-card">
+            <div class="label">최종 목표</div>
+            <div class="name">황제드라몬 팔라딘 모드</div>
+            <div class="meta" id="evo-final-meta">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 진화 단계 테이블 -->
+    <div class="card tbl-card" style="padding:0;">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Stage</th>
+            <th>캐릭터명</th>
+            <th>순자산 구간</th>
+            <th>진화 조건</th>
+            <th class="wrap">의미</th>
+          </tr>
+        </thead>
+        <tbody id="evo-table-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="eyebrow">오늘의 한 줄 요약</div>
+    <div class="hero-title" id="hero-title">
+      현재 포트폴리오는 부동산 계약금(약 42%)과 비트코인(약 19%), CRDU 비중이 높고 현금성 자산이 매우 낮은 구조입니다.
+      마이너스통장이 순자산 대비 60%대로 신규 매수보다 <span style="color:var(--accent);">유동성 확보와 고집중 자산 관리</span>가 우선순위입니다.
+    </div>
+  </section>
+
+  <!-- KPI GRID (TOP 5) -->
+  <div class="grid-5">
+    <div class="kpi kpi-primary">
+      <div class="kpi-label">총자산 (KRW)</div>
+      <div class="kpi-value" id="kpi-total">—</div>
+      <div class="kpi-sub">총자산 기준</div>
+    </div>
+    <div class="kpi kpi-primary">
+      <div class="kpi-label">순자산 (KRW)</div>
+      <div class="kpi-value" id="kpi-net">—</div>
+      <div class="kpi-sub">총자산 − 총부채</div>
+    </div>
+    <div class="kpi kpi-primary">
+      <div class="kpi-label">총부채 (KRW)</div>
+      <div class="kpi-value" id="kpi-debt">—</div>
+      <div class="kpi-sub">마이너스통장</div>
+    </div>
+    <div class="kpi kpi-primary">
+      <div class="kpi-label">투자자산 (KRW)</div>
+      <div class="kpi-value" id="kpi-inv">—</div>
+      <div class="kpi-sub">주식/ETF + 비트코인</div>
+    </div>
+    <div class="kpi kpi-primary">
+      <div class="kpi-label">부채비율</div>
+      <div class="kpi-value" id="kpi-ratio">—</div>
+      <div class="kpi-sub">총자산 기준</div>
+    </div>
+  </div>
+
+  <!-- KPI GRID (SUB 5) -->
+  <div class="grid-5">
+    <div class="kpi"><div class="kpi-label">현금성 자산</div><div class="kpi-value kpi-value-sm" id="sub-cash">—</div></div>
+    <div class="kpi"><div class="kpi-label">부동산 + 보증금</div><div class="kpi-value kpi-value-sm" id="sub-re">—</div></div>
+    <div class="kpi"><div class="kpi-label">비트코인</div><div class="kpi-value kpi-value-sm" id="sub-btc">—</div></div>
+    <div class="kpi"><div class="kpi-label">주식/ETF (통합)</div><div class="kpi-value kpi-value-sm" id="sub-stock">—</div></div>
+    <div class="kpi"><div class="kpi-label">퇴직연금/예금</div><div class="kpi-value kpi-value-sm" id="sub-ret">—</div></div>
+  </div>
+
+  <!-- RISK STRIP -->
+  <div class="section-h"><h2>핵심 리스크 비율 <span class="meta">(순자산 기준)</span></h2></div>
+  <div class="risk-strip" id="risk-strip"></div>
+
+  <!-- TOP 3 RISKS / NEXT 3 ACTIONS -->
+  <div class="section-h"><h2>Risk Focus &amp; Next Actions</h2></div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title-row">
+        <h3>Top 3 Risks</h3>
+        <span class="card-sub">우선순위 — Risk_Monitor 기반</span>
+      </div>
+      <div id="top-risks"></div>
+    </div>
+    <div class="card">
+      <div class="card-title-row">
+        <h3>Next 3 Actions</h3>
+        <span class="card-sub">실무 액션 아이템</span>
+      </div>
+      <div id="next-actions"></div>
+    </div>
+  </div>
+
+  <!-- ASSET ALLOCATION -->
+  <div class="section-h"><h2>자산 배분 <span class="meta">(총자산 기준)</span></h2></div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title-row">
+        <h3>자산군별 비중</h3>
+        <span class="card-sub">5% 미만은 '기타'로 통합</span>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-asset-group"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title-row">
+        <h3>투자자산 비중</h3>
+        <span class="card-sub">투자자산 합계 기준</span>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-inv-group"></canvas></div>
+    </div>
+  </div>
+
+  <!-- TOP 10 BAR -->
+  <div class="section-h"><h2>투자자산 Top 10 <span class="meta">(통합 노출 · 순자산 비중)</span></h2></div>
+  <div class="card">
+    <div class="chart-wrap tall"><canvas id="chart-top10"></canvas></div>
+  </div>
+
+  <!-- LOSS / GAIN -->
+  <div class="section-h"><h2>손익 기여도 (평가) <span class="meta">(통합 기준 · 수익 Top 5 · 손실 Top 5)</span></h2></div>
+  <div class="card">
+    <div class="chart-wrap tall"><canvas id="chart-pnl"></canvas></div>
+  </div>
+
+  <!-- REALIZED P&L -->
+  <div class="section-h"><h2>실현 손익 (Realized P&amp;L) <span class="meta">YTD 누적 · 매매차익 + 배당 + 이자</span></h2></div>
+  <div class="grid-5">
+    <div class="kpi kpi-primary">
+      <div class="kpi-label">YTD 순 실현손익</div>
+      <div class="kpi-value kpi-value-sm" id="rp-net">—</div>
+      <div class="kpi-sub">매매차익+배당−비용</div>
+    </div>
+    <div class="kpi kpi-primary">
+      <div class="kpi-label">YTD 매매차익</div>
+      <div class="kpi-value kpi-value-sm" id="rp-gain">—</div>
+      <div class="kpi-sub">Capital Gains</div>
+    </div>
+    <div class="kpi kpi-primary">
+      <div class="kpi-label">YTD 배당/이자</div>
+      <div class="kpi-value kpi-value-sm" id="rp-inc">—</div>
+      <div class="kpi-sub">Income</div>
+    </div>
+    <div class="kpi kpi-primary">
+      <div class="kpi-label">이번 달 실현손익</div>
+      <div class="kpi-value kpi-value-sm" id="rp-mtd">—</div>
+      <div class="kpi-sub">MTD</div>
+    </div>
+    <div class="kpi kpi-primary">
+      <div class="kpi-label">해외주식 양도세 추정</div>
+      <div class="kpi-value kpi-value-sm" id="rp-tax">—</div>
+      <div class="kpi-sub">(공제 후 22%)</div>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-top:14px;">
+    <div class="card">
+      <div class="card-title-row">
+        <h3>월별 실현손익</h3>
+        <span class="card-sub">매매차익 + 배당이자 − 비용 (KRW)</span>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-realized-monthly"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title-row">
+        <h3>최근 실현 거래</h3>
+        <span class="card-sub">최근 5건 — Realized_PnL 시트 기반</span>
+      </div>
+      <div id="rp-recent"></div>
+    </div>
+  </div>
+
+  <!-- CASH FLOW & NET WORTH BRIDGE -->
+  <div class="section-h"><h2>Cash Flow &amp; Net Worth Bridge <span class="meta" id="cf-asof">기준월: —</span></h2></div>
+  <div class="grid-3">
+    <div class="kpi kpi-primary">
+      <div class="kpi-label">이번 달 순자산 증감</div>
+      <div class="kpi-value kpi-value-sm" id="cf-delta">—</div>
+      <div class="kpi-sub" id="cf-delta-pct">ΔNW</div>
+    </div>
+    <div class="kpi kpi-primary">
+      <div class="kpi-label">월 소득</div>
+      <div class="kpi-value kpi-value-sm" id="cf-income">—</div>
+      <div class="kpi-sub">노동소득</div>
+    </div>
+    <div class="kpi kpi-primary">
+      <div class="kpi-label">투자 평가손익</div>
+      <div class="kpi-value kpi-value-sm" id="cf-capgain">—</div>
+      <div class="kpi-sub">자본소득 (주식+BTC)</div>
+    </div>
+    <div class="kpi kpi-primary">
+      <div class="kpi-label">기타 순유출입</div>
+      <div class="kpi-value kpi-value-sm" id="cf-other">—</div>
+      <div class="kpi-sub">생활비+신규투자 등 자동 역산</div>
+    </div>
+    <div class="kpi kpi-primary">
+      <div class="kpi-label">부채 증감 효과</div>
+      <div class="kpi-value kpi-value-sm" id="cf-debt">—</div>
+      <div class="kpi-sub">(+) 감소 / (-) 증가</div>
+    </div>
+    <div class="kpi kpi-primary">
+      <div class="kpi-label">한 줄 평가</div>
+      <div class="kpi-value kpi-value-sm" id="cf-summary" style="font-size:0.95rem;line-height:1.4;">—</div>
+      <div class="kpi-sub">자본 vs 노동 비교</div>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-top:14px;">
+    <div class="card">
+      <div class="card-title-row">
+        <h3>Net Worth Bridge — 변동 항목별</h3>
+        <span class="card-sub">전월 NW → 이번 달 NW</span>
+      </div>
+      <div class="chart-wrap tall"><canvas id="chart-bridge"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title-row">
+        <h3>월별 총자산 / 부채 / 순자산</h3>
+        <span class="card-sub">Monthly_Snapshot 기반</span>
+      </div>
+      <div class="chart-wrap tall"><canvas id="chart-nw-trend"></canvas></div>
+    </div>
+  </div>
+
+  <!-- SINGLE STOCK CONCENTRATION -->
+  <div class="section-h"><h2>단일 종목 집중도 Top 5 <span class="meta">(순자산 기준)</span></h2></div>
+  <div class="card tbl-card" style="padding:0;">
+    <table class="tbl" id="tbl-conc"></table>
+  </div>
+
+  <!-- RISK MONITOR FULL -->
+  <div class="section-h"><h2>Risk Monitor — 전체</h2></div>
+  <div class="card tbl-card" style="padding:0;">
+    <table class="tbl" id="tbl-risk"></table>
+  </div>
+
+  <!-- CONSOLIDATED HOLDINGS FULL -->
+  <div class="section-h"><h2>Consolidated Holdings — 통합 보유 전체</h2></div>
+  <div class="card tbl-card" style="padding:0;">
+    <table class="tbl" id="tbl-cons"></table>
+  </div>
+  <div style="margin-top:10px;font-size:0.8rem;color:var(--text-3);line-height:1.6;">
+    <div>• 동일 티커는 계좌(Asset_Master 의 B열)가 달라도 합산됩니다. 예: TIGER 미국S&amp;P500 → 주식계좌(20.1M) + 기타투자(8.7M) = 28.8M</div>
+    <div>• Dashboard 의 '단일 종목 집중도 Top 5' 도 본 시트(통합 기준)와 일치합니다.</div>
+  </div>
+
+  <footer class="footer">
+    <span>Personal Wealth Dashboard · Alpha Design System v1.0</span>
+    <span>마지막 갱신: <span id="footer-asof">2026-05-25</span></span>
+  </footer>
+
+  </div>
+</div>
 
 </body>
 </html>
