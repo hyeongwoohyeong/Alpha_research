@@ -4105,7 +4105,30 @@ function renderCashFlow(D) {
   });
 }
 
+function renderHeroSummary(D) {
+  const el = document.getElementById('hero-title');
+  if (!el) return;
+  const nw = D.kpi['순자산'] || 0;
+  const debtRatio = (D.riskRatios && D.riskRatios['부채/순자산']) || 0;
+  const riskRatio = (D.riskRatios && D.riskRatios['위험자산/순자산']) || 0;
+  const inv = D.kpi['투자자산'] || 0;
+  const cash = (D.subKpi && D.subKpi['현금성 자산']) || 0;
+  const cashToInv = inv ? cash / inv : 0;
+  const top = (D.top5Concentration && D.top5Concentration[0]) || null;
+  const flags = [];
+  if (debtRatio >= 0.5) flags.push(`마이너스통장이 순자산의 ${Math.round(debtRatio*100)}%로 부채 부담이 큰 구간`);
+  if (top && top.pct >= 0.25) flags.push(`단일 종목(${top.name}) 비중이 순자산의 ${Math.round(top.pct*100)}%로 과도`);
+  if (cashToInv < 0.02) flags.push(`현금성 자산이 투자자산의 ${(cashToInv*100).toFixed(1)}%로 매수 여력이 거의 없음`);
+  if (!flags.length && riskRatio >= 0.7) flags.push(`위험자산 비중이 순자산의 ${Math.round(riskRatio*100)}%로 높음`);
+  const head = `현재 순자산은 ${(nw/1e8).toFixed(2)}억원입니다. `;
+  const body = flags.length
+    ? flags.slice(0, 2).join(', ') + ' — <span style="color:var(--accent);">신규 매수보다 유동성 확보와 집중도 관리</span>가 우선순위입니다.'
+    : '핵심 리스크 비율이 모두 정상 범위입니다.';
+  el.innerHTML = head + body;
+}
+
 function renderAll(D) {
+  renderHeroSummary(D);
   renderEvolution(D);
   renderKPIs(D);
   renderRiskStrip(D);
@@ -4416,10 +4439,7 @@ return { renderPortfolioView };
   <!-- HERO -->
   <section class="hero">
     <div class="eyebrow">오늘의 한 줄 요약</div>
-    <div class="hero-title" id="hero-title">
-      현재 포트폴리오는 부동산 계약금(약 42%)과 비트코인(약 19%), CRDU 비중이 높고 현금성 자산이 매우 낮은 구조입니다.
-      마이너스통장이 순자산 대비 60%대로 신규 매수보다 <span style="color:var(--accent);">유동성 확보와 고집중 자산 관리</span>가 우선순위입니다.
-    </div>
+    <div class="hero-title" id="hero-title">—</div>
   </section>
 
   <!-- KPI GRID (TOP 5) -->
