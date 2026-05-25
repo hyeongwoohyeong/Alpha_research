@@ -3517,10 +3517,11 @@ function renderMain() {
 }
 
 // init — 기본 뷰: 내 포트폴리오
+// renderMain()은 PF 모듈 정의 + pf-view DOM 파싱이 끝난 뒤 실행해야 한다
+// (포트폴리오 분기가 PF를 참조 → const PF 선언 전 호출 시 TDZ 에러).
 activeType = 'portfolio';
 activeId = null;
-renderTopnav();
-renderMain();
+window.addEventListener('DOMContentLoaded', () => { renderTopnav(); renderMain(); });
 
 // 인쇄 단축키 Cmd/Ctrl + P 가 동작하도록 (기본 동작) — 별도 처리 X. 버튼은 화면 우상단.
 
