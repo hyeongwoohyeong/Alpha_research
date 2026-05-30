@@ -597,8 +597,14 @@
 }
 @media (max-width: 980px) {
 #pf-view .evo-hero { grid-template-columns: 1fr; gap: 20px; padding: 22px; }
-#pf-view .evo-img-wrap { width: 180px; height: 180px; }
+#pf-view .evo-img-wrap { width: 280px; height: 280px; }
 #pf-view .evo-targets { grid-template-columns: 1fr; }
+#pf-view .evo-character-name { font-size: 1.85rem; }
+}
+@media (max-width: 600px) {
+#pf-view .evo-img-wrap { width: 340px; height: 340px; max-width: 80vw; max-height: 80vw; }
+#pf-view .evo-character-name { font-size: 2rem; }
+#pf-view .evo-stage-pill { font-size: 0.82rem; padding: 5px 16px; }
 }
 #pf-view .list-item {
   padding: 12px 0; border-bottom: 1px dashed var(--border);
