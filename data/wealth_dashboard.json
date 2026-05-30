@@ -1412,6 +1412,41 @@
       "memo": "5/22 매도 +41.6%"
     }
   ],
+  "coinRealizedPnl": {
+    "_doc": "코인 거래 누적 실현손익 (KRW). 연도×코인 매트릭스. 거래소 기록 기준 — 새 거래 발생 시 by_year[YYYY][COIN] 수정 + 합계 재계산. 주식 realized_pnl 와 분리.",
+    "by_year": {
+      "2024": {
+        "BTC": -179764,
+        "_total": -179764
+      },
+      "2025": {
+        "BTC": 22873149,
+        "ETH": 3285941,
+        "SOL": 2036373,
+        "ADA": -12168,
+        "LINK": 1687,
+        "XRP": 87407,
+        "DOGE": -16356,
+        "_total": 28256033
+      },
+      "2026": {
+        "BTC": 3657314,
+        "SOL": -22224478,
+        "_total": -18567164,
+        "_note": "2026 SOL 대량 손실 — 단일 종목 베팅 실패. 향후 같은 패턴 경계"
+      }
+    },
+    "by_coin_lifetime": {
+      "BTC": 26350699,
+      "ETH": 3285941,
+      "SOL": -20188105,
+      "ADA": -12168,
+      "LINK": 1687,
+      "XRP": 87407,
+      "DOGE": -16356
+    },
+    "lifetime_total_krw": 9509105
+  },
   "cashflowKpi": {
     "deltaNW": 53521412,
     "deltaPct": 0.426,
@@ -1542,7 +1577,7 @@
     }
   ],
   "_meta": {
-    "generated_at": "2026-05-30T06:52:16",
+    "generated_at": "2026-05-30T07:35:42",
     "builder": "scripts/build_wealth_dashboard.py",
     "warning": "이 파일은 빌더로만 생성됩니다 — 직접 편집 금지"
   }
