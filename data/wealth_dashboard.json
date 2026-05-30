@@ -1229,10 +1229,14 @@
       "totalAsset": 267571844,
       "totalDebt": 88291878,
       "netWorth": 179279966,
-      "income": 13037410,
+      "income": 17877860,
       "capGain": 31766630,
       "other": 0,
-      "deltaNW": 23563481
+      "deltaNW": 23563481,
+      "_income_breakdown": {
+        "salary": 4840450,
+        "bonus": 13037410
+      }
     }
   ],
   "realizedKpi": {
@@ -1281,7 +1285,8 @@
       "income": 5686,
       "cost": 875,
       "net": 31772316,
-      "cumulative": 34306877
+      "cumulative": 34306877,
+      "_note": "realized_pnl.monthly.income은 배당/이자만 — 급여/상여는 별도(monthly_snapshots/cashflow)"
     },
     {
       "month": "2026-06",
@@ -1410,11 +1415,15 @@
   "cashflowKpi": {
     "deltaNW": 23563481,
     "deltaPct": 0.151,
-    "income": 13037410,
+    "income": 17877860,
     "capGain": 31766630,
     "other": 0,
     "debtChg": 2315450,
-    "asofMonth": "2026-05"
+    "asofMonth": "2026-05",
+    "_income_breakdown": {
+      "salary": 4840450,
+      "bonus_samjeong": 13037410
+    }
   },
   "bridge": [
     {
@@ -1422,12 +1431,12 @@
       "value": 155716485
     },
     {
-      "name": "월 소득 (삼정상여)",
-      "value": 13037410
+      "name": "월 급여",
+      "value": 4840450
     },
     {
-      "name": "보너스/기타수입",
-      "value": 0
+      "name": "상여 (삼정회계)",
+      "value": 13037410
     },
     {
       "name": "투자 평가손익",
@@ -1446,8 +1455,8 @@
       "value": -2315450
     },
     {
-      "name": "기타 순유출입",
-      "value": 1798955
+      "name": "기타 순유출입(소비 등)",
+      "value": -3041495
     },
     {
       "name": "기말 순자산",
@@ -1460,14 +1469,18 @@
       "totalAsset": 267571844,
       "totalDebt": 88291878,
       "netWorth": 179279966,
-      "income": 13037410,
+      "income": 17877860,
       "capGain": 31766630,
       "other": 0,
-      "deltaNW": 23563481
+      "deltaNW": 23563481,
+      "_income_breakdown": {
+        "salary": 4840450,
+        "bonus": 13037410
+      }
     }
   ],
   "_meta": {
-    "generated_at": "2026-05-30T06:22:42",
+    "generated_at": "2026-05-30T06:30:38",
     "builder": "scripts/build_wealth_dashboard.py",
     "warning": "이 파일은 빌더로만 생성됩니다 — 직접 편집 금지"
   }
