@@ -4038,9 +4038,59 @@ function renderCashFlow(D) {
   summEl.className = 'kpi-value kpi-value-sm';
 
   destroyChart('bridge');
-  const bridgeItems = (D.bridge || []).slice(1, 8);
-  const bridgeLabels = bridgeItems.map(b => b.name);
-  const bridgeVals = bridgeItems.map(b => b.value);
+  // ───── Waterfall (워터폴) — 기초/기말은 절대값 막대, 중간은 누적 부유 막대 ─────
+  const allBridge = D.bridge || [];
+  // 기초/기말 + 0 이 아닌 delta 만 (라벨 너무 빽빽해지지 않게)
+  const filtered = allBridge.filter((b, i) => i === 0 || i === allBridge.length - 1 || b.value !== 0);
+  const bridgeLabels = filtered.map(b => b.name);
+  const bridgeData = [];     // floating bar pairs [low, high]
+  const bridgeColors = [];   // per-bar color
+  const bridgeDelta = [];    // delta(for label/tooltip)
+  let cum = 0;
+  for (let i = 0; i < filtered.length; i++) {
+    const b = filtered[i];
+    if (i === 0) {
+      // 기초: 0 → opening
+      bridgeData.push([0, b.value]);
+      bridgeColors.push('#1E3A8A');  // dark blue — total
+      bridgeDelta.push(b.value);
+      cum = b.value;
+    } else if (i === filtered.length - 1) {
+      // 기말: 0 → ending
+      bridgeData.push([0, b.value]);
+      bridgeColors.push('#15803D');  // dark green — final total
+      bridgeDelta.push(b.value);
+    } else {
+      // delta: cum → cum + delta
+      const next = cum + b.value;
+      bridgeData.push([cum, next]);
+      bridgeColors.push(b.value >= 0 ? '#3B82F6' : '#EF4444');
+      bridgeDelta.push(b.value);
+      cum = next;
+    }
+  }
+  // 막대 위 라벨 그리기 plugin
+  const labelPlugin = {
+    id: 'bridgeLabels',
+    afterDatasetsDraw(chart) {
+      const { ctx, scales: { y } } = chart;
+      const meta = chart.getDatasetMeta(0);
+      ctx.save();
+      ctx.font = '600 11px Inter, system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      meta.data.forEach((bar, i) => {
+        const v = bridgeDelta[i];
+        const label = (i === 0 || i === filtered.length - 1)
+          ? '₩' + (v / 1e6).toFixed(0) + 'M'
+          : (v >= 0 ? '+' : '') + (v / 1e6).toFixed(1) + 'M';
+        const { x, y: barTop, base } = bar.getProps(['x', 'y', 'base'], false);
+        const top = Math.min(barTop, base);
+        ctx.fillStyle = '#E5E7EB';
+        ctx.fillText(label, x, top - 6);
+      });
+      ctx.restore();
+    }
+  };
   const ctxB = document.getElementById('chart-bridge').getContext('2d');
   chartInstances['bridge'] = new Chart(ctxB, {
     type: 'bar',
@@ -4048,28 +4098,38 @@ function renderCashFlow(D) {
       labels: bridgeLabels,
       datasets: [{
         label: '변동 (KRW)',
-        data: bridgeVals,
-        backgroundColor: bridgeVals.map(v => v >= 0 ? '#22C55E' : '#EF4444'),
-        borderRadius: 4,
+        data: bridgeData,
+        backgroundColor: bridgeColors,
+        borderRadius: 3,
+        borderSkipped: false,
       }],
     },
     options: {
       responsive: true, maintainAspectRatio: false,
+      layout: { padding: { top: 24 } },
       plugins: {
         legend: { display: false },
         tooltip: {
           backgroundColor: '#1F2937', borderColor: '#2D3748', borderWidth: 1,
-          callbacks: { label: ctx => fmt.signed(ctx.raw) }
+          callbacks: {
+            title: ctx => ctx[0].label,
+            label: ctx => {
+              const d = bridgeDelta[ctx.dataIndex];
+              const isTotal = ctx.dataIndex === 0 || ctx.dataIndex === filtered.length - 1;
+              return isTotal ? fmt.krw(d) : fmt.signed(d);
+            }
+          }
         }
       },
       scales: {
-        x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+        x: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#94A3B8', maxRotation: 30, minRotation: 30 } },
         y: {
           grid: { color: ctx => ctx.tick.value === 0 ? '#475569' : '#1F2937' },
-          ticks: { callback: v => v === 0 ? '0' : (v / 1e6).toFixed(0) + 'M' }
+          ticks: { callback: v => v === 0 ? '0' : '₩' + (v / 1e6).toFixed(0) + 'M', color: '#94A3B8' }
         }
       }
-    }
+    },
+    plugins: [labelPlugin],
   });
 
   destroyChart('nw-trend');
