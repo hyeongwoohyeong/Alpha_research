@@ -4037,100 +4037,146 @@ function renderCashFlow(D) {
   summEl.textContent = summary;
   summEl.className = 'kpi-value kpi-value-sm';
 
-  destroyChart('bridge');
-  // ───── Waterfall (워터폴) — 기초/기말은 절대값 막대, 중간은 누적 부유 막대 ─────
-  const allBridge = D.bridge || [];
-  // 기초/기말 + 0 이 아닌 delta 만 (라벨 너무 빽빽해지지 않게)
-  const filtered = allBridge.filter((b, i) => i === 0 || i === allBridge.length - 1 || b.value !== 0);
-  const bridgeLabels = filtered.map(b => b.name);
-  const bridgeData = [];     // floating bar pairs [low, high]
-  const bridgeColors = [];   // per-bar color
-  const bridgeDelta = [];    // delta(for label/tooltip)
-  let cum = 0;
-  for (let i = 0; i < filtered.length; i++) {
-    const b = filtered[i];
-    if (i === 0) {
-      // 기초: 0 → opening
-      bridgeData.push([0, b.value]);
-      bridgeColors.push('#1E3A8A');  // dark blue — total
-      bridgeDelta.push(b.value);
-      cum = b.value;
-    } else if (i === filtered.length - 1) {
-      // 기말: 0 → ending
-      bridgeData.push([0, b.value]);
-      bridgeColors.push('#15803D');  // dark green — final total
-      bridgeDelta.push(b.value);
-    } else {
-      // delta: cum → cum + delta
-      const next = cum + b.value;
-      bridgeData.push([cum, next]);
-      bridgeColors.push(b.value >= 0 ? '#3B82F6' : '#EF4444');
-      bridgeDelta.push(b.value);
-      cum = next;
+  // ───── Bridge: 월별 데이터 + 네비게이션 + 워터폴 렌더 ─────
+  // bridges 가 있으면 키 정렬해서 가장 최신을 기본 선택, 없으면 legacy bridge 사용
+  const bridgesMap = D.bridges || {};
+  const bridgeMonths = Object.keys(bridgesMap).sort();  // YYYY-MM 오름차순
+  let bridgeIdx = bridgeMonths.length > 0 ? bridgeMonths.length - 1 : -1;
+
+  function renderBridgeFor(monthKey){
+    destroyChart('bridge');
+    const allBridge = (bridgesMap[monthKey] && bridgesMap[monthKey].length > 0)
+      ? bridgesMap[monthKey] : (D.bridge || []);
+    // 기초/기말 + 0 이 아닌 delta 만
+    const filtered = allBridge.filter((b, i) => i === 0 || i === allBridge.length - 1 || b.value !== 0);
+    if (filtered.length < 2) return;
+    const opening = filtered[0].value;
+    const ending = filtered[filtered.length - 1].value;
+    // y축 min: 기초 NW 절반 (음수 delta 가 그 아래로 떨어지면 자동 확장)
+    const baseMin = opening * 0.5;
+    const bridgeLabels = filtered.map(b => b.name);
+    const bridgeData = [];     // floating bar pairs [low, high]
+    const bridgeColors = [];
+    const bridgeDelta = [];
+    let cum = 0, runningMin = baseMin;
+    for (let i = 0; i < filtered.length; i++) {
+      const b = filtered[i];
+      if (i === 0) {
+        bridgeData.push([baseMin, b.value]);  // 기초: y축 시작부터 opening 까지
+        bridgeColors.push('#1E3A8A');
+        bridgeDelta.push(b.value);
+        cum = b.value;
+      } else if (i === filtered.length - 1) {
+        bridgeData.push([baseMin, b.value]);  // 기말: y축 시작부터 ending 까지
+        bridgeColors.push('#15803D');
+        bridgeDelta.push(b.value);
+      } else {
+        const next = cum + b.value;
+        bridgeData.push([cum, next]);
+        bridgeColors.push(b.value >= 0 ? '#3B82F6' : '#EF4444');
+        bridgeDelta.push(b.value);
+        runningMin = Math.min(runningMin, next, cum);
+        cum = next;
+      }
     }
-  }
-  // 막대 위 라벨 그리기 plugin
-  const labelPlugin = {
-    id: 'bridgeLabels',
-    afterDatasetsDraw(chart) {
-      const { ctx, scales: { y } } = chart;
-      const meta = chart.getDatasetMeta(0);
-      ctx.save();
-      ctx.font = '600 11px Inter, system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      meta.data.forEach((bar, i) => {
-        const v = bridgeDelta[i];
-        const label = (i === 0 || i === filtered.length - 1)
-          ? '₩' + (v / 1e6).toFixed(0) + 'M'
-          : (v >= 0 ? '+' : '') + (v / 1e6).toFixed(1) + 'M';
-        const { x, y: barTop, base } = bar.getProps(['x', 'y', 'base'], false);
-        const top = Math.min(barTop, base);
-        ctx.fillStyle = '#E5E7EB';
-        ctx.fillText(label, x, top - 6);
-      });
-      ctx.restore();
-    }
-  };
-  const ctxB = document.getElementById('chart-bridge').getContext('2d');
-  chartInstances['bridge'] = new Chart(ctxB, {
-    type: 'bar',
-    data: {
-      labels: bridgeLabels,
-      datasets: [{
-        label: '변동 (KRW)',
-        data: bridgeData,
-        backgroundColor: bridgeColors,
-        borderRadius: 3,
-        borderSkipped: false,
-      }],
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      layout: { padding: { top: 24 } },
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: '#1F2937', borderColor: '#2D3748', borderWidth: 1,
-          callbacks: {
-            title: ctx => ctx[0].label,
-            label: ctx => {
-              const d = bridgeDelta[ctx.dataIndex];
-              const isTotal = ctx.dataIndex === 0 || ctx.dataIndex === filtered.length - 1;
-              return isTotal ? fmt.krw(d) : fmt.signed(d);
+    // delta 가 baseMin 아래로 내려가면 y축 확장
+    const yMin = Math.min(baseMin, runningMin * 0.97);
+
+    const labelPlugin = {
+      id: 'bridgeLabels',
+      afterDatasetsDraw(chart) {
+        const { ctx } = chart;
+        const meta = chart.getDatasetMeta(0);
+        ctx.save();
+        ctx.font = '600 11px Inter, system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        meta.data.forEach((bar, i) => {
+          const v = bridgeDelta[i];
+          const label = (i === 0 || i === filtered.length - 1)
+            ? '₩' + (v / 1e6).toFixed(0) + 'M'
+            : (v >= 0 ? '+' : '') + (v / 1e6).toFixed(1) + 'M';
+          const { x, y: barTop, base } = bar.getProps(['x', 'y', 'base'], false);
+          const top = Math.min(barTop, base);
+          ctx.fillStyle = '#E5E7EB';
+          ctx.fillText(label, x, top - 6);
+        });
+        ctx.restore();
+      }
+    };
+    const ctxB = document.getElementById('chart-bridge').getContext('2d');
+    chartInstances['bridge'] = new Chart(ctxB, {
+      type: 'bar',
+      data: {
+        labels: bridgeLabels,
+        datasets: [{
+          label: '변동 (KRW)',
+          data: bridgeData,
+          backgroundColor: bridgeColors,
+          borderRadius: 3,
+          borderSkipped: false,
+        }],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        layout: { padding: { top: 24 } },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#1F2937', borderColor: '#2D3748', borderWidth: 1,
+            callbacks: {
+              title: ctx => ctx[0].label,
+              label: ctx => {
+                const d = bridgeDelta[ctx.dataIndex];
+                const isTotal = ctx.dataIndex === 0 || ctx.dataIndex === filtered.length - 1;
+                return isTotal ? fmt.krw(d) : fmt.signed(d);
+              }
             }
+          }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#94A3B8', maxRotation: 30, minRotation: 30, autoSkip: false } },
+          y: {
+            min: yMin,
+            grid: { color: '#1F2937' },
+            ticks: { callback: v => '₩' + (v / 1e6).toFixed(0) + 'M', color: '#94A3B8' }
           }
         }
       },
-      scales: {
-        x: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#94A3B8', maxRotation: 30, minRotation: 30 } },
-        y: {
-          grid: { color: ctx => ctx.tick.value === 0 ? '#475569' : '#1F2937' },
-          ticks: { callback: v => v === 0 ? '0' : '₩' + (v / 1e6).toFixed(0) + 'M', color: '#94A3B8' }
-        }
-      }
-    },
-    plugins: [labelPlugin],
-  });
+      plugins: [labelPlugin],
+    });
+
+    // 라벨 + 네비 버튼 상태 갱신
+    const lbl = document.getElementById('bridge-month');
+    if (lbl) lbl.textContent = monthKey || '—';
+    const prev = document.getElementById('bridge-prev');
+    const next = document.getElementById('bridge-next');
+    if (prev) prev.disabled = bridgeIdx <= 0;
+    if (next) next.disabled = bridgeIdx >= bridgeMonths.length - 1;
+    if (prev) prev.style.opacity = prev.disabled ? '0.35' : '1';
+    if (next) next.style.opacity = next.disabled ? '0.35' : '1';
+  }
+
+  // 네비 바인딩 (한 번만)
+  const prevBtn = document.getElementById('bridge-prev');
+  const nextBtn = document.getElementById('bridge-next');
+  if (prevBtn && !prevBtn._bound) {
+    prevBtn._bound = true;
+    prevBtn.addEventListener('click', () => {
+      if (bridgeIdx > 0) { bridgeIdx--; renderBridgeFor(bridgeMonths[bridgeIdx]); }
+    });
+  }
+  if (nextBtn && !nextBtn._bound) {
+    nextBtn._bound = true;
+    nextBtn.addEventListener('click', () => {
+      if (bridgeIdx < bridgeMonths.length - 1) { bridgeIdx++; renderBridgeFor(bridgeMonths[bridgeIdx]); }
+    });
+  }
+  // 첫 렌더
+  if (bridgeIdx >= 0) {
+    renderBridgeFor(bridgeMonths[bridgeIdx]);
+  } else {
+    renderBridgeFor(null);  // legacy fallback
+  }
 
   destroyChart('nw-trend');
   const months = (D.monthlyAll || []).map(m => m.month);
@@ -4802,7 +4848,11 @@ return { renderPortfolioView };
     <div class="card">
       <div class="card-title-row">
         <h3>Net Worth Bridge — 변동 항목별</h3>
-        <span class="card-sub">전월 NW → 이번 달 NW</span>
+        <span class="card-sub">
+          <button id="bridge-prev" class="btn" style="padding:2px 8px; font-size:0.78rem;" aria-label="전월">◀</button>
+          <span id="bridge-month" style="display:inline-block; min-width:62px; text-align:center; font-weight:500;">—</span>
+          <button id="bridge-next" class="btn" style="padding:2px 8px; font-size:0.78rem;" aria-label="익월">▶</button>
+        </span>
       </div>
       <div class="chart-wrap tall"><canvas id="chart-bridge"></canvas></div>
     </div>
