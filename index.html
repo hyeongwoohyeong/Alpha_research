@@ -4379,6 +4379,27 @@ function renderKPIs(D) {
   document.getElementById('sub-stock').textContent = fmt.krw(D.subKpi['주식/ETF (통합)']);
   document.getElementById('sub-ret').textContent   = fmt.krw(D.subKpi['퇴직연금/예금']);
 
+  // 분양 잔금 progress — 진행률은 '순자산 ÷ 목표' (퇴직금/보증금 중간정산 가능, 다 현금화 가정)
+  const apt = D.apartment || {};
+  if (document.getElementById('apt-pct')) {
+    const target = apt.target_krw || 0;
+    const paid = apt.paid_krw || 0;
+    const nw = apt.net_worth_krw || 0;
+    const remaining = apt.remaining_krw || Math.max(target - nw, 0);
+    const pct = apt.progress_pct || (target ? (nw / target * 100) : 0);
+    document.getElementById('apt-target').textContent = (target / 1e8).toFixed(1) + '억';
+    document.getElementById('apt-pct').textContent = pct.toFixed(1);
+    document.getElementById('apt-fill').style.width = Math.min(pct, 100) + '%';
+    document.getElementById('apt-nw').textContent = (nw / 1e8).toFixed(2) + '억';
+    document.getElementById('apt-paid').textContent = (paid / 1e8).toFixed(2) + '억';
+    document.getElementById('apt-remaining').textContent = (remaining / 1e8).toFixed(2) + '억';
+    document.getElementById('apt-deadline').textContent = apt.deadline || '—';
+    // 월 필요액 = 잔여 부족분 / 남은 개월 (지금~deadline)
+    const monthsLeft = 26;
+    const monthlyNeed = remaining / monthsLeft;
+    document.getElementById('apt-monthly').textContent = '₩' + (monthlyNeed / 1e6).toFixed(1) + 'M (자체 ₩6.5M + 투자 ₩' + Math.max(monthlyNeed / 1e6 - 6.5, 0).toFixed(1) + 'M)';
+  }
+
   document.getElementById('meta-asof').textContent = D.asof;
   document.getElementById('footer-asof').textContent = D.asof + ' (xlsx 빌드 시점)';
 }
@@ -5421,6 +5442,30 @@ return { renderPortfolioView };
     <div class="kpi"><div class="kpi-label">비트코인</div><div class="kpi-value kpi-value-sm" id="sub-btc">—</div></div>
     <div class="kpi"><div class="kpi-label">주식/ETF (통합)</div><div class="kpi-value kpi-value-sm" id="sub-stock">—</div></div>
     <div class="kpi"><div class="kpi-label">퇴직연금/예금</div><div class="kpi-value kpi-value-sm" id="sub-ret">—</div></div>
+  </div>
+
+  <!-- APARTMENT PROGRESS (2028.7 분양 잔금 마련) -->
+  <div class="card" id="apt-card" style="margin-top:14px;">
+    <div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+      <div>
+        <div style="font-size:11px; color:var(--text-2); letter-spacing:.05em; text-transform:uppercase;">분양 잔금 마련 진행</div>
+        <div style="font-size:16px; color:var(--text-1); font-weight:700; margin-top:3px;">2028.7 deadline — 총 ₩<span id="apt-target">—</span></div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:11px; color:var(--text-2);">진행률</div>
+        <div style="font-size:22px; color:var(--accent); font-weight:700; line-height:1;"><span id="apt-pct">—</span>%</div>
+      </div>
+    </div>
+    <div style="background:var(--surface-alt); height:12px; border-radius:6px; overflow:hidden; margin-bottom:10px;">
+      <div id="apt-fill" style="width:0%; height:100%; background:linear-gradient(90deg, var(--accent), var(--positive)); transition:width 0.4s;"></div>
+    </div>
+    <div style="display:flex; gap:18px; flex-wrap:wrap; font-size:12.5px; color:var(--text-2);">
+      <div>💰 현 순자산: <b style="color:var(--positive);">₩<span id="apt-nw">—</span></b></div>
+      <div>✓ 분양 납입: <b style="color:var(--text-1);">₩<span id="apt-paid">—</span></b></div>
+      <div>⏳ 잔여 부족분: <b style="color:var(--warning);">₩<span id="apt-remaining">—</span></b></div>
+      <div>📅 deadline: <b style="color:var(--text-1);" id="apt-deadline">—</b></div>
+      <div>월 필요액: <b style="color:var(--text-1);" id="apt-monthly">—</b></div>
+    </div>
   </div>
 
   <!-- RISK STRIP -->

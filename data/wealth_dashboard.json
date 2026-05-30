@@ -1576,8 +1576,16 @@
       }
     }
   ],
+  "apartment": {
+    "paid_krw": 97600000,
+    "target_krw": 400000000,
+    "net_worth_krw": 179279966,
+    "remaining_krw": 220720034,
+    "progress_pct": 44.8199915,
+    "deadline": "2028-07"
+  },
   "_meta": {
-    "generated_at": "2026-05-30T07:35:42",
+    "generated_at": "2026-05-30T16:38:06",
     "builder": "scripts/build_wealth_dashboard.py",
     "warning": "이 파일은 빌더로만 생성됩니다 — 직접 편집 금지"
   }
