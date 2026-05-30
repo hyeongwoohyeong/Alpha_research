@@ -4409,12 +4409,38 @@ function bindPortfolioEvents(){
   });
 }
 
+// ───── 자동 fetch: wealth_dashboard.json (single source of truth) ─────
+// 빌더(scripts/build_wealth_dashboard.py)가 portfolio.json + wealth_inputs.json
+// 으로부터 생성한 정적 JSON. same-origin 이라 CORS 이슈 없음.
+async function fetchWealthDashboard(){
+  try {
+    const url = 'data/wealth_dashboard.json?t=' + Date.now();  // cache-bust
+    const r = await fetch(url, { cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const D = await r.json();
+    return D;
+  } catch (e) {
+    console.warn('[wealth] fetch 실패 — embedded SNAPSHOT 으로 폴백:', e);
+    return null;
+  }
+}
+
 let _pfRendered = false;
-function renderPortfolioView(){
+async function renderPortfolioView(){
   bindPortfolioEvents();
   if(_pfRendered) return;
+  // 1) 즉시 SNAPSHOT 으로 렌더 (스켈레톤 깜빡임 방지)
   renderAll(SNAPSHOT);
   _pfRendered = true;
+  // 2) 백그라운드로 최신 wealth_dashboard.json fetch → 도착 시 재렌더
+  const D = await fetchWealthDashboard();
+  if (D) {
+    renderAll(D);
+    const m = document.getElementById('meta-asof');
+    if (m) m.textContent = D.asof + ' (자동 동기화)';
+    const f = document.getElementById('footer-asof');
+    if (f) f.textContent = D.asof + ' · portfolio.json 기준';
+  }
 }
 return { renderPortfolioView };
 })();
