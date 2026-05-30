@@ -86,7 +86,7 @@
   .index-card:active { transform: scale(0.99); }
   .index-card.study:hover { border-color: var(--purple); }
   .index-card.valuation:hover { border-color: #F59E0B; }
-  .ic-verdict { display:inline-block; padding:2px 9px; border-radius:999px; font-size:11px; font-weight:700; color:#fff; margin-top:8px; }
+  .ic-verdict { display:inline-block; padding:2px 9px; border-radius:999px; font-size:11px; font-weight:700; color:#fff; }
   /* ===== Valuation 전용 ===== */
   .val-block { padding: 18px 22px; }
   .val-head-row { display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:6px; }
@@ -3333,9 +3333,9 @@ function renderStocksIndex() {
 // Valuation 매니페스트 — data/valuations/{name}.json 매핑
 // (data/valuations 폴더에 새 회사 추가 시 여기에도 등록)
 const VALUATIONS_MANIFEST = [
-  { id: '현대건설',         name_ko: '현대건설',         ticker: '000720.KS', industry: '건설 (글로벌 EPC)',          verdict: '중립' },
-  { id: '파마리서치',       name_ko: '파마리서치',       ticker: '214450.KQ', industry: '메디컬 에스테틱 (리쥬란)',     verdict: '긍정' },
-  { id: '삼성바이오로직스', name_ko: '삼성바이오로직스', ticker: '207940.KS', industry: '바이오 CDMO (글로벌 1위)',     verdict: '부정' },
+  { id: '현대건설',         name_ko: '현대건설',         ticker: '000720.KS', industry: '건설 (글로벌 EPC)',          verdict: '중립', score: 50 },
+  { id: '파마리서치',       name_ko: '파마리서치',       ticker: '214450.KQ', industry: '메디컬 에스테틱 (리쥬란)',     verdict: '매수', score: 72 },
+  { id: '삼성바이오로직스', name_ko: '삼성바이오로직스', ticker: '207940.KS', industry: '바이오 CDMO (글로벌 1위)',     verdict: '중립', score: 37 },
 ];
 
 async function fetchValuation(id) {
@@ -3357,14 +3357,17 @@ async function fetchValuation(id) {
 
 function renderValuationsIndex() {
   const main = document.getElementById('main-content');
-  const verdictColor = v => v === '긍정' ? '#22C55E' : v === '부정' ? '#EF4444' : '#F59E0B';
+  const verdictColor = v => (v === '매수' || v === '긍정') ? '#22C55E' : v === '부정' ? '#EF4444' : '#F59E0B';
   const cards = VALUATIONS_MANIFEST.length
     ? VALUATIONS_MANIFEST.map(v => `
       <div class="index-card valuation" data-id="${v.id}">
         <div class="ic-symbol">${v.ticker} · ${v.name_ko}</div>
         <div class="ic-name">${v.industry}</div>
-        <div class="ic-meta">IC Memo + Financial Model</div>
-        ${v.verdict ? `<div class="ic-verdict" style="background:${verdictColor(v.verdict)}">${v.verdict}</div>` : ''}
+        <div class="ic-meta">IC Memo + 3-Statement Model</div>
+        <div style="display:flex; gap:6px; margin-top:8px; align-items:center;">
+          ${v.verdict ? `<div class="ic-verdict" style="background:${verdictColor(v.verdict)}">${v.verdict}</div>` : ''}
+          ${v.score != null ? `<div style="font-size:11px; color:var(--text); font-weight:700;">${v.score}<span style="color:var(--muted); font-weight:400;">/100</span></div>` : ''}
+        </div>
       </div>`).join('')
     : '<div class="empty-state">분석된 valuation 이 없습니다.<br>채팅창에 "회사명: XXX" 입력 시 Claude 가 분석을 추가합니다.</div>';
   main.innerHTML = `
@@ -3446,8 +3449,10 @@ function valFmtKRW(v, big = false) {
 // ── IC Memo 렌더 ─────────────────────────────────────────────
 function renderValuationICMemo(d) {
   const memo = d.ic_memo || {};
+  const sb = d.score_breakdown || {};
   const verdict = memo.investment_verdict || '—';
-  const verdictColor = verdict.includes('긍정') ? '#22C55E' : verdict.includes('부정') ? '#EF4444' : '#F59E0B';
+  const verdictColor = (verdict.includes('매수') || verdict.includes('긍정')) ? '#22C55E'
+                     : verdict.includes('부정') ? '#EF4444' : '#F59E0B';
 
   // 투자 논지·포인트 — 번호 리스트
   const thesisHTML = (memo.investment_thesis || []).map((t, i) =>
@@ -3478,10 +3483,17 @@ function renderValuationICMemo(d) {
         <div class="val-verdict-wrap">
           <div class="val-tag">투자 결론</div>
           <div class="val-verdict" style="color:${verdictColor}">${verdict}</div>
+          ${sb.total != null ? `<div style="font-size:13px; color:${verdictColor}; margin-top:4px; font-weight:600;">${sb.total}점 / 100 <span style="color:var(--muted); font-weight:400;">(${sb.band || ''})</span></div>` : ''}
         </div>
       </div>
       <div class="val-oneliner">${memo.verdict_oneliner || ''}</div>
     </section>
+
+    ${sb.total != null ? `
+    <section class="section-card">
+      <h2 class="val-section-h">[스코어 분해 — 총 ${sb.total} / 100]</h2>
+      ${renderValuationScoreBreakdown(sb, verdictColor)}
+    </section>` : ''}
 
     <section class="section-card">
       <h2 class="val-section-h">[투자 논지]</h2>
@@ -3630,6 +3642,28 @@ function renderValuationFinancialsTable(fin) {
         </tbody>
       </table>
     </div>`;
+}
+
+function renderValuationScoreBreakdown(sb, color) {
+  const axes = [['quality', 'Quality'], ['valuation', 'Valuation'], ['catalyst', 'Catalyst'], ['risk_reward', 'Risk / Reward']];
+  return axes.map(([k, label]) => {
+    const a = sb[k] || {};
+    const sc = a.score || 0;
+    const pct = (sc / 25) * 100;
+    return `
+      <div style="display:flex; gap:12px; align-items:flex-start; padding:9px 0; border-top:1px solid var(--border);">
+        <div style="flex:0 0 130px;">
+          <div style="font-size:11px; color:var(--muted); letter-spacing:.03em;">${label}</div>
+          <div style="font-size:16px; color:var(--text); font-weight:700; margin-top:2px;">
+            ${sc}<span style="font-size:11px; color:var(--muted); font-weight:400;"> / 25</span>
+          </div>
+          <div style="margin-top:4px; background:var(--panel-2); height:5px; border-radius:3px; overflow:hidden;">
+            <div style="width:${pct}%; height:100%; background:${color};"></div>
+          </div>
+        </div>
+        <div style="flex:1; font-size:12.5px; color:var(--text); line-height:1.55; padding-top:2px;">${a.rationale || ''}</div>
+      </div>`;
+  }).join('');
 }
 
 function valRow(label, arr, fmt, italic) {
