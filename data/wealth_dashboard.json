@@ -1231,8 +1231,8 @@
       "netWorth": 179279966,
       "income": 17877860,
       "capGain": 31766630,
-      "other": 0,
-      "deltaNW": 23563481,
+      "other": -3000000,
+      "deltaNW": 53521412,
       "_income_breakdown": {
         "salary": 4840450,
         "bonus": 13037410
@@ -1413,22 +1413,25 @@
     }
   ],
   "cashflowKpi": {
-    "deltaNW": 23563481,
-    "deltaPct": 0.151,
+    "deltaNW": 53521412,
+    "deltaPct": 0.426,
     "income": 17877860,
     "capGain": 31766630,
-    "other": 0,
+    "other": -3000000,
     "debtChg": 2315450,
     "asofMonth": "2026-05",
     "_income_breakdown": {
       "salary": 4840450,
       "bonus_samjeong": 13037410
+    },
+    "_other_breakdown": {
+      "travel_living": -3000000
     }
   },
   "bridge": [
     {
-      "name": "기초 순자산",
-      "value": 155716485
+      "name": "기초 순자산 (4월말, 역산)",
+      "value": 125758554
     },
     {
       "name": "월 급여",
@@ -1439,8 +1442,12 @@
       "value": 13037410
     },
     {
-      "name": "투자 평가손익",
-      "value": 11036880
+      "name": "실현 손익 (5월 매매)",
+      "value": 31766630
+    },
+    {
+      "name": "평가 손익 (현재 보유)",
+      "value": 9186686
     },
     {
       "name": "배당/이자수익",
@@ -1455,8 +1462,8 @@
       "value": -2315450
     },
     {
-      "name": "기타 순유출입(소비 등)",
-      "value": -3041495
+      "name": "소비 (여행 + 생활비)",
+      "value": -3000000
     },
     {
       "name": "기말 순자산",
@@ -1465,14 +1472,25 @@
   ],
   "monthlyAll": [
     {
+      "month": "2026-04",
+      "totalAsset": 214050432,
+      "totalDebt": 88291878,
+      "netWorth": 125758554,
+      "income": 0,
+      "capGain": 0,
+      "other": 0,
+      "deltaNW": 0,
+      "_note": "4월말 NW는 5월 흐름으로부터 역산. totalAsset/Debt 정확치 아님 — 4월말 데이터 입력 시 갱신"
+    },
+    {
       "month": "2026-05",
       "totalAsset": 267571844,
       "totalDebt": 88291878,
       "netWorth": 179279966,
       "income": 17877860,
       "capGain": 31766630,
-      "other": 0,
-      "deltaNW": 23563481,
+      "other": -3000000,
+      "deltaNW": 53521412,
       "_income_breakdown": {
         "salary": 4840450,
         "bonus": 13037410
@@ -1480,7 +1498,7 @@
     }
   ],
   "_meta": {
-    "generated_at": "2026-05-30T06:30:38",
+    "generated_at": "2026-05-30T06:39:23",
     "builder": "scripts/build_wealth_dashboard.py",
     "warning": "이 파일은 빌더로만 생성됩니다 — 직접 편집 금지"
   }
