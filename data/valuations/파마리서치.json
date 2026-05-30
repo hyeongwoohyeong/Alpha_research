@@ -366,5 +366,636 @@
       "url": null
     }
   ],
-  "generated_at": "2026-05-30 15:34"
+  "generated_at": "2026-05-30 16:00",
+  "income_statement": {
+    "years": [
+      2023,
+      2024,
+      2025,
+      2026,
+      2027,
+      2028,
+      2029,
+      2030
+    ],
+    "a_years_count": 3,
+    "revenue": [
+      261011,
+      350115,
+      536289,
+      635777,
+      717775,
+      807783,
+      927710,
+      1092428
+    ],
+    "cogs": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "gross_profit": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "gross_margin": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "sga": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "operating_income": [
+      88000,
+      118000,
+      198000,
+      248000,
+      282000,
+      314000,
+      365000,
+      437000
+    ],
+    "operating_margin": [
+      0.337,
+      0.337,
+      0.369,
+      0.39,
+      0.393,
+      0.389,
+      0.394,
+      0.4
+    ],
+    "ebitda": [
+      104253,
+      139696,
+      230211,
+      285783,
+      324415,
+      362987,
+      420510,
+      502638
+    ],
+    "ebitda_margin": [
+      0.399,
+      0.399,
+      0.429,
+      0.45,
+      0.452,
+      0.449,
+      0.453,
+      0.46
+    ],
+    "interest_income": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "interest_expense": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "pretax_income": [
+      null,
+      null,
+      217000,
+      265000,
+      297000,
+      329000,
+      384000,
+      464000
+    ],
+    "tax": [
+      null,
+      null,
+      49000,
+      59000,
+      67000,
+      75000,
+      87000,
+      105000
+    ],
+    "tax_rate": [
+      null,
+      null,
+      0.226,
+      0.223,
+      0.226,
+      0.228,
+      0.227,
+      0.226
+    ],
+    "net_income": [
+      80239,
+      88943,
+      168255,
+      205768,
+      229897,
+      254435,
+      297371,
+      359663
+    ],
+    "eps": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "balance_sheet": {
+    "years": [
+      2023,
+      2024,
+      2025,
+      2026,
+      2027,
+      2028,
+      2029,
+      2030
+    ],
+    "a_years_count": 3,
+    "cash": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "accounts_receivable": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "inventory": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "contract_assets": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "other_current_assets": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "ppe_net": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "intangibles": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "other_non_current_assets": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "total_assets": [
+      535281,
+      855701,
+      1043888,
+      1385831,
+      1603757,
+      1841342,
+      2114078,
+      2448917
+    ],
+    "accounts_payable": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "short_term_debt": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "current_portion_lt_debt": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "other_current_liabilities": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "long_term_debt": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "other_non_current_liabilities": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "total_liabilities": [
+      73087,
+      286260,
+      320010,
+      475184,
+      484440,
+      491081,
+      493902,
+      502285
+    ],
+    "common_stock": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "retained_earnings": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "total_equity": [
+      462195,
+      569441,
+      723878,
+      910647,
+      1119318,
+      1350261,
+      1620176,
+      1946632
+    ],
+    "net_debt": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "debt_to_equity": [
+      0.158,
+      0.503,
+      0.442,
+      0.522,
+      0.433,
+      0.364,
+      0.305,
+      0.258
+    ]
+  },
+  "cash_flow_statement": {
+    "years": [
+      2023,
+      2024,
+      2025,
+      2026,
+      2027,
+      2028,
+      2029,
+      2030
+    ],
+    "a_years_count": 3,
+    "net_income": [
+      80239,
+      88943,
+      168255,
+      205768,
+      229897,
+      254435,
+      297371,
+      359663
+    ],
+    "depreciation_amortization": [
+      16000,
+      21000,
+      32000,
+      38000,
+      42000,
+      48000,
+      55000,
+      65000
+    ],
+    "working_capital_change": [
+      -50000,
+      14000,
+      -42000,
+      -65000,
+      7000,
+      -68000,
+      4000,
+      -40000
+    ],
+    "other_operating": [
+      18706,
+      14179,
+      24907,
+      -664,
+      1140,
+      1357,
+      -17155,
+      -62735
+    ],
+    "ocf": [
+      64945,
+      138122,
+      183162,
+      178143,
+      280037,
+      235792,
+      339216,
+      321928
+    ],
+    "capex": [
+      -15000,
+      -38000,
+      -55000,
+      -75000,
+      -85000,
+      -85000,
+      -90000,
+      -100000
+    ],
+    "acquisitions": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "icf": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "debt_issuance": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "debt_repayment": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "dividends_buyback": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "fcf": [
+      49945,
+      100122,
+      128162,
+      103143,
+      195037,
+      150792,
+      249216,
+      221928
+    ],
+    "ending_cash": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "debt_schedule": {
+    "as_of": "2025-12-31",
+    "total_debt_krw_mm": null,
+    "weighted_avg_cost": null,
+    "maturity_profile": null,
+    "tranches": [],
+    "narrative": "사용자 첨부 IC Memo 의 CB 구조 (5년 만기, YTM 5%, Coupon 1%) 는 JKL Investment 면접 가정. 실제 파마리서치 차입금 상세는 DART 사업보고서에서 추가 확인 필요 (현재 사용자 첨부 자료엔 미포함). 재무구조: 부채비율 31% (2025) — 안정적. EBITDA margin 43% × 매출 5,363억 = 약 2,300억 영업현금 창출력으로 자본조달 부담 없음."
+  },
+  "capex_schedule": {
+    "years": [
+      2023,
+      2024,
+      2025,
+      2026,
+      2027,
+      2028,
+      2029,
+      2030
+    ],
+    "a_years_count": 3,
+    "maintenance_capex": [
+      8000,
+      15000,
+      18000,
+      25000,
+      28000,
+      30000,
+      32000,
+      35000
+    ],
+    "growth_capex": [
+      7000,
+      23000,
+      37000,
+      50000,
+      57000,
+      55000,
+      58000,
+      65000
+    ],
+    "total_capex": [
+      15000,
+      38000,
+      55000,
+      75000,
+      85000,
+      85000,
+      90000,
+      100000
+    ],
+    "depreciation": [
+      16000,
+      21000,
+      32000,
+      38000,
+      42000,
+      48000,
+      55000,
+      65000
+    ],
+    "net_capex": [
+      -1000,
+      17000,
+      23000,
+      37000,
+      43000,
+      37000,
+      35000,
+      35000
+    ],
+    "ppe_net": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "capex_to_revenue": [
+      0.0575,
+      0.1085,
+      0.1026,
+      0.118,
+      0.1184,
+      0.1052,
+      0.097,
+      0.0916
+    ],
+    "narrative": "CAPEX intensity 9~12% — 의료기기/제약 평균 (6~10%) 보다 약간 높음. 글로벌 인허가 대비 신규 제조 라인 + R&D 시설 투자 단계. 중국 NMPA 승인 시 추가 CAPA 확장 가능 — 인허가 timing 에 따라 growth CAPEX 가속 가능. 현재 CAPEX < OCF 로 self-funding 가능 — 외부 자본조달 없이 organic growth 지속 가능."
+  }
 }

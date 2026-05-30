@@ -86,6 +86,7 @@
   .index-card:active { transform: scale(0.99); }
   .index-card.study:hover { border-color: var(--purple); }
   .index-card.valuation:hover { border-color: #F59E0B; }
+  .ic-verdict { display:inline-block; padding:2px 9px; border-radius:999px; font-size:11px; font-weight:700; color:#fff; margin-top:8px; }
   /* ===== Valuation 전용 ===== */
   .val-block { padding: 18px 22px; }
   .val-head-row { display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:6px; }
@@ -3332,8 +3333,9 @@ function renderStocksIndex() {
 // Valuation 매니페스트 — data/valuations/{name}.json 매핑
 // (data/valuations 폴더에 새 회사 추가 시 여기에도 등록)
 const VALUATIONS_MANIFEST = [
-  { id: '현대건설',   name_ko: '현대건설',   ticker: '000720.KS', industry: '건설 (글로벌 EPC)' },
-  { id: '파마리서치', name_ko: '파마리서치', ticker: '214450.KQ', industry: '메디컬 에스테틱 (리쥬란)' },
+  { id: '현대건설',         name_ko: '현대건설',         ticker: '000720.KS', industry: '건설 (글로벌 EPC)',          verdict: '중립' },
+  { id: '파마리서치',       name_ko: '파마리서치',       ticker: '214450.KQ', industry: '메디컬 에스테틱 (리쥬란)',     verdict: '긍정' },
+  { id: '삼성바이오로직스', name_ko: '삼성바이오로직스', ticker: '207940.KS', industry: '바이오 CDMO (글로벌 1위)',     verdict: '부정' },
 ];
 
 async function fetchValuation(id) {
@@ -3355,12 +3357,14 @@ async function fetchValuation(id) {
 
 function renderValuationsIndex() {
   const main = document.getElementById('main-content');
+  const verdictColor = v => v === '긍정' ? '#22C55E' : v === '부정' ? '#EF4444' : '#F59E0B';
   const cards = VALUATIONS_MANIFEST.length
     ? VALUATIONS_MANIFEST.map(v => `
       <div class="index-card valuation" data-id="${v.id}">
         <div class="ic-symbol">${v.ticker} · ${v.name_ko}</div>
         <div class="ic-name">${v.industry}</div>
         <div class="ic-meta">IC Memo + Financial Model</div>
+        ${v.verdict ? `<div class="ic-verdict" style="background:${verdictColor(v.verdict)}">${v.verdict}</div>` : ''}
       </div>`).join('')
     : '<div class="empty-state">분석된 valuation 이 없습니다.<br>채팅창에 "회사명: XXX" 입력 시 Claude 가 분석을 추가합니다.</div>';
   main.innerHTML = `
@@ -3521,6 +3525,36 @@ function renderValuationModel(d) {
       ${renderValuationFinancialsTable(fin)}
     </section>
 
+    ${d.income_statement ? `
+    <section class="section-card">
+      <h2 class="val-section-h">[Income Statement — 상세]</h2>
+      ${renderValuationIS(d.income_statement)}
+    </section>` : ''}
+
+    ${d.balance_sheet ? `
+    <section class="section-card">
+      <h2 class="val-section-h">[Balance Sheet — 상세]</h2>
+      ${renderValuationBS(d.balance_sheet)}
+    </section>` : ''}
+
+    ${d.cash_flow_statement ? `
+    <section class="section-card">
+      <h2 class="val-section-h">[Cash Flow Statement — 상세]</h2>
+      ${renderValuationCF(d.cash_flow_statement)}
+    </section>` : ''}
+
+    ${d.debt_schedule ? `
+    <section class="section-card">
+      <h2 class="val-section-h">[Debt Schedule]</h2>
+      ${renderValuationDebt(d.debt_schedule)}
+    </section>` : ''}
+
+    ${d.capex_schedule ? `
+    <section class="section-card">
+      <h2 class="val-section-h">[CAPEX Schedule — 매출 성장 vs CAPEX intensity]</h2>
+      ${renderValuationCapex(d.capex_schedule)}
+    </section>` : ''}
+
     <section class="section-card">
       <h2 class="val-section-h">[시나리오 — Bull / Base / Bear]</h2>
       ${renderValuationScenariosTable(scen)}
@@ -3596,6 +3630,176 @@ function renderValuationFinancialsTable(fin) {
         </tbody>
       </table>
     </div>`;
+}
+
+function valRow(label, arr, fmt, italic) {
+  const isHdr = !arr || !arr.length;
+  if (isHdr) {
+    return `<tr><td style="padding:4px 8px; font-size:12px; ${italic ? 'font-style:italic; color:var(--muted); font-weight:700;' : 'color:var(--text); font-weight:700;'}">${label}</td></tr>`;
+  }
+  const cells = arr.map(v =>
+    `<td style="text-align:right; padding:4px 8px; font-size:12px; font-variant-numeric:tabular-nums; ${italic ? 'font-style:italic; color:var(--muted);' : 'color:var(--text);'}">${fmt(v)}</td>`
+  ).join('');
+  return `<tr><td style="padding:4px 8px; font-size:12px; ${italic ? 'font-style:italic; color:var(--muted);' : 'color:var(--text);'}">${label}</td>${cells}</tr>`;
+}
+
+function valBuildHeader(years, aCnt) {
+  return years.map((y, i) =>
+    `<th class="val-th-r" style="font-size:11px;"><span style="color:var(--muted);">${y}</span><sup style="font-size:9px; color:var(--text-soft);">${i < aCnt ? 'A' : 'F'}</sup></th>`
+  ).join('');
+}
+
+function valWrapTable(corner, th, tbody) {
+  return `
+    <div class="val-table-wrap">
+      <table class="val-fin-table">
+        <thead><tr><th>${corner}</th>${th}</tr></thead>
+        <tbody>${tbody}</tbody>
+      </table>
+    </div>`;
+}
+
+function renderValuationIS(IS) {
+  const years = IS.years || [];
+  if (!years.length) return '<div class="val-muted">데이터 없음</div>';
+  const th = valBuildHeader(years, IS.a_years_count || 0);
+  const rows = [
+    valRow('매출액', IS.revenue, valFmtInt),
+    valRow('매출원가', IS.cogs, valFmtInt),
+    valRow('매출총이익', IS.gross_profit, valFmtInt),
+    valRow('% Gross margin', IS.gross_margin, v => valFmtPct(v, 1), true),
+    valRow('판관비', IS.sga, valFmtInt),
+    valRow('영업이익', IS.operating_income, valFmtInt),
+    valRow('% OPM', IS.operating_margin, v => valFmtPct(v, 1), true),
+    valRow('EBITDA', IS.ebitda, valFmtInt),
+    valRow('% EBITDA margin', IS.ebitda_margin, v => valFmtPct(v, 1), true),
+    valRow('이자수익', IS.interest_income, valFmtInt, true),
+    valRow('이자비용', IS.interest_expense, valFmtInt, true),
+    valRow('세전이익', IS.pretax_income, valFmtInt),
+    valRow('법인세', IS.tax, valFmtInt, true),
+    valRow('% 실효세율', IS.tax_rate, valFmtPct, true),
+    valRow('당기순이익', IS.net_income, valFmtInt),
+    valRow('EPS (원)', IS.eps, valFmtInt),
+  ].join('');
+  return valWrapTable('KRW million', th, rows);
+}
+
+function renderValuationBS(BS) {
+  const years = BS.years || [];
+  if (!years.length) return '<div class="val-muted">데이터 없음</div>';
+  const th = valBuildHeader(years, BS.a_years_count || 0);
+  const rows = [
+    valRow('[자산]', null, null, true),
+    valRow('  현금성자산', BS.cash, valFmtInt),
+    valRow('  매출채권', BS.accounts_receivable, valFmtInt),
+    valRow('  재고자산', BS.inventory, valFmtInt),
+    valRow('  미청구공사/계약자산', BS.contract_assets, valFmtInt),
+    valRow('  기타유동자산', BS.other_current_assets, valFmtInt, true),
+    valRow('  유형자산(PP&E)', BS.ppe_net, valFmtInt),
+    valRow('  무형자산', BS.intangibles, valFmtInt),
+    valRow('  기타비유동자산', BS.other_non_current_assets, valFmtInt, true),
+    valRow('자산총계', BS.total_assets, valFmtInt),
+    valRow('[부채]', null, null, true),
+    valRow('  매입채무', BS.accounts_payable, valFmtInt),
+    valRow('  단기차입금', BS.short_term_debt, valFmtInt),
+    valRow('  유동성장기차입금', BS.current_portion_lt_debt, valFmtInt),
+    valRow('  기타유동부채', BS.other_current_liabilities, valFmtInt, true),
+    valRow('  장기차입금/사채', BS.long_term_debt, valFmtInt),
+    valRow('  기타비유동부채', BS.other_non_current_liabilities, valFmtInt, true),
+    valRow('부채총계', BS.total_liabilities, valFmtInt),
+    valRow('[자본]', null, null, true),
+    valRow('  자본금', BS.common_stock, valFmtInt, true),
+    valRow('  이익잉여금', BS.retained_earnings, valFmtInt),
+    valRow('자본총계', BS.total_equity, valFmtInt),
+    valRow('순차입금 (Net Debt)', BS.net_debt, valFmtInt),
+    valRow('부채비율 (D/E)', BS.debt_to_equity, valFmtPct, true),
+  ].join('');
+  return valWrapTable('KRW million', th, rows);
+}
+
+function renderValuationCF(CF) {
+  const years = CF.years || [];
+  if (!years.length) return '<div class="val-muted">데이터 없음</div>';
+  const th = valBuildHeader(years, CF.a_years_count || 0);
+  const rows = [
+    valRow('[영업CF]', null, null, true),
+    valRow('  당기순이익', CF.net_income, valFmtInt, true),
+    valRow('  감가상각', CF.depreciation_amortization, valFmtInt, true),
+    valRow('  운전자본 변동', CF.working_capital_change, valFmtInt, true),
+    valRow('  기타', CF.other_operating, valFmtInt, true),
+    valRow('OCF', CF.ocf, valFmtInt),
+    valRow('[투자CF]', null, null, true),
+    valRow('  CAPEX', CF.capex, valFmtInt),
+    valRow('  M&A / 기타', CF.acquisitions, valFmtInt, true),
+    valRow('ICF', CF.icf, valFmtInt),
+    valRow('[재무CF]', null, null, true),
+    valRow('  차입 조달', CF.debt_issuance, valFmtInt, true),
+    valRow('  차입 상환', CF.debt_repayment, valFmtInt, true),
+    valRow('  배당/자사주', CF.dividends_buyback, valFmtInt, true),
+    valRow('FCF (OCF − CAPEX)', CF.fcf, valFmtInt),
+    valRow('기말 현금', CF.ending_cash, valFmtInt),
+  ].join('');
+  return valWrapTable('KRW million', th, rows);
+}
+
+function renderValuationDebt(ds) {
+  const tranches = ds.tranches || [];
+  const chips = [];
+  if (ds.as_of) chips.push(['As of', ds.as_of]);
+  if (ds.total_debt_krw_mm != null) chips.push(['총 차입금', `₩${valFmtInt(ds.total_debt_krw_mm)}M`]);
+  if (ds.weighted_avg_cost != null) chips.push(['Weighted Avg Cost', `${(ds.weighted_avg_cost * 100).toFixed(2)}%`]);
+  if (ds.maturity_profile && ds.maturity_profile.within_1y != null) {
+    chips.push(['1년 이내 만기', `₩${valFmtInt(ds.maturity_profile.within_1y)}M`]);
+  }
+  const chipHtml = chips.map(([l, v]) =>
+    `<div style="background:var(--panel-2); border-radius:6px; padding:8px 12px;">
+      <div style="font-size:10px; color:var(--muted);">${l}</div>
+      <div style="font-size:14px; color:var(--text); font-weight:600; margin-top:2px;">${v}</div>
+    </div>`
+  ).join('');
+  const tbody = tranches.length
+    ? tranches.map(t => `
+        <tr>
+          <td style="padding:5px 10px; font-size:12px; color:var(--text);">${t.name || ''}</td>
+          <td style="text-align:right; padding:5px 10px; font-size:12px; color:var(--text); font-variant-numeric:tabular-nums;">${valFmtInt(t.amount_krw_mm)}</td>
+          <td style="text-align:right; padding:5px 10px; font-size:12px; color:var(--muted);">${t.rate != null ? valFmtPct(t.rate, 2) : '—'}</td>
+          <td style="text-align:right; padding:5px 10px; font-size:12px; color:var(--muted);">${t.maturity || '—'}</td>
+          <td style="padding:5px 10px; font-size:12px; color:var(--muted);">${t.note || ''}</td>
+        </tr>`).join('')
+    : '<tr><td colspan="5" style="padding:8px 10px; color:var(--muted);">차입금 tranche 미입력</td></tr>';
+  const narr = ds.narrative ? `<div class="val-narrative" style="margin-top:8px">${ds.narrative}</div>` : '';
+  return `
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px;">${chipHtml}</div>
+    <div class="val-table-wrap">
+      <table class="val-fin-table">
+        <thead><tr>
+          <th>Tranche</th>
+          <th class="val-th-r">₩M</th>
+          <th class="val-th-r">금리</th>
+          <th class="val-th-r">만기</th>
+          <th>비고</th>
+        </tr></thead>
+        <tbody>${tbody}</tbody>
+      </table>
+    </div>
+    ${narr}`;
+}
+
+function renderValuationCapex(cs) {
+  const years = cs.years || [];
+  if (!years.length) return '<div class="val-muted">CAPEX 데이터 없음</div>';
+  const th = valBuildHeader(years, cs.a_years_count || 0);
+  const rows = [
+    valRow('Maintenance CAPEX', cs.maintenance_capex, valFmtInt),
+    valRow('Growth CAPEX', cs.growth_capex, valFmtInt),
+    valRow('Total CAPEX', cs.total_capex, valFmtInt),
+    valRow('감가상각비', cs.depreciation, valFmtInt, true),
+    valRow('Net CAPEX (CAPEX − D&A)', cs.net_capex, valFmtInt, true),
+    valRow('PP&E 기말잔액', cs.ppe_net, valFmtInt, true),
+    valRow('CAPEX / 매출액 (%)', cs.capex_to_revenue, valFmtPct, true),
+  ].join('');
+  const narr = cs.narrative ? `<div class="val-narrative" style="margin-top:8px">${cs.narrative}</div>` : '';
+  return valWrapTable('KRW million', th, rows) + narr;
 }
 
 function renderValuationScenariosTable(scen) {
