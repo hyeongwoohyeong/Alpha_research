@@ -170,12 +170,14 @@
   .ab-bet-thesis { font-size:12.5px; color:var(--text-soft); line-height:1.55; margin-top:6px; }
   .ab-bet-meta { display:flex; gap:14px; flex-wrap:wrap; font-size:11.5px; color:var(--muted); margin-top:8px; }
   .ab-bet-meta strong { color:var(--text-soft); font-weight:600; }
-  .ab-progress { background:var(--panel-2); height:6px; border-radius:3px; margin-top:10px; overflow:hidden; position:relative; }
-  .ab-progress-fill { height:100%; border-radius:3px; transition:width .3s; }
-  .ab-progress-track { position:relative; margin-top:4px; height:14px; }
-  .ab-progress-mark { position:absolute; top:0; font-size:10px; color:var(--muted); transform:translateX(-50%); white-space:nowrap; }
-  .ab-progress-mark.stop { color:var(--red); }
-  .ab-progress-mark.target { color:var(--green); }
+  .ab-progress { background:var(--panel-2); height:8px; border-radius:4px; margin-top:10px; position:relative; }
+  .ab-progress-fill { height:100%; border-radius:4px; transition:width .3s; }
+  .ab-progress-entry { position:absolute; top:-3px; bottom:-3px; width:2px; background:#9CA3AF; opacity:.7; z-index:2; pointer-events:none; }
+  .ab-progress-track { position:relative; margin-top:6px; height:14px; }
+  .ab-progress-mark { position:absolute; top:0; font-size:10px; color:var(--muted); white-space:nowrap; line-height:1; }
+  .ab-progress-mark.stop { color:var(--red); left:0; }
+  .ab-progress-mark.target { color:var(--green); right:0; }
+  .ab-progress-mark.entry { transform:translateX(-50%); font-weight:600; }
   .ab-scale-row { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
   .ab-scale-chip { font-size:10.5px; padding:2px 8px; background:var(--panel-2); border:1px solid var(--border); border-radius:999px; color:var(--text-soft); }
   .ab-lessons { margin-top:10px; padding:8px 12px; background:var(--panel-2); border-radius:6px; }
@@ -4127,11 +4129,12 @@ function renderAlphaBetActiveCard(bet) {
       </div>
       <div class="ab-progress">
         <div class="ab-progress-fill" style="width:${curPos}%; background:${fillColor}"></div>
+        <div class="ab-progress-entry" style="left:${(-stop / range) * 100}%"></div>
       </div>
       <div class="ab-progress-track">
-        <div class="ab-progress-mark stop" style="left:0%">손절 ${stopPct}</div>
-        <div class="ab-progress-mark" style="left:${(-stop / range) * 100}%">진입</div>
-        <div class="ab-progress-mark target" style="left:100%; transform:translateX(-100%)">target ${targetPct}</div>
+        <div class="ab-progress-mark stop">손절 ${stopPct}</div>
+        <div class="ab-progress-mark entry" style="left:${(-stop / range) * 100}%">▲ 진입</div>
+        <div class="ab-progress-mark target">target ${targetPct}</div>
       </div>
       ${scaleOut ? `<div class="ab-scale-row">${scaleOut}</div>` : ''}
     </div>`;
