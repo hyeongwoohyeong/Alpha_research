@@ -176,12 +176,14 @@
   ],
   "candidates": [
     {
-      "name": "TQQQ 100% 베팅",
-      "thesis": "사용자 명시: '100% × 3~5번 중 1번은 TQQQ로'. 나스닥 -15% 조정 시 진입, target +100% (4~6개월).",
-      "entry_trigger": "나스닥 -15% 조정 OR QQQ drawdown -15% 도달",
-      "target_pct": 1.00,
+      "name": "TQQQ Drawdown Sweet Spot 베팅",
+      "thesis": "실증 데이터 (QQQ 1999~, entry_timing_buckets DB) 기준 sweet spot 진입. QQQ 52W DD -5~-10% 구간 진입 시 TQQQ 3M 평균 +21.7%, win rate 84% (n=661). -10~-15% 도 유사 (+23.8%, win 81%, n=245). -20%+ 들어가면 win rate 폭락 (48~60%).",
+      "entry_trigger": "QQQ 52W DD ∈ [-5%, -15%] 진입 + market_cycle_analyzer.recommend_current_entry best_asset='TQQQ' 출력 시",
+      "target_pct": 0.22,
       "stop_pct": -0.25,
-      "estimated_capital_krw_mm": "분양 deadline 이전: max 40 / 분양 후: 100~150"
+      "expected_hold_months": "3개월 (실증 윈도우)",
+      "estimated_capital_krw_mm": "분양 deadline 이전: max 40 / 분양 후: 100~150",
+      "_data_basis": "entry_timing_buckets table — QQQ 1999~, 63일 윈도우. 옛 '나스닥 -15% 조정 → target +100% (4~6개월)' 가설은 데이터에 backed 안 됨 — 평균 +22% 수준이고 100% 는 outlier 인 -35%+ 표본 n=2 의 환상."
     },
     {
       "name": "BTC cycle 2029~2030 peak",
