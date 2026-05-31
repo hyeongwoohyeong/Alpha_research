@@ -147,6 +147,52 @@
     .val-asum-row, .val-judg-row { flex-direction:column; gap:2px; }
     .val-asum-label, .val-asum-value, .val-judg-q { flex:0 0 auto; }
   }
+
+  /* ===== Alpha Bet Tracker ===== */
+  .index-card.alphabet:hover { border-color: #06B6D4; }
+  .ab-stats-row { display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:12px; margin-bottom:20px; }
+  .ab-stat-card { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:12px 14px; }
+  .ab-stat-label { font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; font-weight:700; }
+  .ab-stat-value { font-size:22px; font-weight:800; color:var(--text); margin-top:4px; font-variant-numeric:tabular-nums; line-height:1.1; }
+  .ab-stat-sub { font-size:11px; color:var(--text-soft); margin-top:2px; }
+  .ab-section-h { font-size:13px; color:var(--text); font-weight:700; letter-spacing:.04em; margin:24px 0 10px; padding-bottom:5px; border-bottom:1px solid var(--border); text-transform:uppercase; }
+  .ab-bet-card { background:var(--panel); border:1px solid var(--border); border-left-width:3px; border-radius:8px; padding:14px 16px; margin-bottom:10px; }
+  .ab-bet-active { border-left-color:#06B6D4; }
+  .ab-bet-realized { border-left-color:var(--green); }
+  .ab-bet-failed { border-left-color:var(--red); }
+  .ab-bet-candidate { border-left-color:#F59E0B; border-style:dashed; }
+  .ab-bet-head { display:flex; justify-content:space-between; gap:10px; align-items:baseline; flex-wrap:wrap; }
+  .ab-bet-name { font-size:14.5px; font-weight:700; color:var(--text); }
+  .ab-bet-ticker { font-size:11px; color:var(--muted); font-weight:500; }
+  .ab-bet-pnl { font-size:15px; font-weight:800; font-variant-numeric:tabular-nums; }
+  .ab-bet-pnl.win { color:var(--green); }
+  .ab-bet-pnl.loss { color:var(--red); }
+  .ab-bet-thesis { font-size:12.5px; color:var(--text-soft); line-height:1.55; margin-top:6px; }
+  .ab-bet-meta { display:flex; gap:14px; flex-wrap:wrap; font-size:11.5px; color:var(--muted); margin-top:8px; }
+  .ab-bet-meta strong { color:var(--text-soft); font-weight:600; }
+  .ab-progress { background:var(--panel-2); height:6px; border-radius:3px; margin-top:10px; overflow:hidden; position:relative; }
+  .ab-progress-fill { height:100%; border-radius:3px; transition:width .3s; }
+  .ab-progress-track { position:relative; margin-top:4px; height:14px; }
+  .ab-progress-mark { position:absolute; top:0; font-size:10px; color:var(--muted); transform:translateX(-50%); white-space:nowrap; }
+  .ab-progress-mark.stop { color:var(--red); }
+  .ab-progress-mark.target { color:var(--green); }
+  .ab-scale-row { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+  .ab-scale-chip { font-size:10.5px; padding:2px 8px; background:var(--panel-2); border:1px solid var(--border); border-radius:999px; color:var(--text-soft); }
+  .ab-lessons { margin-top:10px; padding:8px 12px; background:var(--panel-2); border-radius:6px; }
+  .ab-lessons-title { font-size:10.5px; color:#F59E0B; font-weight:700; text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px; }
+  .ab-lessons-list { margin:0; padding-left:18px; }
+  .ab-lessons-list li { font-size:12px; color:var(--text); line-height:1.5; margin-bottom:2px; }
+  .ab-realized-tbl { width:100%; border-collapse:collapse; }
+  .ab-realized-tbl thead { background:var(--panel-2); }
+  .ab-realized-tbl th { text-align:left; padding:7px 10px; font-size:10.5px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
+  .ab-realized-tbl td { padding:8px 10px; font-size:12.5px; color:var(--text); border-top:1px solid var(--border); }
+  .ab-realized-tbl td.num { text-align:right; font-variant-numeric:tabular-nums; font-weight:600; }
+  .ab-realized-tbl td.win { color:var(--green); }
+  .ab-realized-tbl td.loss { color:var(--red); }
+  .ab-mission { background:linear-gradient(135deg, var(--panel) 0%, var(--panel-2) 100%); border:1px solid var(--border); border-left:4px solid #06B6D4; border-radius:8px; padding:14px 18px; margin-bottom:18px; }
+  .ab-mission-tag { font-size:10.5px; color:#06B6D4; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
+  .ab-mission-text { font-size:13.5px; color:var(--text); margin-top:4px; line-height:1.55; }
+
   .index-card .ic-symbol { font-weight: 800; font-size: 15px; color: var(--text); }
   .index-card .ic-title { font-weight: 700; font-size: 14px; color: var(--text); line-height: 1.4; }
   .index-card .ic-name { font-size: 12px; color: var(--text-soft); margin-top: 4px; }
@@ -734,6 +780,7 @@
     <button class="topnav-tab" data-tab="studies-index">스터디 노트</button>
     <button class="topnav-tab" data-tab="stocks-index">리서치 종목</button>
     <button class="topnav-tab" data-tab="valuations-index">Valuation</button>
+    <button class="topnav-tab" data-tab="alphabets-index">Alpha Bet</button>
   </div>
 </nav>
 
@@ -3239,6 +3286,7 @@ function topnavGroup() {
   if (activeType === 'alphaengine') return 'alphaengine';
   if (activeType === 'study' || activeType === 'studies-index') return 'studies-index';
   if (activeType === 'valuation' || activeType === 'valuations-index') return 'valuations-index';
+  if (activeType === 'alphabet' || activeType === 'alphabets-index') return 'alphabets-index';
   return 'stocks-index'; // 'stock' | 'stocks-index'
 }
 
@@ -3967,6 +4015,240 @@ function renderValuationSources(src) {
     : `<li>${s.title}</li>`).join('')}</ul>`;
 }
 
+// ============================================================
+//  ALPHA BET TRACKER — 100% × 3~5번 베팅 ledger
+//  미션: 큰 베팅으로 자산 cycle 단축. Hit rate + 학습 누적.
+// ============================================================
+
+let ALPHA_BETS_CACHE = null;
+
+async function fetchAlphaBets() {
+  if (ALPHA_BETS_CACHE) return ALPHA_BETS_CACHE;
+  try {
+    const r = await fetch(`data/alpha_bets.json?t=${Date.now()}`, { cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    ALPHA_BETS_CACHE = await r.json();
+    return ALPHA_BETS_CACHE;
+  } catch (e) {
+    console.warn('Alpha bets fetch 실패:', e);
+    return null;
+  }
+}
+
+function abFmtKRW(mm) {
+  if (mm == null) return '—';
+  const sign = mm < 0 ? '-' : (mm > 0 ? '+' : '');
+  const abs = Math.abs(mm);
+  if (abs >= 100) return `${sign}₩${abs.toFixed(0)}M`;
+  if (abs >= 10)  return `${sign}₩${abs.toFixed(1)}M`;
+  return `${sign}₩${abs.toFixed(2)}M`;
+}
+function abFmtPct(p, digits = 1) {
+  if (p == null) return '—';
+  if (typeof p === 'string') return p;
+  return (p >= 0 ? '+' : '') + (p * 100).toFixed(digits) + '%';
+}
+
+function renderAlphaBetMission() {
+  return `
+    <section class="ab-mission">
+      <div class="ab-mission-tag">🎯 미션 — 100% × 3~5번 alpha 베팅</div>
+      <div class="ab-mission-text">큰 베팅으로 자산 cycle 단축. Hit rate 추적 + 학습 패턴 누적. 모든 베팅은 2028.7 분양 잔금 ₩3억 deadline 에 종속.</div>
+    </section>`;
+}
+
+function renderAlphaBetStats(stats) {
+  if (!stats) return '';
+  const winRate = stats.hit_rate != null ? (stats.hit_rate * 100).toFixed(0) + '%' : '—';
+  const pnlClass = (stats.total_realized_pnl_krw_mm || 0) >= 0 ? 'win' : 'loss';
+  const pnlSign = (stats.total_realized_pnl_krw_mm || 0) >= 0 ? '+' : '';
+  return `
+    <div class="ab-stats-row">
+      <div class="ab-stat-card">
+        <div class="ab-stat-label">Hit Rate</div>
+        <div class="ab-stat-value" style="color:#06B6D4">${winRate}</div>
+        <div class="ab-stat-sub">${stats.wins}승 ${stats.losses}패 / ${stats.total_realized_bets}건</div>
+      </div>
+      <div class="ab-stat-card">
+        <div class="ab-stat-label">누적 실현손익</div>
+        <div class="ab-stat-value ab-bet-pnl ${pnlClass}">${abFmtKRW(stats.total_realized_pnl_krw_mm)}</div>
+        <div class="ab-stat-sub">전 베팅 누적</div>
+      </div>
+      <div class="ab-stat-card">
+        <div class="ab-stat-label">Biggest Win</div>
+        <div class="ab-stat-value ab-bet-pnl win">${abFmtKRW(stats.biggest_win_krw_mm)}</div>
+        <div class="ab-stat-sub">최대 익절</div>
+      </div>
+      <div class="ab-stat-card">
+        <div class="ab-stat-label">Biggest Loss</div>
+        <div class="ab-stat-value ab-bet-pnl loss">${abFmtKRW(stats.biggest_loss_krw_mm)}</div>
+        <div class="ab-stat-sub">최대 손실</div>
+      </div>
+      <div class="ab-stat-card">
+        <div class="ab-stat-label">평균 베팅 사이즈</div>
+        <div class="ab-stat-value">${abFmtKRW(stats.avg_active_capital_per_bet_krw_mm)}</div>
+        <div class="ab-stat-sub">건당 평균 자본</div>
+      </div>
+    </div>`;
+}
+
+function renderAlphaBetActiveCard(bet) {
+  const ret = bet.current && bet.current.return_pct != null ? bet.current.return_pct : null;
+  const pnl = bet.current && bet.current.pnl_krw_mm != null ? bet.current.pnl_krw_mm : null;
+  const pnlClass = (pnl || 0) >= 0 ? 'win' : 'loss';
+  const er = bet.exit_rules || {};
+  const stop = er.stop_loss_pct != null ? er.stop_loss_pct : -0.15;
+  const target = er.target_return_pct != null ? er.target_return_pct : 0.30;
+  const range = target - stop; // e.g. 0.30 - (-0.15) = 0.45
+  const curPos = ret != null ? Math.max(0, Math.min(100, ((ret - stop) / range) * 100)) : 50;
+  const fillColor = ret == null ? '#6B7280' : (ret >= 0 ? '#22C55E' : '#EF4444');
+
+  const scaleOut = (er.scale_out || []).map(s =>
+    `<span class="ab-scale-chip">${s.note || ''} · +${(s.trigger_pct * 100).toFixed(0)}% → ${(s.fraction * 100).toFixed(0)}% 익절</span>`
+  ).join('');
+
+  const stopPct = (stop * 100).toFixed(0) + '%';
+  const targetPct = '+' + (target * 100).toFixed(0) + '%';
+
+  return `
+    <div class="ab-bet-card ab-bet-active" data-id="${bet.id}">
+      <div class="ab-bet-head">
+        <div>
+          <div class="ab-bet-name">${bet.name}</div>
+          <div class="ab-bet-ticker">${bet.ticker || ''} · ${bet.category || ''}</div>
+        </div>
+        <div class="ab-bet-pnl ${pnlClass}">${abFmtKRW(pnl)} <span style="font-size:12px;font-weight:600">(${abFmtPct(ret)})</span></div>
+      </div>
+      <div class="ab-bet-thesis">${bet.thesis || ''}</div>
+      <div class="ab-bet-meta">
+        <span><strong>진입</strong>: ${bet.entry?.date || '—'} · ${abFmtKRW(bet.entry?.amount_krw_mm)}</span>
+        <span><strong>현재가치</strong>: ${abFmtKRW(bet.current?.value_krw_mm)}</span>
+        ${er.target_underlying_price ? `<span><strong>본주 target</strong>: ${er.target_underlying_price}</span>` : ''}
+      </div>
+      <div class="ab-progress">
+        <div class="ab-progress-fill" style="width:${curPos}%; background:${fillColor}"></div>
+      </div>
+      <div class="ab-progress-track">
+        <div class="ab-progress-mark stop" style="left:0%">손절 ${stopPct}</div>
+        <div class="ab-progress-mark" style="left:${(-stop / range) * 100}%">진입</div>
+        <div class="ab-progress-mark target" style="left:100%; transform:translateX(-100%)">target ${targetPct}</div>
+      </div>
+      ${scaleOut ? `<div class="ab-scale-row">${scaleOut}</div>` : ''}
+    </div>`;
+}
+
+function renderAlphaBetRealizedRow(bet) {
+  const r = bet.realized || {};
+  const gain = r.gain_krw_mm;
+  const cls = bet.status === 'failed' ? 'loss' : (gain >= 0 ? 'win' : 'loss');
+  const statusLabel = bet.status === 'failed' ? '❌ 실패' : '✅ 익절';
+  const gainPctRaw = r.gain_pct ?? r.gain_pct_qld ?? null;
+  const gainPctText = gainPctRaw != null
+    ? abFmtPct(gainPctRaw)
+    : (r.gain_pct_tqqq != null ? `QLD ${abFmtPct(r.gain_pct_qld)} / TQQQ ${abFmtPct(r.gain_pct_tqqq)}` : '—');
+  return `
+    <tr>
+      <td><strong>${bet.name}</strong><br><span style="font-size:11px;color:var(--muted)">${bet.ticker || ''}</span></td>
+      <td>${statusLabel}</td>
+      <td>${r.date || bet.entry?.date || '—'}</td>
+      <td class="num ${cls}">${abFmtKRW(gain)}</td>
+      <td class="num">${gainPctText}</td>
+      <td style="font-size:11.5px;color:var(--text-soft);max-width:300px">${r.note || ''}</td>
+    </tr>`;
+}
+
+function renderAlphaBetLessons(bet) {
+  if (!bet.lessons || !bet.lessons.length) return '';
+  return `
+    <div class="ab-lessons">
+      <div class="ab-lessons-title">📚 학습 (${bet.name})</div>
+      <ul class="ab-lessons-list">${bet.lessons.map(l => `<li>${l}</li>`).join('')}</ul>
+    </div>`;
+}
+
+function renderAlphaBetCandidateCard(c) {
+  return `
+    <div class="ab-bet-card ab-bet-candidate">
+      <div class="ab-bet-head">
+        <div>
+          <div class="ab-bet-name">📌 ${c.name}</div>
+          <div class="ab-bet-ticker">대기 — entry trigger 충족 시 활성화</div>
+        </div>
+        <div style="text-align:right;font-size:11.5px;color:var(--text-soft)">
+          target ${typeof c.target_pct === 'number' ? abFmtPct(c.target_pct, 0) : c.target_pct}<br>
+          stop ${typeof c.stop_pct === 'number' ? abFmtPct(c.stop_pct, 0) : c.stop_pct}
+        </div>
+      </div>
+      <div class="ab-bet-thesis">${c.thesis || ''}</div>
+      <div class="ab-bet-meta">
+        <span><strong>진입 트리거</strong>: ${c.entry_trigger || '—'}</span>
+        <span><strong>예상 자본</strong>: ${c.estimated_capital_krw_mm != null ? (typeof c.estimated_capital_krw_mm === 'number' ? '₩' + c.estimated_capital_krw_mm + 'M' : c.estimated_capital_krw_mm) : '—'}</span>
+      </div>
+    </div>`;
+}
+
+async function renderAlphaBetsIndex() {
+  const main = document.getElementById('main-content');
+  main.innerHTML = `<div class="empty-state">Alpha Bet ledger 로딩 중...</div>`;
+  const data = await fetchAlphaBets();
+  if (!data) {
+    main.innerHTML = `<div class="empty-state">data/alpha_bets.json 로드 실패</div>`;
+    return;
+  }
+  const bets = data.bets || [];
+  const active = bets.filter(b => b.status === 'active');
+  const realized = bets.filter(b => b.status === 'realized' || b.status === 'failed');
+  const candidates = data.candidates || [];
+  const stats = data.lifetime_stats || null;
+
+  const lessonsHTML = realized.map(renderAlphaBetLessons).filter(Boolean).join('');
+
+  main.innerHTML = `
+    <header class="header">
+      <div class="header-l">
+        <h1>Alpha Bet Tracker</h1>
+        <div class="subtitle">100% × 3~5번 베팅 ledger · 기준일 ${data.as_of || ''}</div>
+      </div>
+      <div class="header-r">Alpha Deep-Dive</div>
+    </header>
+
+    ${renderAlphaBetMission()}
+    ${renderAlphaBetStats(stats)}
+
+    <h2 class="ab-section-h">🔥 진행중 베팅 (${active.length})</h2>
+    ${active.length ? active.map(renderAlphaBetActiveCard).join('') : '<div class="val-muted">진행중 베팅 없음</div>'}
+
+    <h2 class="ab-section-h">📊 실현 베팅 Track Record (${realized.length})</h2>
+    <div style="overflow-x:auto;border:1px solid var(--border);border-radius:6px">
+      <table class="ab-realized-tbl">
+        <thead>
+          <tr>
+            <th>베팅</th>
+            <th>결과</th>
+            <th>일자</th>
+            <th class="val-th-r">실현 ₩</th>
+            <th class="val-th-r">수익률</th>
+            <th>메모</th>
+          </tr>
+        </thead>
+        <tbody>${realized.map(renderAlphaBetRealizedRow).join('')}</tbody>
+      </table>
+    </div>
+
+    ${lessonsHTML ? `<h2 class="ab-section-h">📚 누적 학습</h2>${lessonsHTML}` : ''}
+
+    <h2 class="ab-section-h">⏳ 대기 후보 (${candidates.length})</h2>
+    ${candidates.length ? candidates.map(renderAlphaBetCandidateCard).join('') : '<div class="val-muted">대기 후보 없음</div>'}
+
+    ${stats && stats.note ? `<div style="margin-top:18px;padding:10px 14px;background:var(--panel-2);border-left:3px solid #F59E0B;border-radius:4px;font-size:12.5px;color:var(--text-soft);line-height:1.6">💡 ${stats.note}</div>` : ''}
+  `;
+}
+
+async function renderAlphaBetDetail(id) {
+  // 현 구조: 인덱스만 사용. 추후 베팅별 상세 페이지 추가 시 확장.
+  return renderAlphaBetsIndex();
+}
+
 function renderStudy(st) {
   const main = document.getElementById('main-content');
   if (!st) { main.innerHTML = '<div class="empty-state">스터디를 선택하세요.</div>'; return; }
@@ -4106,6 +4388,8 @@ function renderMain() {
   if (activeType === 'study') return renderStudy(STUDIES[activeId]);
   if (activeType === 'valuations-index') return renderValuationsIndex();
   if (activeType === 'valuation') return renderValuationDetail(activeId);
+  if (activeType === 'alphabets-index') return renderAlphaBetsIndex();
+  if (activeType === 'alphabet') return renderAlphaBetDetail(activeId);
   if (!activeId) { main.innerHTML = '<div class="empty-state">상단 탭에서 스터디 또는 종목을 선택하세요.</div>'; return; }
   const s = STOCKS[activeId];
   if (!s) { main.innerHTML = '<div class="empty-state">선택한 항목을 찾을 수 없습니다.</div>'; return; }
