@@ -186,20 +186,24 @@
       "_data_basis": "entry_timing_buckets table — QQQ 1999~, 63일 윈도우. 옛 '나스닥 -15% 조정 → target +100% (4~6개월)' 가설은 데이터에 backed 안 됨 — 평균 +22% 수준이고 100% 는 outlier 인 -35%+ 표본 n=2 의 환상."
     },
     {
-      "name": "BTC cycle 2029~2030 peak",
-      "thesis": "Halving 2024 → 2025~26 peak → 2026~27 bear → 2028~29 bottom → 2029~30 peak. 분양 끝나고 본격 진입.",
-      "entry_trigger": "2028~2029 BTC -50~70% drawdown 시 분할 매수",
-      "target_pct": "+200~400% (cycle peak)",
-      "stop_pct": "-30% from average",
-      "estimated_capital_krw_mm": "분양 후 자금의 30~40% (₩100~200M)"
+      "name": "BTC Cycle 5 (Post-2028 Halving) 베팅",
+      "thesis": "Halving cycle 1-3 실증: cycle 1 peak +9,500% / cycle 2 +2,930% / cycle 3 +711% — 감쇠 추세 명확. Post-peak drawdown 평균 -78~85%. Cycle 5 (2028.3 halving) peak 예상 2029.7~2030.4 — 분양 deadline (2028.7) 직후, 본격 진입 가능 timing.",
+      "entry_trigger": "Cycle 4 peak (예상 2025.8~2026.4) 이후 BTC -70~80% drawdown 도달 시 분할 매수 시작. 분양 잔금 이후 (2028.7+) 본격 deploy.",
+      "target_pct": "+100~250% (cycle 1-3 감쇠 추세 반영 — base case)",
+      "stop_pct": "-30% from average entry (또는 cycle thesis 무효 시점)",
+      "expected_hold_months": "12~24개월 (halving → peak)",
+      "estimated_capital_krw_mm": "분양 후 자금의 30~40% (₩100~200M)",
+      "_data_basis": "BTC halving cycle 1-3 (2012/2016/2020) 공개 가격 데이터. 옛 가설 'target +200~400%' 는 감쇠 추세 반영 안 한 낙관 시나리오 — base case 는 +100~250%. 옛 entry '-50~70% DD' 도 역사적 trough -78~85% 대비 빠름 — 분할 매수는 -70%부터, full deploy 는 -75%+."
     },
     {
-      "name": "고확신 alpha 종목 deep deploy",
-      "thesis": "Discovery engine 발굴 + LESS ≥80 + 본주 alpha score ≥80 동시 hit",
-      "entry_trigger": "엔진이 발굴 (자동)",
-      "target_pct": 0.50,
-      "stop_pct": -0.20,
-      "estimated_capital_krw_mm": "건당 ₩30~50M"
+      "name": "고확신 Alpha 종목 Deep Deploy",
+      "thesis": "Discovery engine 발굴 + alpha score ≥80 + 52W DD ≤-10% (사용자 quant_standards 룰). 발굴된 종목별로 Valuation 탭의 score_breakdown (총 100점) + IC Memo 결과로 target/stop 개별 산정.",
+      "entry_trigger": "엔진 발굴 + valuation_workflow 통과 (score ≥67/100 → 매수 band) + 52W DD ≤-10%",
+      "target_pct": "종목별 — Valuation IC Memo 의 base case IRR/MOIC 또는 목표주가 lookup",
+      "stop_pct": "종목별 — IC Memo 의 worst case 또는 thesis-break 시점",
+      "expected_hold_months": "종목별 (보통 6~24개월)",
+      "estimated_capital_krw_mm": "건당 ₩30~50M",
+      "_data_basis": "옛 'target 50%, stop -20%' 는 임의 일반화 — 종목별 fundamental 무시. 정정: Valuation 탭의 개별 모델 결과를 lookup. 가용 valuations: 파마리서치 (매수 72/100), 현대건설 (중립 50), 삼성바이오 (중립 37)."
     }
   ],
   "lifetime_stats": {
