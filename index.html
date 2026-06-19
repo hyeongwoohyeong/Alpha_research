@@ -625,7 +625,16 @@
 }
 #pf-view .evo-character-block {
   display: flex; flex-direction: column; align-items: center; gap: 12px;
+  border: none !important;
+  background: transparent !important;
 }
+#pf-view .evo-character-block::before,
+#pf-view .evo-character-block::after,
+#pf-view .evo-img-wrap::before,
+#pf-view .evo-img-wrap::after,
+#pf-view .evo-info-block::before { content: none !important; display: none !important; }
+#pf-view .evo-img-wrap { border: none !important; box-shadow: none !important; }
+#pf-view .evo-info-block { border-left: none !important; padding-left: 0 !important; }
 #pf-view .evo-img-wrap {
   width: 220px; height: 220px;
   display: flex; align-items: center; justify-content: center;
