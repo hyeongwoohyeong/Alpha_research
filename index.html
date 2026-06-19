@@ -628,11 +628,22 @@
   border: none !important;
   background: transparent !important;
 }
-#pf-view .evo-character-block::before,
-#pf-view .evo-character-block::after,
-#pf-view .evo-img-wrap::before,
-#pf-view .evo-img-wrap::after,
-#pf-view .evo-info-block::before { content: none !important; display: none !important; }
+/* 브이몬 영역 모든 잠재적 줄 강제 제거 */
+#pf-view .evo-hero *,
+#pf-view .evo-hero *::before,
+#pf-view .evo-hero *::after {
+  border-left: none !important;
+  border-right: none !important;
+}
+#pf-view .evo-hero *::before,
+#pf-view .evo-hero *::after { content: none !important; }
+/* 단 bar track 의 border 는 유지 (round track) */
+#pf-view .evo-bar-track {
+  border-top: 1px solid var(--border) !important;
+  border-bottom: 1px solid var(--border) !important;
+  border-left: none !important;
+  border-right: none !important;
+}
 #pf-view .evo-img-wrap { border: none !important; box-shadow: none !important; }
 #pf-view .evo-info-block { border-left: none !important; padding-left: 0 !important; }
 #pf-view .evo-img-wrap {
