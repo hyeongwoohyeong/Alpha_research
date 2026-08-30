@@ -7,7 +7,7 @@
       "id": "bet_001_kodex_hynix",
       "name": "KODEX SK하이닉스 단일종목레버리지 (2x)",
       "ticker": "KODEX_HYNIX_2X",
-      "thesis": "SK하이닉스 HBM cycle + AI capex 수혜. 본주 ₩2.5M 도달 시 단계 익절.",
+      "thesis": "SK하이닉스 HBM cycle + AI capex 수혜. 본주 ₩3.6M 도달 시 전량 익절. (2026-06-20 목표가 상향: ₩2.5M → ₩3.6M)",
       "category": "Leveraged single-stock (Tactical alpha)",
       "status": "active",
       "entry": {
@@ -23,14 +23,9 @@
         "pnl_krw_mm": 1.9
       },
       "exit_rules": {
-        "target_underlying_price": "SK하이닉스 ₩2,500,000",
-        "target_return_pct": 0.25,
-        "stop_loss_pct": -0.15,
-        "scale_out": [
-          {"trigger_pct": 0.15, "fraction": 0.33, "note": "1차 익절 (보수)"},
-          {"trigger_pct": 0.25, "fraction": 0.33, "note": "2차 익절 (target)"},
-          {"trigger_pct": 0.40, "fraction": 0.34, "note": "3차 익절 (over-shoot)"}
-        ]
+        "target_underlying_price": "SK하이닉스 ₩3,600,000",
+        "stop_loss_underlying_price": "SK하이닉스 ₩2,400,000",
+        "scale_out": "전량 매도 (분할 없음) — 본주 ₩3.6M 도달 시 전량, 또는 ₩2.4M 이탈 시 전량 손절"
       },
       "realized": null,
       "lessons": []
